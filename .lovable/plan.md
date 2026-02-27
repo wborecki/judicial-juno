@@ -1,75 +1,92 @@
 
 
-## Plano: Evolução para CRM Completo de Gestão de Ativos Judiciais
+## Plano: Supabase + Tela de Detalhe estilo Salesforce
 
-O sistema atual é só o módulo de triagem. O usuário descreveu um CRM completo com pipeline de negócios. Vou reestruturar a navegação e criar a arquitetura completa.
+### 1. Conectar Lovable Cloud (Supabase)
 
-### Arquitetura do Sistema (Módulos)
+Ativar o Lovable Cloud e criar as tabelas:
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│                   SIDEBAR (módulos)                  │
-├─────────────────────────────────────────────────────┤
-│  📊 Dashboard (visão geral / KPIs)                  │
-│                                                      │
-│  ── PIPELINE ──                                      │
-│  📥 Captação (upload JSON / leads novos)             │
-│  🔍 Triagem (pendente/apto/descartado) ← JÁ EXISTE  │
-│  📤 Distribuição (roteamento por equipe)             │
-│  📝 Análise (preenchimento de dados)                 │
-│  💰 Precificação (equipe financeira)                 │
-│  📞 Comercial (contato / fechamento)                 │
-│  ✅ Negócios (ganhos / perdidos / em andamento)      │
-│                                                      │
-│  ── CADASTROS ──                                     │
-│  👥 Pessoas (partes dos processos - nome/CPF/tel)    │
-│  🏢 Equipes (config de roteamento RPV/Precatório)    │
-│  👤 Usuários (analistas do sistema)                  │
-│                                                      │
-│  ── SISTEMA ──                                       │
-│  💬 Chat interno (futuro)                            │
-│  ⚙️ Configurações                                    │
-└─────────────────────────────────────────────────────┘
+pessoas (id, nome, cpf_cnpj, email, telefone, endereco, cidade, uf, tipo, created_at)
+equipes (id, nome, tipo, ativa, created_at)
+usuarios (id, nome, email, equipe_id FK, cargo, avatar_url, ativo, created_at)
+equipe_membros (id, equipe_id FK, usuario_id FK)  -- relação N:N
+
+processos (id, numero_processo, tribunal, natureza, tipo_pagamento, 
+  status_processo, transito_julgado, parte_autora, parte_re, 
+  valor_estimado, data_distribuicao, data_captacao,
+  triagem_resultado, triagem_observacoes, triagem_data, triagem_por FK,
+  pipeline_status, pessoa_id FK, equipe_id FK, analista_id FK,
+  -- campos de precificação (preenchidos depois)
+  valor_precificado, precificacao_data, precificado_por FK,
+  -- campos comercial
+  tipo_servico, valor_proposta, valor_fechamento,
+  data_fechamento, negocio_status,
+  created_at, updated_at)
 ```
 
-### Etapas de Implementação
+Unifica `ProcessoLead` e `Negocio` em uma única tabela `processos` que acompanha o lead por todo o pipeline -- como o usuário pediu.
 
-**1. Reestruturar navegação e roteamento**
-- Transformar a sidebar de filtros de triagem para navegação por módulos do CRM
-- Criar rotas: `/`, `/triagem`, `/distribuicao`, `/analise`, `/precificacao`, `/comercial`, `/negocios`, `/pessoas`, `/equipes`
-- Layout compartilhado com sidebar persistente
+Seed data com os mesmos dados mock atuais via migration.
 
-**2. Expandir tipos e modelos de dados**
-- Adicionar tipos: `Pessoa` (nome, CPF, email, telefone, endereço), `Equipe` (nome, tipo: RPV/Precatório/etc, membros), `Negocio` (processo vinculado, tipo de serviço, status do negócio, valor)
-- Adicionar `TipoServico`: compra de crédito judicial, compensação tributária, etc
-- Adicionar pipeline status ao `ProcessoLead`: triagem → distribuído → em análise → precificado → comercial → ganho/perdido
-- Vincular `pessoaId` ao processo (parte autora como cadastro)
+### 2. Tela de Detalhe do Processo (estilo Salesforce)
 
-**3. Criar páginas-esqueleto dos módulos**
-- Cada módulo com sua página, header, e conteúdo inicial (tabela ou kanban conforme o módulo)
-- Dashboard com KPIs do pipeline completo
-- Página de Pessoas com CRUD
-- Página de Equipes com configuração de roteamento
+Substituir o `TriageModal` por uma página dedicada `/processos/:id`:
 
-**4. Implementar Distribuição**
-- Após triagem "apto", processo entra na fila de distribuição
-- Roteamento automático por regras: RPV → Equipe RPV, Precatório → Equipe Precatório
-- Atribuição manual ou automática a analistas
+```text
+┌──────────────────────────────────────────────────────────┐
+│  ← Voltar    #0001234-56.2024...    [Pipeline: Triagem ▾]│
+│  Maria Silva Santos · TJSP · Precatório · R$ 85.000     │
+├──────────────────────────────────────────────────────────┤
+│  [Dados do Processo] [Triagem] [Análise] [Precif.] [Com]│
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌─ Informações Gerais ──────┐  ┌─ Triagem ───────────┐ │
+│  │ Tribunal: TJSP            │  │ Resultado: Pendente  │ │
+│  │ Natureza: Cível           │  │ Trânsito: Sim        │ │
+│  │ Tipo Pgto: Precatório     │  │ Status: S3           │ │
+│  │ Parte Autora: Maria...    │  │ Observações: ...     │ │
+│  │ Parte Ré: INSS            │  │                      │ │
+│  │ Valor Est: R$ 85.000      │  │ [Apto] [Reanálise]   │ │
+│  │ Data Dist: 15/03/2024     │  │ [Descartar]          │ │
+│  └───────────────────────────┘  └──────────────────────┘ │
+│                                                          │
+│  ┌─ Timeline / Histórico ────────────────────────────┐   │
+│  │ 27/02 - Lead captado                              │   │
+│  │ 27/02 - Enviado para triagem                      │   │
+│  └───────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────┘
+```
 
-**5. Implementar módulo de Negócios**
-- Kanban ou tabela com status: Em Andamento, Ganho, Perdido
-- Tipo de serviço vinculado
-- Histórico de interações
+Campos editáveis inline. Tabs para seções do pipeline (dados visíveis conforme a etapa avança). Botões de ação contextual por etapa.
+
+### 3. Etapas de Implementação
+
+**Etapa 1 -- Supabase schema + seed**
+- Criar tabela `pessoas`, `equipes`, `usuarios`, `equipe_membros`, `processos`
+- RLS básica (sem auth por enquanto, policies permissivas para desenvolvimento)
+- Seed com dados mock atuais
+
+**Etapa 2 -- Hooks e integração de dados**
+- Criar hooks com TanStack Query: `useProcessos`, `usePessoas`, `useEquipes`, `useProcesso(id)`
+- Substituir imports de mock-data pelos hooks em todas as páginas
+
+**Etapa 3 -- Página de detalhe do processo**
+- Nova rota `/processos/:id` com layout Salesforce-like
+- Seções: Dados Gerais, Triagem (com botões Apto/Descartar/Reanálise), Timeline
+- Tabs para etapas futuras (Análise, Precificação, Comercial) -- visíveis mas desabilitadas até o processo chegar lá
+- Na tabela de triagem, clicar no processo navega para `/processos/:id` em vez de abrir modal
+
+**Etapa 4 -- Atualizar páginas existentes**
+- Dashboard, Triagem, Pessoas, Equipes: todos lendo do Supabase
+- Triagem: tabela com link para detalhe, sem modal
+- Pessoas/Equipes: CRUD funcional com Supabase
 
 ### Detalhes Técnicos
 
-- Roteamento via `react-router-dom` com layout aninhado (sidebar + outlet)
-- Dados mock expandidos para todos os módulos
-- Tipos centralizados em `src/lib/types.ts`
-- Componentes de página em `src/pages/` (Dashboard, Triagem, Distribuicao, Analise, Precificacao, Comercial, Negocios, Pessoas, Equipes)
-- Sidebar refatorada para navegação por rotas com ícones e contadores
-- Banco de dados (Supabase) será conectado numa etapa futura
-
-### Escopo desta implementação
-Vou focar em: **reestruturar a navegação completa do CRM, criar as páginas-esqueleto de todos os módulos, expandir os tipos de dados, e implementar o módulo de Pessoas e Equipes** -- mantendo a triagem funcional como já está. Os módulos de Distribuição, Precificação e Comercial terão a estrutura pronta para serem desenvolvidos iterativamente.
+- Supabase client via `@supabase/supabase-js` (já disponível com Lovable Cloud)
+- TanStack Query para cache e mutations
+- Tabela unificada `processos` com `pipeline_status` controlando em qual etapa está
+- Campos de precificação/comercial ficam null até o processo chegar nessas etapas
+- Componente `ProcessoDetail` com layout de grid 2 colunas, cards por seção
 
