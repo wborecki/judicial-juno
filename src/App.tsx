@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Triagem from "./pages/Triagem";
-import Captacao from "./pages/Captacao";
+
 import Distribuicao from "./pages/Distribuicao";
 import Analise from "./pages/Analise";
 import Precificacao from "./pages/Precificacao";
@@ -32,7 +32,7 @@ const App = () => (
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/triagem" element={<Triagem />} />
-            <Route path="/captacao" element={<Captacao />} />
+            
             <Route path="/distribuicao" element={<Distribuicao />} />
             <Route path="/analise" element={<Analise />} />
             <Route path="/precificacao" element={<Precificacao />} />
