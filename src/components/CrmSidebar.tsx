@@ -15,7 +15,7 @@ interface NavItem {
 
 const pipelineItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/captacao", label: "Captação", icon: Upload },
+  
   { to: "/triagem", label: "Triagem", icon: Filter },
   { to: "/distribuicao", label: "Distribuição", icon: ArrowRightLeft },
   { to: "/analise", label: "Análise", icon: FileSearch },
