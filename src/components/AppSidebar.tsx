@@ -1,5 +1,6 @@
 import { LayoutDashboard, Filter, CheckCircle2, XCircle, RotateCcw, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MegaTecLogo } from "./MegaTecLogo";
 
 interface SidebarProps {
   activeFilter: string;
@@ -19,10 +20,8 @@ export function AppSidebar({ activeFilter, onFilterChange, counts }: SidebarProp
   return (
     <aside className="w-64 min-h-screen bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
       <div className="p-6 border-b border-sidebar-border">
-        <h1 className="font-display text-xl font-bold tracking-tight">
-          <span className="text-sidebar-primary">Juris</span>Flow
-        </h1>
-        <p className="text-xs text-sidebar-foreground/50 mt-1">Gestão de Processos</p>
+        <MegaTecLogo size="md" />
+        <p className="text-[10px] text-sidebar-foreground/40 mt-1.5">Gestão de Processos</p>
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
