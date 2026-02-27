@@ -1,11 +1,19 @@
-import { mockUsuarios, mockEquipes } from "@/lib/mock-data";
+import { useUsuarios, useEquipes } from "@/hooks/useEquipes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
 
 export default function UsuariosPage() {
+  const { data: usuarios = [], isLoading } = useUsuarios();
+  const { data: equipes = [] } = useEquipes();
+
+  if (isLoading) {
+    return <div className="space-y-6"><Skeleton className="h-8 w-64" /><Skeleton className="h-96 w-full" /></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -29,8 +37,8 @@ export default function UsuariosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockUsuarios.map(u => {
-                const equipe = mockEquipes.find(e => e.id === u.equipeId);
+              {usuarios.map(u => {
+                const equipe = equipes.find(e => e.id === u.equipe_id);
                 return (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.nome}</TableCell>

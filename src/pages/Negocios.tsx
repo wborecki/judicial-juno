@@ -1,32 +1,48 @@
 import { useMemo } from "react";
-import { mockNegocios, mockProcessos, mockPessoas } from "@/lib/mock-data";
-import { TIPO_SERVICO_LABELS } from "@/lib/types";
+import { useProcessos } from "@/hooks/useProcessos";
+import { usePessoas } from "@/hooks/usePessoas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, Clock, XCircle } from "lucide-react";
 
-const statusConfig = {
-  em_andamento: { label: "Em Andamento", icon: Clock, variant: "outline" as const },
-  ganho: { label: "Ganho", icon: TrendingUp, variant: "default" as const },
-  perdido: { label: "Perdido", icon: XCircle, variant: "destructive" as const },
+const TIPO_SERVICO_LABELS: Record<string, string> = {
+  compra_credito: "Compra de Crédito Judicial",
+  compensacao_tributaria: "Compensação Tributária",
+  honorarios: "Honorários",
+  cessao_direitos: "Cessão de Direitos",
+};
+
+const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "outline" | "default" | "destructive" }> = {
+  em_andamento: { label: "Em Andamento", icon: Clock, variant: "outline" },
+  ganho: { label: "Ganho", icon: TrendingUp, variant: "default" },
+  perdido: { label: "Perdido", icon: XCircle, variant: "destructive" },
 };
 
 export default function Negocios() {
+  const { data: processos = [], isLoading } = useProcessos();
+  const { data: pessoas = [] } = usePessoas();
+
   const negocios = useMemo(() => {
-    return mockNegocios.map(n => {
-      const processo = mockProcessos.find(p => p.id === n.processoId);
-      const pessoa = mockPessoas.find(p => p.id === n.pessoaId);
-      return { ...n, processo, pessoa };
-    });
-  }, []);
+    return processos
+      .filter(p => p.negocio_status)
+      .map(p => {
+        const pessoa = pessoas.find(pe => pe.id === p.pessoa_id);
+        return { ...p, pessoaNome: pessoa?.nome ?? "—" };
+      });
+  }, [processos, pessoas]);
 
   const stats = {
     total: negocios.length,
-    em_andamento: negocios.filter(n => n.status === "em_andamento").length,
-    ganho: negocios.filter(n => n.status === "ganho").length,
-    perdido: negocios.filter(n => n.status === "perdido").length,
+    em_andamento: negocios.filter(n => n.negocio_status === "em_andamento").length,
+    ganho: negocios.filter(n => n.negocio_status === "ganho").length,
+    perdido: negocios.filter(n => n.negocio_status === "perdido").length,
   };
+
+  if (isLoading) {
+    return <div className="space-y-6"><Skeleton className="h-8 w-64" /><Skeleton className="h-96 w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -56,14 +72,14 @@ export default function Negocios() {
             </TableHeader>
             <TableBody>
               {negocios.map(n => {
-                const cfg = statusConfig[n.status];
+                const cfg = statusConfig[n.negocio_status ?? "em_andamento"];
                 return (
                   <TableRow key={n.id}>
-                    <TableCell className="font-mono text-xs">{n.processo?.numeroProcesso ?? "—"}</TableCell>
-                    <TableCell>{n.pessoa?.nome ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{TIPO_SERVICO_LABELS[n.tipoServico]}</TableCell>
-                    <TableCell>{n.valorProposta ? `R$ ${n.valorProposta.toLocaleString("pt-BR")}` : "—"}</TableCell>
-                    <TableCell><Badge variant={cfg.variant}>{cfg.label}</Badge></TableCell>
+                    <TableCell className="font-mono text-xs">{n.numero_processo}</TableCell>
+                    <TableCell>{n.pessoaNome}</TableCell>
+                    <TableCell className="text-xs">{n.tipo_servico ? TIPO_SERVICO_LABELS[n.tipo_servico] ?? n.tipo_servico : "—"}</TableCell>
+                    <TableCell>{n.valor_proposta ? `R$ ${n.valor_proposta.toLocaleString("pt-BR")}` : "—"}</TableCell>
+                    <TableCell><Badge variant={cfg?.variant ?? "outline"}>{cfg?.label ?? n.negocio_status}</Badge></TableCell>
                   </TableRow>
                 );
               })}
