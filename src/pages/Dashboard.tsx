@@ -1,22 +1,39 @@
-import { useMemo } from "react";
-import { mockProcessos, mockPessoas, mockNegocios } from "@/lib/mock-data";
+import { useProcessos } from "@/hooks/useProcessos";
+import { usePessoas } from "@/hooks/usePessoas";
 import { PIPELINE_LABELS, PipelineStatus } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, Users, TrendingUp, DollarSign, Filter, ArrowRightLeft, FileSearch, Briefcase } from "lucide-react";
+import { useMemo } from "react";
 
 export default function Dashboard() {
+  const { data: processos = [], isLoading: loadingProcessos } = useProcessos();
+  const { data: pessoas = [], isLoading: loadingPessoas } = usePessoas();
+
   const stats = useMemo(() => {
-    const pipelineCounts = mockProcessos.reduce((acc, p) => {
-      acc[p.pipelineStatus] = (acc[p.pipelineStatus] || 0) + 1;
+    const pipelineCounts = processos.reduce((acc, p) => {
+      acc[p.pipeline_status] = (acc[p.pipeline_status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const valorTotal = mockProcessos.reduce((sum, p) => sum + (p.valorEstimado || 0), 0);
-    const negociosGanhos = mockNegocios.filter(n => n.status === "ganho").length;
-    const valorGanho = mockNegocios.filter(n => n.status === "ganho").reduce((sum, n) => sum + (n.valorFechamento || 0), 0);
+    const valorTotal = processos.reduce((sum, p) => sum + (p.valor_estimado || 0), 0);
+    const negociosGanhos = processos.filter(p => p.negocio_status === "ganho").length;
+    const valorGanho = processos.filter(p => p.negocio_status === "ganho").reduce((sum, p) => sum + (p.valor_fechamento || 0), 0);
 
-    return { pipelineCounts, valorTotal, negociosGanhos, valorGanho, totalProcessos: mockProcessos.length, totalPessoas: mockPessoas.length };
-  }, []);
+    return { pipelineCounts, valorTotal, negociosGanhos, valorGanho, totalProcessos: processos.length, totalPessoas: pessoas.length };
+  }, [processos, pessoas]);
+
+  if (loadingProcessos || loadingPessoas) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <Skeleton className="h-48" />
+      </div>
+    );
+  }
 
   const kpis = [
     { label: "Total Processos", value: stats.totalProcessos, icon: BarChart3, color: "text-info" },

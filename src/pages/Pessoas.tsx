@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { mockPessoas } from "@/lib/mock-data";
-import { Pessoa } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { usePessoas } from "@/hooks/usePessoas";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const tipoLabels: Record<Pessoa["tipo"], string> = {
+const tipoLabels: Record<string, string> = {
   autor: "Autor",
   reu: "Réu",
   advogado: "Advogado",
@@ -17,11 +17,17 @@ const tipoLabels: Record<Pessoa["tipo"], string> = {
 
 export default function Pessoas() {
   const [search, setSearch] = useState("");
-  const pessoas = mockPessoas.filter(p => {
+  const { data: allPessoas = [], isLoading } = usePessoas();
+
+  const pessoas = allPessoas.filter(p => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return p.nome.toLowerCase().includes(q) || p.cpfCnpj.includes(q) || (p.email?.toLowerCase().includes(q));
+    return p.nome.toLowerCase().includes(q) || p.cpf_cnpj.includes(q) || (p.email?.toLowerCase().includes(q));
   });
+
+  if (isLoading) {
+    return <div className="space-y-6"><Skeleton className="h-8 w-64" /><Skeleton className="h-96 w-full" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -55,11 +61,11 @@ export default function Pessoas() {
               {pessoas.map(p => (
                 <TableRow key={p.id} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{p.nome}</TableCell>
-                  <TableCell className="font-mono text-xs">{p.cpfCnpj}</TableCell>
+                  <TableCell className="font-mono text-xs">{p.cpf_cnpj}</TableCell>
                   <TableCell className="text-xs">{p.email ?? "—"}</TableCell>
                   <TableCell className="text-xs">{p.telefone ?? "—"}</TableCell>
                   <TableCell className="text-xs">{p.cidade && p.uf ? `${p.cidade}/${p.uf}` : "—"}</TableCell>
-                  <TableCell><Badge variant="outline">{tipoLabels[p.tipo]}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{tipoLabels[p.tipo] ?? p.tipo}</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
