@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Upload, Filter, ArrowRightLeft, FileSearch, DollarSign,
+  LayoutDashboard, Filter, ArrowRightLeft, FileSearch, DollarSign,
   Phone, Briefcase, Users, Building2, UserCog, MessageSquare, Settings
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
