@@ -45,12 +45,6 @@ export default function Negocios() {
     return list;
   }, [negocios, search, statusFilter]);
 
-  // KPIs
-  const emAndamento = negocios.filter((n) => n.negocio_status === "em_andamento").length;
-  const valorTotal = negocios
-    .filter((n) => n.negocio_status === "em_andamento")
-    .reduce((sum, n) => sum + (n.valor_proposta ?? 0), 0);
-  const ganhos = negocios.filter((n) => n.negocio_status === "ganho").length;
 
   return (
     <div className="space-y-6">
@@ -68,22 +62,6 @@ export default function Negocios() {
         <Button onClick={() => setSheetOpen(true)} size="sm">
           <Plus className="w-4 h-4 mr-1.5" /> Novo Negócio
         </Button>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Em andamento</p>
-          <p className="text-2xl font-bold">{emAndamento}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Valor total pipeline</p>
-          <p className="text-2xl font-bold">{valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Ganhos</p>
-          <p className="text-2xl font-bold text-primary">{ganhos}</p>
-        </div>
       </div>
 
       {/* Toolbar */}

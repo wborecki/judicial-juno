@@ -1,0 +1,205 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { useNegocio, useUpdateNegocio } from "@/hooks/useNegocios";
+import { useDefaultPipeline } from "@/hooks/useNegocioPipelines";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import TabDadosGerais from "@/components/negocios/TabDadosGerais";
+import TabAtividades from "@/components/negocios/TabAtividades";
+import TabCamposPersonalizados from "@/components/negocios/TabCamposPersonalizados";
+
+const TIPO_SERVICO_LABELS: Record<string, string> = {
+  compra_credito: "Compra de Crédito",
+  compensacao_tributaria: "Compensação Tributária",
+  honorarios: "Honorários",
+  cessao_direitos: "Cessão de Direitos",
+};
+
+function formatCurrency(v?: number | null) {
+  if (v == null) return "—";
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+export default function NegocioDetalhe() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data: negocio, isLoading } = useNegocio(id);
+  const { data: pipeline } = useDefaultPipeline();
+  const updateNegocio = useUpdateNegocio();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+
+  if (!negocio) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-muted-foreground">Negócio não encontrado.</p>
+        <Button variant="link" onClick={() => navigate("/negocios")}>Voltar</Button>
+      </div>
+    );
+  }
+
+  const etapas = pipeline?.etapas ?? [];
+  const currentEtapa = etapas.find((e) => e.id === negocio.pipeline_etapa);
+
+  const handleMarkGanho = () => {
+    updateNegocio.mutate(
+      { id: negocio.id, updates: { negocio_status: "ganho", data_fechamento: new Date().toISOString() } },
+      { onSuccess: () => toast.success("Negócio marcado como ganho!"), onError: () => toast.error("Erro") }
+    );
+  };
+
+  const handleMarkPerdido = () => {
+    updateNegocio.mutate(
+      { id: negocio.id, updates: { negocio_status: "perdido", data_fechamento: new Date().toISOString() } },
+      { onSuccess: () => toast.success("Negócio marcado como perdido"), onError: () => toast.error("Erro") }
+    );
+  };
+
+  const handleMoveEtapa = (etapaId: string) => {
+    updateNegocio.mutate(
+      { id: negocio.id, updates: { pipeline_etapa: etapaId } },
+      { onSuccess: () => toast.success("Etapa atualizada"), onError: () => toast.error("Erro") }
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Back button */}
+      <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={() => navigate("/negocios")}>
+        <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Negócios
+      </Button>
+
+      {/* Header */}
+      <div className="bg-card border border-border/40 rounded-xl p-6 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Briefcase className="w-5 h-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold tracking-tight truncate">{negocio.titulo || "Sem título"}</h1>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                {negocio.pessoas?.nome && <span>{negocio.pessoas.nome}</span>}
+                {negocio.tipo_servico && (
+                  <>
+                    <span>·</span>
+                    <span>{TIPO_SERVICO_LABELS[negocio.tipo_servico] ?? negocio.tipo_servico}</span>
+                  </>
+                )}
+                {negocio.processos?.numero_processo && (
+                  <>
+                    <span>·</span>
+                    <button
+                      className="flex items-center gap-1 hover:text-primary transition-colors"
+                      onClick={() => navigate(`/processos/${negocio.processo_id}`)}
+                    >
+                      <LinkIcon className="w-3 h-3" />
+                      <span className="font-mono">{negocio.processos.numero_processo}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {negocio.negocio_status === "em_andamento" && (
+              <>
+                <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={handleMarkGanho}>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Ganho
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={handleMarkPerdido}>
+                  <XCircle className="w-3.5 h-3.5 text-destructive" /> Perdido
+                </Button>
+              </>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="w-8 h-8"><MoreHorizontal className="w-4 h-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => toast.info("Em breve")}>Gerar Proposta</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info("Em breve")}>Duplicar Negócio</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info("Em breve")}>Arquivar</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Metadata row */}
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Status */}
+          <Badge
+            variant="secondary"
+            className={
+              negocio.negocio_status === "ganho"
+                ? "bg-emerald-500/10 text-emerald-600"
+                : negocio.negocio_status === "perdido"
+                ? "bg-destructive/10 text-destructive"
+                : "bg-blue-500/10 text-blue-600"
+            }
+          >
+            {negocio.negocio_status === "em_andamento" ? "Em andamento" : negocio.negocio_status === "ganho" ? "Ganho" : "Perdido"}
+          </Badge>
+
+          {/* Pipeline etapa selector */}
+          {etapas.length > 0 && (
+            <div className="flex items-center gap-1">
+              {etapas.map((e, i) => (
+                <button
+                  key={e.id}
+                  onClick={() => handleMoveEtapa(e.id)}
+                  className={`text-[10px] px-2.5 py-1 rounded-full border transition-all ${
+                    e.id === negocio.pipeline_etapa
+                      ? "font-semibold"
+                      : "opacity-50 hover:opacity-80"
+                  }`}
+                  style={{
+                    borderColor: e.cor,
+                    backgroundColor: e.id === negocio.pipeline_etapa ? e.cor + "20" : "transparent",
+                    color: e.cor,
+                  }}
+                >
+                  {e.nome}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Valor */}
+          <span className="text-sm font-bold ml-auto">{formatCurrency(negocio.valor_proposta)}</span>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="dados" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dados">Dados Gerais</TabsTrigger>
+          <TabsTrigger value="atividades">Atividades</TabsTrigger>
+          <TabsTrigger value="campos">Campos Personalizados</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dados">
+          <TabDadosGerais negocio={negocio} />
+        </TabsContent>
+        <TabsContent value="atividades">
+          <TabAtividades negocioId={negocio.id} />
+        </TabsContent>
+        <TabsContent value="campos">
+          <TabCamposPersonalizados negocioId={negocio.id} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

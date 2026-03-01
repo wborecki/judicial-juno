@@ -15,6 +15,7 @@ import Analise from "./pages/Analise";
 import Precificacao from "./pages/Precificacao";
 import Comercial from "./pages/Comercial";
 import Negocios from "./pages/Negocios";
+import NegocioDetalhe from "./pages/NegocioDetalhe";
 import Pessoas from "./pages/Pessoas";
 import Equipes from "./pages/Equipes";
 import UsuariosPage from "./pages/Usuarios";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/precificacao" element={<Precificacao />} />
               <Route path="/comercial" element={<Comercial />} />
               <Route path="/negocios" element={<Negocios />} />
+              <Route path="/negocios/:id" element={<NegocioDetalhe />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/configuracoes" element={<ConfiguracoesLayout />}>
                 <Route index element={<ConfiguracoesGeral />} />
