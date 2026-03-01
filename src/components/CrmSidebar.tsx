@@ -23,15 +23,12 @@ const comercialItems: NavItem[] = [
   { to: "/negocios", label: "Negócios", icon: Briefcase },
 ];
 
-const cadastroItems: NavItem[] = [
-  { to: "/pessoas", label: "Pessoas", icon: Users },
-  { to: "/equipes", label: "Equipes", icon: Building2 },
-  { to: "/usuarios", label: "Usuários", icon: UserCog },
-];
-
 const sistemaItems: NavItem[] = [
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/pessoas", label: "Pessoas", icon: Users },
+  { to: "/equipes", label: "Equipes", icon: Building2 },
+  { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 
 function SidebarSection({ title, items }: { title: string; items: NavItem[] }) {
@@ -91,7 +88,6 @@ export function CrmSidebar() {
       <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
         <SidebarSection title="Processos" items={analiseItems} />
         <SidebarSection title="Comercial" items={comercialItems} />
-        <SidebarSection title="Cadastros" items={cadastroItems} />
         <SidebarSection title="Sistema" items={sistemaItems} />
       </nav>
 
