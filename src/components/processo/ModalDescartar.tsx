@@ -1,12 +1,12 @@
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,17 +51,17 @@ export default function ModalDescartar({ processo, open, onOpenChange }: Props) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-sm flex items-center gap-2 text-destructive">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-sm flex items-center gap-2 text-destructive">
             <XCircle className="w-4 h-4" />
             Descartar Processo
-          </DialogTitle>
-          <DialogDescription className="text-xs">
+          </SheetTitle>
+          <SheetDescription className="text-xs">
             Informe o motivo pelo qual este processo não é apto para conversão.
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="space-y-4">
           <div className="bg-muted/30 rounded-lg p-3 text-xs">
@@ -97,7 +97,7 @@ export default function ModalDescartar({ processo, open, onOpenChange }: Props) 
           </div>
         </div>
 
-        <DialogFooter>
+        <SheetFooter className="mt-4">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs">Cancelar</Button>
           <Button
             size="sm"
@@ -109,8 +109,8 @@ export default function ModalDescartar({ processo, open, onOpenChange }: Props) 
             <XCircle className="w-3.5 h-3.5" />
             Descartar
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
