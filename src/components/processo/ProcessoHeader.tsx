@@ -178,7 +178,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
   return (
     <>
       {/* ── Line 1: CNJ + Tribunal + Actions + Value ── */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
           <h1 className="font-mono text-base font-bold tracking-tight text-primary">{processo.numero_processo}</h1>
           <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0" onClick={handleCopyCNJ}>
