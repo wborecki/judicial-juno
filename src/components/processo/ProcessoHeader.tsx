@@ -177,76 +177,67 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
 
   return (
     <>
-      {/* ── Top area: CNJ + Tribunal + Buttons (outside card) ── */}
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-3 min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="font-mono text-base font-bold tracking-tight text-primary">{processo.numero_processo}</h1>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={handleCopyCNJ}>
-                {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+      {/* ── Line 1: CNJ + Tribunal + Actions + Value ── */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <h1 className="font-mono text-base font-bold tracking-tight text-primary">{processo.numero_processo}</h1>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0" onClick={handleCopyCNJ}>
+            {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+          </Button>
+          {tribunalUrl && (
+            <a href={tribunalUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary shrink-0">
+                <ExternalLink className="w-3.5 h-3.5" />
               </Button>
+            </a>
+          )}
+          <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5 shrink-0">{processo.tribunal}</Badge>
+
+          {triagem === "apto" ? (
+            <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg shrink-0">
+              <Briefcase className="w-3.5 h-3.5" />Criar Negócio
+            </Button>
+          ) : triagem === "pendente" || triagem === "reanálise" ? (
+            <>
+              <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg bg-success hover:bg-success/90 text-success-foreground shrink-0">
+                <Briefcase className="w-3.5 h-3.5" />Converter
+              </Button>
+              <Button size="sm" variant="outline" onClick={onDiscard} className="text-xs gap-1.5 h-7 rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10 shrink-0">
+                Descartar
+              </Button>
+            </>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Valor da Causa</p>
+            <p className="text-base font-bold">{fmt(processo.valor_estimado)}</p>
+          </div>
+          <Badge className={`rounded-full text-[11px] px-3 py-1 font-medium ${TRIAGEM_COLORS[triagem]}`}>{TRIAGEM_LABELS[triagem]}</Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg"><MoreHorizontal className="w-4 h-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { setValorEdit(processo.valor_estimado ?? 0); setEditValorOpen(true); }}>
+                <Pencil className="w-3.5 h-3.5 mr-2" />Editar Valor da Causa
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Sincronização não implementada")}>
+                <RefreshCw className="w-3.5 h-3.5 mr-2" />Sincronizar Dados
+              </DropdownMenuItem>
               {tribunalUrl && (
-                <a href={tribunalUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary">
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Button>
-                </a>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5">{processo.tribunal}</Badge>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {triagem === "apto" ? (
-                <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8 rounded-lg">
-                  <Briefcase className="w-3.5 h-3.5" />Criar Negócio
-                </Button>
-              ) : triagem === "pendente" || triagem === "reanálise" ? (
                 <>
-                  <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8 rounded-lg bg-success hover:bg-success/90 text-success-foreground">
-                    <Briefcase className="w-3.5 h-3.5" />Converter
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={onDiscard} className="text-xs gap-1.5 h-8 rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10">
-                    Descartar
-                  </Button>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href={tribunalUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-3.5 h-3.5 mr-2" />Ver no Tribunal
+                    </a>
+                  </DropdownMenuItem>
                 </>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Valor da Causa</p>
-              <p className="text-base font-bold">{fmt(processo.valor_estimado)}</p>
-            </div>
-            <Badge className={`rounded-full text-[11px] px-3 py-1 font-medium ${TRIAGEM_COLORS[triagem]}`}>{TRIAGEM_LABELS[triagem]}</Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg"><MoreHorizontal className="w-4 h-4" /></Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { setValorEdit(processo.valor_estimado ?? 0); setEditValorOpen(true); }}>
-                  <Pencil className="w-3.5 h-3.5 mr-2" />Editar Valor da Causa
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toast.info("Sincronização não implementada")}>
-                  <RefreshCw className="w-3.5 h-3.5 mr-2" />Sincronizar Dados
-                </DropdownMenuItem>
-                {tribunalUrl && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <a href={tribunalUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3.5 h-3.5 mr-2" />Ver no Tribunal
-                      </a>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
