@@ -74,6 +74,7 @@ export default function CamposAnalise() {
       ordem,
       opcoes: tipo === "select" ? opcoes.split(",").map((o) => o.trim()).filter(Boolean) : [],
       ativo: true,
+      entidade: "processo" as string,
     };
 
     try {
