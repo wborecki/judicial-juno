@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Plus, MoreHorizontal, Pencil, ShieldCheck, UserX, UserCheck, Loader2 } from "lucide-react";
@@ -281,13 +282,13 @@ export default function UsuariosPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Usuário</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+      {/* Edit Sheet */}
+      <Sheet open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
+        <SheetContent className="w-[400px] sm:max-w-[400px]">
+          <SheetHeader>
+            <SheetTitle>Editar Usuário</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Nome</Label>
               <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} />
@@ -326,17 +327,17 @@ export default function UsuariosPage() {
               <Switch checked={editAtivo} onCheckedChange={setEditAtivo} />
             </div>
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
+          <SheetFooter className="gap-2">
+            <SheetClose asChild>
               <Button variant="outline">Cancelar</Button>
-            </DialogClose>
+            </SheetClose>
             <Button onClick={handleUpdate} disabled={updateMut.isPending}>
               {updateMut.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Salvar
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
