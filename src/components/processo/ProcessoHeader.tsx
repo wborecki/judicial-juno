@@ -65,6 +65,15 @@ interface Props {
   onDiscard: () => void;
 }
 
+type DetailField = {
+  label: string;
+  value: string;
+  editable?: {
+    options: { value: string; label: string }[];
+    onSave: (v: string) => Promise<any>;
+  };
+};
+
 export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props) {
   const updateProcesso = useUpdateProcesso();
   const [copied, setCopied] = useState(false);
@@ -75,7 +84,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   const [pessoaSheetData, setPessoaSheetData] = useState<{ pessoaId?: string | null; nome?: string; cpfCnpj?: string | null }>({});
 
   const triagem = processo.triagem_resultado ?? "pendente";
-  const p = processo as any; // shorthand for new fields not yet in generated types
+  const p = processo as any;
 
   const handleCopyCNJ = async () => {
     await navigator.clipboard.writeText(processo.numero_processo);
@@ -98,23 +107,78 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
     ? `${TRIBUNAL_URLS[processo.tribunal]}${processo.numero_processo}`
     : null;
 
-  // Build detail fields – only show non-empty ones
-  const detailFields: { label: string; value: string }[] = [];
-  if (processo.classe_fase) detailFields.push({ label: "Classe Judicial", value: processo.classe_fase });
-  if (p.assunto) detailFields.push({ label: "Assunto", value: p.assunto });
-  detailFields.push({ label: "Valor da Causa", value: fmt(processo.valor_estimado) });
-  if (processo.vara_comarca || p.orgao_julgador) detailFields.push({ label: "Vara / Comarca", value: processo.vara_comarca || p.orgao_julgador });
-  if (p.area) detailFields.push({ label: "Área", value: p.area });
-  if (p.foro) detailFields.push({ label: "Foro", value: p.foro });
-  if (p.juiz) detailFields.push({ label: "Juiz", value: p.juiz });
-  if (p.competencia) detailFields.push({ label: "Competência", value: p.competencia });
-  if (p.data_autuacao) detailFields.push({ label: "Autuação", value: fmtDate(p.data_autuacao) });
-  if (processo.data_distribuicao) detailFields.push({ label: "Distribuição", value: fmtDate(processo.data_distribuicao) });
+  // Build detail fields
+  const detailFields: DetailField[] = [
+    { label: "Classe Judicial", value: processo.classe_fase || "—" },
+    { label: "Assunto", value: p.assunto || "—" },
+    { label: "Valor da Causa", value: fmt(processo.valor_estimado) },
+    {
+      label: "Natureza", value: processo.natureza || "—",
+      editable: {
+        options: [
+          { value: "Previdenciário", label: "Previdenciário" },
+          { value: "Cível", label: "Cível" },
+          { value: "Trabalhista", label: "Trabalhista" },
+          { value: "Tributário", label: "Tributário" },
+          { value: "Administrativo", label: "Administrativo" },
+          { value: "Outro", label: "Outro" },
+        ],
+        onSave: (v) => updateProcesso.mutateAsync({ id: processo.id, updates: { natureza: v } }).then(() => toast.success("Natureza atualizada")),
+      },
+    },
+    {
+      label: "Tipo Pagamento", value: processo.tipo_pagamento || "—",
+      editable: {
+        options: [
+          { value: "RPV", label: "RPV" },
+          { value: "Precatório", label: "Precatório" },
+          { value: "Alvará", label: "Alvará" },
+          { value: "Depósito Judicial", label: "Depósito Judicial" },
+          { value: "Outro", label: "Outro" },
+        ],
+        onSave: (v) => updateProcesso.mutateAsync({ id: processo.id, updates: { tipo_pagamento: v } }).then(() => toast.success("Tipo atualizado")),
+      },
+    },
+    {
+      label: "Status Processo", value: `S${processo.status_processo} — ${STATUS_LABELS[processo.status_processo] ?? "—"}`,
+      editable: {
+        options: Object.entries(STATUS_LABELS).map(([k, v]) => ({ value: k, label: `S${k} — ${v}` })),
+        onSave: (v) => updateProcesso.mutateAsync({ id: processo.id, updates: { status_processo: Number(v) } }).then(() => toast.success("Status atualizado")),
+      },
+    },
+    { label: "Vara / Comarca", value: processo.vara_comarca || p.orgao_julgador || "—" },
+    { label: "Área", value: p.area || "—" },
+    {
+      label: "Trânsito Julgado", value: processo.transito_julgado ? "Sim" : "Não",
+      editable: {
+        options: [
+          { value: "true", label: "Sim" },
+          { value: "false", label: "Não" },
+        ],
+        onSave: (v) => updateProcesso.mutateAsync({ id: processo.id, updates: { transito_julgado: v === "true" } }).then(() => toast.success("Trânsito atualizado")),
+      },
+    },
+    {
+      label: "Natureza do Crédito", value: processo.natureza_credito || "—",
+      editable: {
+        options: [
+          { value: "Alimentar", label: "Alimentar" },
+          { value: "Comum", label: "Comum" },
+        ],
+        onSave: (v) => updateProcesso.mutateAsync({ id: processo.id, updates: { natureza_credito: v } }).then(() => toast.success("Natureza do crédito atualizada")),
+      },
+    },
+    { label: "Competência", value: p.competencia || "—" },
+    { label: "Foro", value: p.foro || "—" },
+    { label: "Juiz", value: p.juiz || "—" },
+    { label: "Autuação", value: fmtDate(p.data_autuacao) },
+    { label: "Distribuição", value: fmtDate(processo.data_distribuicao) },
+  ];
 
-    return (
+  return (
     <>
       <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
-        {/* ── Row 1: CNJ + Value + Actions ── */}
+        {/* ── Row 1: CNJ + Actions ── */}
         <div className="p-5 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3 min-w-0">
@@ -133,67 +197,9 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                 )}
               </div>
 
-              {/* Badges row */}
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Tribunal badge only */}
+              <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5">{processo.tribunal}</Badge>
-
-                {/* Natureza - editable */}
-                <EditableBadge
-                  value={processo.natureza || "—"}
-                  options={[
-                    { value: "Previdenciário", label: "Previdenciário" },
-                    { value: "Cível", label: "Cível" },
-                    { value: "Trabalhista", label: "Trabalhista" },
-                    { value: "Tributário", label: "Tributário" },
-                    { value: "Administrativo", label: "Administrativo" },
-                    { value: "Outro", label: "Outro" },
-                  ]}
-                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { natureza: v } }).then(() => toast.success("Natureza atualizada"))}
-                />
-
-                {/* Tipo Pagamento - editable */}
-                <EditableBadge
-                  value={processo.tipo_pagamento}
-                  options={[
-                    { value: "RPV", label: "RPV" },
-                    { value: "Precatório", label: "Precatório" },
-                    { value: "Alvará", label: "Alvará" },
-                    { value: "Depósito Judicial", label: "Depósito Judicial" },
-                    { value: "Outro", label: "Outro" },
-                  ]}
-                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { tipo_pagamento: v } }).then(() => toast.success("Tipo atualizado"))}
-                />
-
-                {processo.classe_fase && <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.classe_fase}</Badge>}
-
-                {/* Status Processo - editable */}
-                <EditableBadge
-                  value={`S${processo.status_processo} — ${STATUS_LABELS[processo.status_processo] ?? "—"}`}
-                  options={Object.entries(STATUS_LABELS).map(([k, v]) => ({ value: k, label: `S${k} — ${v}` }))}
-                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { status_processo: Number(v) } }).then(() => toast.success("Status atualizado"))}
-                />
-
-                {/* Trânsito Julgado - editable */}
-                <EditableBadge
-                  value={`Trânsito: ${processo.transito_julgado ? "Sim" : "Não"}`}
-                  className={processo.transito_julgado ? "bg-success/10 text-success" : ""}
-                  options={[
-                    { value: "true", label: "Trânsito: Sim" },
-                    { value: "false", label: "Trânsito: Não" },
-                  ]}
-                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { transito_julgado: v === "true" } }).then(() => toast.success("Trânsito atualizado"))}
-                />
-
-                {/* Natureza do Crédito - editable */}
-                <EditableBadge
-                  value={((processo as any).natureza_credito) || "Crédito: —"}
-                  className={((processo as any).natureza_credito) === "Alimentar" ? "bg-amber-500/10 text-amber-600" : ((processo as any).natureza_credito) === "Comum" ? "bg-blue-500/10 text-blue-600" : ""}
-                  options={[
-                    { value: "Alimentar", label: "Alimentar" },
-                    { value: "Comum", label: "Comum" },
-                  ]}
-                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { natureza_credito: v } as any }).then(() => toast.success("Natureza do crédito atualizada"))}
-                />
               </div>
 
               {/* Action buttons */}
@@ -255,7 +261,11 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
             {detailFields.map(f => (
               <div key={f.label}>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-0.5">{f.label}</p>
-                <p className="text-xs font-medium text-foreground leading-snug">{f.value}</p>
+                {f.editable ? (
+                  <EditableField value={f.value} options={f.editable.options} onSave={f.editable.onSave} />
+                ) : (
+                  <p className="text-xs font-medium text-foreground leading-snug">{f.value}</p>
+                )}
               </div>
             ))}
           </div>
@@ -294,25 +304,23 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   );
 }
 
-function EditableBadge({
+function EditableField({
   value,
   options,
   onSave,
-  className = "",
 }: {
   value: string;
   options: { value: string; label: string }[];
   onSave: (value: string) => Promise<any>;
-  className?: string;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className={`inline-flex items-center gap-1 rounded-full text-[11px] px-2.5 py-0.5 border cursor-pointer transition-colors hover:bg-accent bg-secondary text-secondary-foreground border-transparent ${className}`}>
+        <button className="group flex items-center gap-1 text-xs font-medium text-foreground leading-snug hover:text-primary transition-colors cursor-pointer">
           {value}
-          <ChevronDown className="w-3 h-3 opacity-50" />
+          <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-1 min-w-[160px]" align="start">

@@ -31,6 +31,7 @@ export type Processo = {
   observacoes: string | null;
   vara_comarca: string | null;
   classe_fase: string | null;
+  natureza_credito: string | null;
   created_at: string;
   updated_at: string;
 };
