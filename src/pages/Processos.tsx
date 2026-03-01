@@ -166,10 +166,10 @@ export default function Processos() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full overflow-hidden">
 
-      {/* Filters */}
-      <div className="glass-card rounded-xl p-3 space-y-2">
+      {/* Filters — sticky */}
+      <div className="shrink-0 glass-card rounded-xl p-3 space-y-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -263,10 +263,10 @@ export default function Processos() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      {/* Table with sticky header and scrollable body */}
+      <div className="flex-1 min-h-0 mt-4 glass-card rounded-xl overflow-hidden flex flex-col">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow className="border-border/50 hover:bg-transparent">
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Nº CNJ</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
@@ -280,89 +280,93 @@ export default function Processos() {
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {processos.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-12 text-muted-foreground text-sm">
-                  Nenhum processo encontrado.
-                </TableCell>
-              </TableRow>
-            )}
-            {processos.map((p) => {
-              const triagem = p.triagem_resultado ?? "pendente";
-              const tribunalUrl = getTribunalUrl(p.tribunal, p.numero_processo);
-              return (
-                <TableRow
-                  key={p.id}
-                  className="cursor-pointer border-border/20 hover:bg-accent/5 transition-colors h-9"
-                  onClick={() => navigate(`/processos/${p.id}`)}
-                >
-                  <TableCell className="py-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[11px] font-medium">{p.numero_processo}</span>
-                      {tribunalUrl && (
-                        <a
-                          href={tribunalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                          title="Consultar no tribunal"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-1.5">
-                    <span className="text-[10px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
-                  </TableCell>
-                  <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
-                  <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
-                  <TableCell className="py-1.5">
-                    <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
-                      {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-[10px] py-1.5">{STATUS_LABELS[p.status_processo] ?? "—"}</TableCell>
-                  <TableCell className="text-[10px] py-1.5">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
-                  <TableCell className="text-[11px] font-medium text-right py-1.5">{formatCurrency(p.valor_estimado)}</TableCell>
-                  <TableCell className="text-[10px] text-muted-foreground py-1.5">{formatDate(p.data_captacao)}</TableCell>
-                  <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}`)} className="text-xs gap-2">
-                          <Eye className="w-3.5 h-3.5" />Ver detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
-                          <CheckCircle2 className="w-3.5 h-3.5" />Triagem
-                        </DropdownMenuItem>
-                        {triagem === "apto" && (
-                          <DropdownMenuItem
-                            onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
-                            className="text-xs gap-2"
-                          >
-                            <Briefcase className="w-3.5 h-3.5" />Enviar para Negócios
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+        </Table>
+        <div className="flex-1 overflow-y-auto">
+          <Table>
+            <TableBody>
+              {processos.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground text-sm">
+                    Nenhum processo encontrado.
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+              {processos.map((p) => {
+                const triagem = p.triagem_resultado ?? "pendente";
+                const tribunalUrl = getTribunalUrl(p.tribunal, p.numero_processo);
+                return (
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer border-border/20 hover:bg-accent/5 transition-colors h-9"
+                    onClick={() => navigate(`/processos/${p.id}`)}
+                  >
+                    <TableCell className="py-1.5 w-[180px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[11px] font-medium">{p.numero_processo}</span>
+                        {tribunalUrl && (
+                          <a
+                            href={tribunalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-muted-foreground hover:text-primary transition-colors"
+                            title="Consultar no tribunal"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-1.5 w-16">
+                      <span className="text-[10px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
+                    </TableCell>
+                    <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
+                    <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
+                    <TableCell className="py-1.5 w-20">
+                      <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
+                        {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-[10px] py-1.5 w-16">{STATUS_LABELS[p.status_processo] ?? "—"}</TableCell>
+                    <TableCell className="text-[10px] py-1.5 w-16">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
+                    <TableCell className="text-[11px] font-medium text-right py-1.5 w-24">{formatCurrency(p.valor_estimado)}</TableCell>
+                    <TableCell className="text-[10px] text-muted-foreground py-1.5 w-20">{formatDate(p.data_captacao)}</TableCell>
+                    <TableCell className="py-1.5 w-10" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <MoreHorizontal className="w-3.5 h-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}`)} className="text-xs gap-2">
+                            <Eye className="w-3.5 h-3.5" />Ver detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5" />Triagem
+                          </DropdownMenuItem>
+                          {triagem === "apto" && (
+                            <DropdownMenuItem
+                              onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
+                              className="text-xs gap-2"
+                            >
+                              <Briefcase className="w-3.5 h-3.5" />Enviar para Negócios
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination — sticky bottom */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-1">
+        <div className="shrink-0 flex items-center justify-between px-1 py-2">
           <p className="text-xs text-muted-foreground">
             {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount.toLocaleString("pt-BR")}
           </p>
