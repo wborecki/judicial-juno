@@ -16,9 +16,9 @@ export default function ConfiguracoesLayout() {
   const location = useLocation();
 
   return (
-    <div className="flex gap-0 -m-8 min-h-[calc(100vh-0px)]">
+    <div className="flex h-full min-h-screen">
       {/* Inner sidebar */}
-      <aside className="w-56 shrink-0 border-r border-border bg-muted/20 p-4 space-y-1 overflow-y-auto">
+      <aside className="w-52 shrink-0 border-r border-border bg-muted/20 py-4 px-3 space-y-1 overflow-y-auto">
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 py-2 font-semibold">
           Configurações
         </p>
