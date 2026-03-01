@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProcessosPaginated, useProcessosStats, ProcessoFilters } from "@/hooks/useProcessos";
+import { useProcessosPaginated, ProcessoFilters } from "@/hooks/useProcessos";
 import { useCreateNegocio } from "@/hooks/useNegocios";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,11 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, X, Scale, CalendarIcon, ChevronLeft, ChevronRight, ExternalLink, MoreHorizontal, Eye, CheckCircle2, Briefcase, FileBarChart } from "lucide-react";
+import { Search, X, Scale, CalendarIcon, ChevronLeft, ChevronRight, ExternalLink, MoreHorizontal, Eye, CheckCircle2, Briefcase } from "lucide-react";
 import { TRIBUNAIS } from "@/lib/types";
 import { format, subDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -111,7 +110,6 @@ export default function Processos() {
   }), [searchDebounced, filterTribunal, filterNatureza, filterTipoPagamento, filterTriagem, filterTransito, dateRange]);
 
   const { data, isLoading } = useProcessosPaginated(page, PAGE_SIZE, filters);
-  const { data: stats } = useProcessosStats();
   const processos = data?.data ?? [];
   const totalCount = data?.count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -161,9 +159,7 @@ export default function Processos() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-4 gap-3">
-          {[1,2,3,4].map(i => <Skeleton key={i} className="h-20" />)}
-        </div>
+        <Skeleton className="h-10 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
@@ -183,46 +179,6 @@ export default function Processos() {
             {hasFilters && " (filtrado)"}
           </p>
         </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="glass-card">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Total</p>
-              <FileBarChart className="w-3.5 h-3.5 text-muted-foreground" />
-            </div>
-            <p className="text-2xl font-bold mt-1">{stats?.total ?? 0}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card border-warning/20">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-wider text-warning font-medium">Pendentes</p>
-              <div className="w-2 h-2 rounded-full bg-warning" />
-            </div>
-            <p className="text-2xl font-bold mt-1 text-warning">{stats?.pendente ?? 0}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card border-success/20">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-wider text-success font-medium">Aptos</p>
-              <div className="w-2 h-2 rounded-full bg-success" />
-            </div>
-            <p className="text-2xl font-bold mt-1 text-success">{stats?.apto ?? 0}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass-card border-destructive/20">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-wider text-destructive font-medium">Descartados</p>
-              <div className="w-2 h-2 rounded-full bg-destructive" />
-            </div>
-            <p className="text-2xl font-bold mt-1 text-destructive">{stats?.descartado ?? 0}</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters */}
