@@ -110,12 +110,13 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
     return (
     <>
       <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
-        {/* ── Row 1: CNJ + Badges + Value + Actions ── */}
-        <div className="p-4 pb-3">
+        {/* ── Row 1: CNJ + Value + Actions ── */}
+        <div className="p-5 pb-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2 min-w-0">
+            <div className="space-y-3 min-w-0">
+              {/* CNJ number */}
               <div className="flex items-center gap-2">
-                <h1 className="font-mono text-base font-bold tracking-tight">{processo.numero_processo}</h1>
+                <h1 className="font-mono text-base font-bold tracking-tight text-primary">{processo.numero_processo}</h1>
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={handleCopyCNJ}>
                   {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
@@ -127,29 +128,50 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                   </a>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Badge variant="outline" className="text-[10px] font-medium">{processo.tribunal}</Badge>
-                <Badge variant="outline" className="text-[10px]">{processo.natureza}</Badge>
-                <Badge variant="outline" className="text-[10px]">{processo.tipo_pagamento}</Badge>
-                {processo.classe_fase && <Badge variant="outline" className="text-[10px]">{processo.classe_fase}</Badge>}
-                <Badge variant="outline" className="text-[10px]">
+
+              {/* Badges row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5">{processo.tribunal}</Badge>
+                <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.natureza}</Badge>
+                <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.tipo_pagamento}</Badge>
+                {processo.classe_fase && <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.classe_fase}</Badge>}
+                <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">
                   S{processo.status_processo} — {STATUS_LABELS[processo.status_processo] ?? "—"}
                 </Badge>
-                <Badge variant="outline" className={`text-[10px] ${processo.transito_julgado ? "border-success/30 text-success" : "border-muted-foreground/30 text-muted-foreground"}`}>
+                <Badge variant="secondary" className={`rounded-full text-[11px] px-2.5 py-0.5 ${processo.transito_julgado ? "bg-success/10 text-success" : ""}`}>
                   Trânsito: {processo.transito_julgado ? "Sim" : "Não"}
                 </Badge>
               </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2">
+                {triagem === "apto" ? (
+                  <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8 rounded-lg">
+                    <Briefcase className="w-3.5 h-3.5" />Criar Negócio
+                  </Button>
+                ) : triagem === "pendente" || triagem === "reanálise" ? (
+                  <>
+                    <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8 rounded-lg bg-success hover:bg-success/90 text-success-foreground">
+                      <Briefcase className="w-3.5 h-3.5" />Converter
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={onDiscard} className="text-xs gap-1.5 h-8 rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10">
+                      Descartar
+                    </Button>
+                  </>
+                ) : null}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="text-right mr-1">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor da Causa</p>
-                <p className="text-sm font-bold">{fmt(processo.valor_estimado)}</p>
+            {/* Right side: value + triagem + menu */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Valor da Causa</p>
+                <p className="text-base font-bold">{fmt(processo.valor_estimado)}</p>
               </div>
-              <Badge className={`text-[10px] ${TRIAGEM_COLORS[triagem]}`}>{TRIAGEM_LABELS[triagem]}</Badge>
+              <Badge className={`rounded-full text-[11px] px-3 py-1 font-medium ${TRIAGEM_COLORS[triagem]}`}>{TRIAGEM_LABELS[triagem]}</Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg"><MoreHorizontal className="w-4 h-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => { setValorEdit(processo.valor_estimado ?? 0); setEditValorOpen(true); }}>
@@ -172,29 +194,11 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
               </DropdownMenu>
             </div>
           </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-3">
-            {triagem === "apto" ? (
-              <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8">
-                <Briefcase className="w-3.5 h-3.5" />Criar Negócio
-              </Button>
-            ) : triagem === "pendente" || triagem === "reanálise" ? (
-              <>
-                <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8 bg-success hover:bg-success/90 text-success-foreground">
-                  <Briefcase className="w-3.5 h-3.5" />Converter
-                </Button>
-                <Button size="sm" variant="outline" onClick={onDiscard} className="text-xs gap-1.5 h-8 border-destructive/30 text-destructive hover:bg-destructive/10">
-                  Descartar
-                </Button>
-              </>
-            ) : null}
-          </div>
         </div>
 
-        {/* ── Row 2: Detail fields grid (2 columns) ── */}
-        <div className="px-4 pb-4 border-t border-border/20 pt-3 space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
+        {/* ── Row 2: Detail fields grid (3 columns) ── */}
+        <div className="px-5 pb-5 border-t border-border/20 pt-4 space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3">
             {detailFields.map(f => (
               <div key={f.label}>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-0.5">{f.label}</p>
