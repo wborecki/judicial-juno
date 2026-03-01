@@ -593,6 +593,7 @@ export type Database = {
           jurisdicao: string | null
           motivo_descarte_id: string | null
           natureza: string
+          natureza_credito: string | null
           numero_processo: string
           observacoes: string | null
           orgao_julgador: string | null
@@ -635,6 +636,7 @@ export type Database = {
           jurisdicao?: string | null
           motivo_descarte_id?: string | null
           natureza: string
+          natureza_credito?: string | null
           numero_processo: string
           observacoes?: string | null
           orgao_julgador?: string | null
@@ -677,6 +679,7 @@ export type Database = {
           jurisdicao?: string | null
           motivo_descarte_id?: string | null
           natureza?: string
+          natureza_credito?: string | null
           numero_processo?: string
           observacoes?: string | null
           orgao_julgador?: string | null
