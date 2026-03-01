@@ -50,7 +50,7 @@ export default function TabAndamentos({ processoId }: Props) {
   if (isLoading) return <p className="text-xs text-muted-foreground">Carregando...</p>;
 
   return (
-    <div className="space-y-3">
+    <div className="bg-card border border-border/60 rounded-xl p-5 shadow-sm space-y-3">
       {/* Search */}
       {andamentos.length > 0 && (
         <div className="flex items-center gap-3">
@@ -77,52 +77,47 @@ export default function TabAndamentos({ processoId }: Props) {
         </div>
       ) : (
         <div className="relative pl-6">
-          {/* Vertical line */}
-          <div className="absolute left-[9px] top-2 bottom-2 w-px bg-border" />
+          <div className="absolute left-[9px] top-1 bottom-1 w-px bg-border/60" />
 
           <div className="space-y-0">
-            {filtered.map((a, i) => {
+            {filtered.map((a) => {
               const doc = a.documento_id ? docsMap[a.documento_id] : null;
               const tipoColor = TIPO_ANDAMENTO_COLORS[a.tipo] ?? TIPO_ANDAMENTO_COLORS.outros;
 
               return (
-                <div key={a.id} className="relative pb-4 last:pb-0 group">
-                  {/* Dot */}
-                  <div className="absolute -left-6 top-1.5 w-[18px] h-[18px] rounded-full border-2 border-background bg-border flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-muted-foreground/60" />
-                  </div>
+                <div key={a.id} className="relative pb-1 last:pb-0 group">
+                  <div className="absolute -left-6 top-3 w-[10px] h-[10px] rounded-full border-2 border-card bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
 
-                  {/* Content */}
-                  <div className="bg-muted/20 border border-border/30 rounded-lg p-3 hover:bg-muted/30 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge className={`text-[9px] shrink-0 rounded-full px-2 ${tipoColor}`}>
-                            {TIPO_ANDAMENTO_LABELS[a.tipo] ?? a.tipo}
-                          </Badge>
-                          <span className="text-xs font-semibold">{a.titulo}</span>
-                        </div>
-                        {a.resumo && (
-                          <p className="text-[11px] text-muted-foreground leading-relaxed">{a.resumo}</p>
-                        )}
-                        {doc && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline mt-0.5"
-                          >
-                            <FileText className="w-3 h-3" />
-                            {doc.nome}
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        )}
+                  <div className="py-2.5 px-3 rounded-lg hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+                        <Badge className={`text-[9px] shrink-0 rounded-full px-2 py-0 ${tipoColor}`}>
+                          {TIPO_ANDAMENTO_LABELS[a.tipo] ?? a.tipo}
+                        </Badge>
+                        <span className="text-xs font-medium text-foreground">{a.titulo}</span>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[11px] font-medium text-muted-foreground">{formatDate(a.data_andamento)}</p>
-                        <p className="text-[10px] text-muted-foreground/60">{formatTime(a.data_andamento)}</p>
+                        <p className="text-[11px] text-muted-foreground">{formatDate(a.data_andamento)}</p>
+                        <p className="text-[10px] text-muted-foreground/50">{formatTime(a.data_andamento)}</p>
                       </div>
                     </div>
+
+                    {a.resumo && (
+                      <p className="text-[11px] text-muted-foreground leading-relaxed mt-1 pl-0.5">{a.resumo}</p>
+                    )}
+
+                    {doc && (
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline mt-1 pl-0.5"
+                      >
+                        <FileText className="w-3 h-3" />
+                        {doc.nome}
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    )}
                   </div>
                 </div>
               );
