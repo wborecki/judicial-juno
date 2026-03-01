@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Trash2, Route, GripVertical, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Route, GripVertical, AlertTriangle, Users } from "lucide-react";
 import { TRIBUNAIS } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -18,10 +18,12 @@ const NATUREZAS = ["Cível", "Trabalhista", "Federal", "Previdenciário", "Tribu
 const TIPOS_PAGAMENTO = ["RPV", "Precatório"];
 const TIPOS_SERVICO = ["Cessão de Crédito", "Honorários", "Consultoria", "Outro"];
 
+type EquipeEntry = { equipe_id: string; peso: number };
+
 type FormData = {
   nome: string;
-  equipe_id: string;
   entidade: string;
+  equipes: EquipeEntry[];
   criterio_tribunal: string[];
   criterio_natureza: string[];
   criterio_tipo_pagamento: string[];
@@ -34,8 +36,8 @@ type FormData = {
 
 const emptyForm: FormData = {
   nome: "",
-  equipe_id: "",
   entidade: "processo",
+  equipes: [],
   criterio_tribunal: [],
   criterio_natureza: [],
   criterio_tipo_pagamento: [],
@@ -67,10 +69,13 @@ export default function ConfigRoteamento() {
 
   const openEdit = (r: RegraRoteamento) => {
     setEditingId(r.id);
+    const regraEquipes: EquipeEntry[] = r.regra_equipes && r.regra_equipes.length > 0
+      ? r.regra_equipes.map(re => ({ equipe_id: re.equipe_id, peso: re.peso }))
+      : [{ equipe_id: r.equipe_id, peso: 100 }];
     setForm({
       nome: r.nome,
-      equipe_id: r.equipe_id,
       entidade: r.entidade,
+      equipes: regraEquipes,
       criterio_tribunal: r.criterio_tribunal,
       criterio_natureza: r.criterio_natureza,
       criterio_tipo_pagamento: r.criterio_tipo_pagamento,
@@ -84,16 +89,21 @@ export default function ConfigRoteamento() {
   };
 
   const handleSave = async () => {
-    if (!form.nome || !form.equipe_id) {
-      toast.error("Preencha nome e equipe");
+    if (!form.nome || form.equipes.length === 0) {
+      toast.error("Preencha nome e selecione ao menos uma equipe");
       return;
     }
     try {
+      const { equipes: formEquipes, ...regraFields } = form;
+      const regraData = {
+        ...regraFields,
+        equipe_id: formEquipes[0]?.equipe_id ?? "",
+      };
       if (editingId) {
-        await updateRegra.mutateAsync({ id: editingId, updates: form });
+        await updateRegra.mutateAsync({ id: editingId, updates: regraData, equipes: formEquipes });
         toast.success("Regra atualizada");
       } else {
-        await createRegra.mutateAsync(form);
+        await createRegra.mutateAsync({ regra: regraData, equipes: formEquipes });
         toast.success("Regra criada");
       }
       setSheetOpen(false);
@@ -114,12 +124,38 @@ export default function ConfigRoteamento() {
   const toggleMulti = (arr: string[], val: string) =>
     arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val];
 
+  const addEquipe = (equipeId: string) => {
+    if (form.equipes.some(e => e.equipe_id === equipeId)) return;
+    setForm({ ...form, equipes: [...form.equipes, { equipe_id: equipeId, peso: 100 }] });
+  };
+
+  const removeEquipe = (equipeId: string) => {
+    setForm({ ...form, equipes: form.equipes.filter(e => e.equipe_id !== equipeId) });
+  };
+
+  const updateEquipePeso = (equipeId: string, peso: number) => {
+    setForm({
+      ...form,
+      equipes: form.equipes.map(e => e.equipe_id === equipeId ? { ...e, peso } : e),
+    });
+  };
+
   if (isLoading) return <div className="space-y-4"><Skeleton className="h-8 w-48" /><Skeleton className="h-64 w-full" /></div>;
 
   const filteredRegras = (regras ?? []).filter(r => r.entidade === tabEntidade);
+  const availableEquipes = (equipes ?? []).filter(e => e.ativa && !form.equipes.some(fe => fe.equipe_id === e.id));
+
+  const getEquipeNome = (id: string) => (equipes ?? []).find(e => e.id === id)?.nome ?? "Equipe removida";
 
   const renderRegraCard = (r: RegraRoteamento) => {
-    const equipe = (equipes ?? []).find(e => e.id === r.equipe_id);
+    const regraEquipes = r.regra_equipes && r.regra_equipes.length > 0
+      ? r.regra_equipes
+      : [{ equipe_id: r.equipe_id, peso: 100 }];
+    const equipeNames = regraEquipes.map(re => {
+      const nome = getEquipeNome(re.equipe_id);
+      return regraEquipes.length > 1 ? `${nome} (${re.peso}%)` : nome;
+    });
+
     return (
       <Card key={r.id} className="glass-card cursor-pointer hover:border-primary/20 transition-colors" onClick={() => openEdit(r)}>
         <CardContent className="p-4 flex items-center justify-between">
@@ -135,7 +171,7 @@ export default function ConfigRoteamento() {
               </div>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
                 <Route className="w-3 h-3 shrink-0" />
-                <span>→ {equipe?.nome ?? "Equipe removida"}</span>
+                <span>→ {equipeNames.join(", ")}</span>
                 {r.criterio_tribunal.length > 0 && <span>• Tribunais: {r.criterio_tribunal.join(", ")}</span>}
                 {r.criterio_natureza.length > 0 && <span>• Natureza: {r.criterio_natureza.join(", ")}</span>}
                 {r.criterio_tipo_pagamento.length > 0 && <span>• Tipo Pgto: {r.criterio_tipo_pagamento.join(", ")}</span>}
@@ -199,7 +235,7 @@ export default function ConfigRoteamento() {
       </Tabs>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-[440px] sm:max-w-[440px] overflow-y-auto">
+        <SheetContent className="w-[480px] sm:max-w-[480px] overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{editingId ? "Editar Regra" : "Nova Regra"}</SheetTitle>
             <SheetDescription>Defina os critérios para distribuição automática</SheetDescription>
@@ -219,15 +255,58 @@ export default function ConfigRoteamento() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Multi-team selector */}
             <div>
-              <label className="text-xs font-medium mb-1.5 block">Equipe Destino</label>
-              <Select value={form.equipe_id} onValueChange={v => setForm({ ...form, equipe_id: v })}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {(equipes ?? []).filter(e => e.ativa).map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <label className="text-xs font-medium mb-1.5 block flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                Equipes Destino
+              </label>
+              {form.equipes.length > 0 && (
+                <div className="space-y-2 mb-2">
+                  {form.equipes.map(entry => (
+                    <div key={entry.equipe_id} className="flex items-center gap-2 bg-muted/30 border border-border/30 rounded-lg px-3 py-2">
+                      <span className="text-sm flex-1 truncate">{getEquipeNome(entry.equipe_id)}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <label className="text-[10px] text-muted-foreground">Peso:</label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={1000}
+                          value={entry.peso}
+                          onChange={e => updateEquipePeso(entry.equipe_id, Number(e.target.value) || 100)}
+                          className="h-7 w-16 text-xs text-center"
+                        />
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => removeEquipe(entry.equipe_id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {availableEquipes.length > 0 && (
+                <Select value="" onValueChange={addEquipe}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Adicionar equipe..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableEquipes.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {form.equipes.length === 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">Selecione ao menos uma equipe</p>
+              )}
+              {form.equipes.length > 1 && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  O peso define a proporção de distribuição entre equipes. Maior peso = mais processos.
+                </p>
+              )}
             </div>
+
             <div>
               <label className="text-xs font-medium mb-1.5 block">Prioridade (menor = maior prioridade)</label>
               <Input type="number" value={form.prioridade} onChange={e => setForm({ ...form, prioridade: Number(e.target.value) })} className="h-9 text-sm w-24" />

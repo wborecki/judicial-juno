@@ -1055,6 +1055,45 @@ export type Database = {
         }
         Relationships: []
       }
+      regra_equipes: {
+        Row: {
+          created_at: string
+          equipe_id: string
+          id: string
+          peso: number
+          regra_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipe_id: string
+          id?: string
+          peso?: number
+          regra_id: string
+        }
+        Update: {
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          peso?: number
+          regra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regra_equipes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regra_equipes_regra_id_fkey"
+            columns: ["regra_id"]
+            isOneToOne: false
+            referencedRelation: "regras_roteamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regras_roteamento: {
         Row: {
           ativa: boolean
