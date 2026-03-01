@@ -1,12 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 
-export default function Configuracoes() {
+export default function ConfiguracoesGeral() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Configurações gerais do sistema</p>
+        <h1 className="text-xl font-bold tracking-tight">Configurações Gerais</h1>
+        <p className="text-xs text-muted-foreground mt-1">Preferências e regras de negócio do sistema</p>
       </div>
 
       <Card className="glass-card">

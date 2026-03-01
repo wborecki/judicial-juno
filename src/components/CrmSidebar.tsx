@@ -26,9 +26,6 @@ const comercialItems: NavItem[] = [
 const sistemaItems: NavItem[] = [
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/pessoas", label: "Pessoas", icon: Users },
-  { to: "/equipes", label: "Equipes", icon: Building2 },
-  { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 
 function SidebarSection({ title, items }: { title: string; items: NavItem[] }) {
