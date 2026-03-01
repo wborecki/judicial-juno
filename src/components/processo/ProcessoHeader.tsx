@@ -17,14 +17,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, MapPin, Scale, Building, Landmark } from "lucide-react";
+import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, DollarSign, Clock, CalendarClock, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useProcessoPartes, ProcessoParte } from "@/hooks/useProcessoPartes";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
-import { useNegocios } from "@/hooks/useNegocios";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Clock, CalendarClock, Briefcase, FileText } from "lucide-react";
 import PessoaSheet from "@/components/PessoaSheet";
 
 const STATUS_LABELS: Record<number, string> = {
@@ -51,10 +49,10 @@ const TRIBUNAL_URLS: Record<string, string> = {
   TJSP: "https://esaj.tjsp.jus.br/cpopg/show.do?processo.numero=",
 };
 
-const formatCurrency = (v?: number | null) =>
+const fmt = (v?: number | null) =>
   v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
-const formatDate = (d?: string | null) => {
+const fmtDate = (d?: string | null) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("pt-BR");
 };
@@ -70,16 +68,15 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   const updateProcesso = useUpdateProcesso();
   const { data: partes = [] } = useProcessoPartes(processo.id);
   const { data: andamentos = [] } = useProcessoAndamentos(processo.id);
-  const { data: negocios = [] } = useNegocios(processo.id);
   const [copied, setCopied] = useState(false);
   const [editValorOpen, setEditValorOpen] = useState(false);
   const [valorEdit, setValorEdit] = useState(processo.valor_estimado ?? 0);
 
-  // Pessoa sheet state
   const [pessoaSheetOpen, setPessoaSheetOpen] = useState(false);
   const [pessoaSheetData, setPessoaSheetData] = useState<{ pessoaId?: string | null; nome?: string; cpfCnpj?: string | null }>({});
 
   const triagem = processo.triagem_resultado ?? "pendente";
+  const p = processo as any; // shorthand for new fields not yet in generated types
 
   const handleCopyCNJ = async () => {
     await navigator.clipboard.writeText(processo.numero_processo);
@@ -99,11 +96,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   };
 
   const openPessoaSheet = (parte: ProcessoParte) => {
-    setPessoaSheetData({
-      pessoaId: parte.pessoa_id,
-      nome: parte.nome,
-      cpfCnpj: parte.cpf_cnpj,
-    });
+    setPessoaSheetData({ pessoaId: parte.pessoa_id, nome: parte.nome, cpfCnpj: parte.cpf_cnpj });
     setPessoaSheetOpen(true);
   };
 
@@ -116,19 +109,27 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
     ? `${TRIBUNAL_URLS[processo.tribunal]}${processo.numero_processo}`
     : null;
 
-  // Categorize partes
   const autores = partes.filter(p => p.tipo === "autor");
   const reus = partes.filter(p => p.tipo === "reu");
   const advogadosAutor = partes.filter(p => p.tipo === "advogado_autor");
   const advogadosReu = partes.filter(p => p.tipo === "advogado_reu");
-  // Fallback: advogados sem tipo específico que tenham OAB
-  const advogadosGeral = partes.filter(p => p.advogado_oab && !p.tipo.startsWith("advogado"));
-
   const primeiroAutor = autores[0];
   const primeiroReu = reus[0];
-
-  // Resumo data
   const ultimoMov = andamentos[0];
+
+  // Build detail fields – only show non-empty ones
+  const detailFields: { label: string; value: string }[] = [];
+  if (processo.classe_fase) detailFields.push({ label: "Classe Judicial", value: processo.classe_fase });
+  if (p.assunto) detailFields.push({ label: "Assunto", value: p.assunto });
+  detailFields.push({ label: "Valor da Causa", value: fmt(processo.valor_estimado) });
+  if (p.orgao_julgador) detailFields.push({ label: "Órgão Julgador", value: p.orgao_julgador });
+  if (processo.vara_comarca) detailFields.push({ label: "Vara / Comarca", value: processo.vara_comarca });
+  if (p.area) detailFields.push({ label: "Área", value: p.area });
+  if (p.foro) detailFields.push({ label: "Foro", value: p.foro });
+  if (p.juiz) detailFields.push({ label: "Juiz", value: p.juiz });
+  if (p.competencia) detailFields.push({ label: "Competência", value: p.competencia });
+  if (p.data_autuacao) detailFields.push({ label: "Autuação", value: fmtDate(p.data_autuacao) });
+  if (processo.data_distribuicao) detailFields.push({ label: "Distribuição", value: fmtDate(processo.data_distribuicao) });
 
   return (
     <>
@@ -138,7 +139,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
         </Button>
 
         <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
-          {/* Row 1: CNJ + Value + Actions */}
+          {/* ── Row 1: CNJ + Badges + Value + Actions ── */}
           <div className="p-4 pb-3">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2 min-w-0">
@@ -155,8 +156,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                     </a>
                   )}
                 </div>
-
-                {/* Badges */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <Badge variant="outline" className="text-[10px] font-medium">{processo.tribunal}</Badge>
                   <Badge variant="outline" className="text-[10px]">{processo.natureza}</Badge>
@@ -165,26 +164,18 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                   <Badge variant="outline" className="text-[10px]">
                     S{processo.status_processo} — {STATUS_LABELS[processo.status_processo] ?? "—"}
                   </Badge>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] ${processo.transito_julgado ? "border-success/30 text-success" : "border-muted-foreground/30 text-muted-foreground"}`}
-                  >
+                  <Badge variant="outline" className={`text-[10px] ${processo.transito_julgado ? "border-success/30 text-success" : "border-muted-foreground/30 text-muted-foreground"}`}>
                     Trânsito: {processo.transito_julgado ? "Sim" : "Não"}
                   </Badge>
                 </div>
               </div>
 
-              {/* Right side */}
               <div className="flex items-center gap-2 shrink-0">
                 <div className="text-right mr-1">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor Estimado</p>
-                  <p className="text-sm font-bold">{formatCurrency(processo.valor_estimado)}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor da Causa</p>
+                  <p className="text-sm font-bold">{fmt(processo.valor_estimado)}</p>
                 </div>
-
-                <Badge className={`text-[10px] ${TRIAGEM_COLORS[triagem]}`}>
-                  {TRIAGEM_LABELS[triagem]}
-                </Badge>
-
+                <Badge className={`text-[10px] ${TRIAGEM_COLORS[triagem]}`}>{TRIAGEM_LABELS[triagem]}</Badge>
                 {triagem === "apto" ? (
                   <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-8">
                     <Briefcase className="w-3.5 h-3.5" />Criar Negócio
@@ -199,16 +190,13 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                     </Button>
                   </>
                 ) : null}
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => { setValorEdit(processo.valor_estimado ?? 0); setEditValorOpen(true); }}>
-                      <Pencil className="w-3.5 h-3.5 mr-2" />Editar Valor Estimado
+                      <Pencil className="w-3.5 h-3.5 mr-2" />Editar Valor da Causa
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => toast.info("Sincronização não implementada")}>
                       <RefreshCw className="w-3.5 h-3.5 mr-2" />Sincronizar Dados
@@ -229,120 +217,52 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
             </div>
           </div>
 
-          {/* Row 2: Processo details + Partes */}
-          <div className="px-4 pb-3 border-t border-border/20 pt-3 space-y-2">
-            {/* Process details rows */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
-              {processo.classe_fase && (
-                <DetailField label="Classe Judicial" icon={Scale} value={processo.classe_fase} />
-              )}
-              {(processo as any).assunto && (
-                <DetailField label="Assunto" icon={FileText} value={(processo as any).assunto} />
-              )}
-              <DetailField label="Valor da Causa" value={formatCurrency(processo.valor_estimado)} />
-              {(processo as any).orgao_julgador && (
-                <DetailField label="Órgão Julgador" icon={Landmark} value={(processo as any).orgao_julgador} />
-              )}
-              {processo.vara_comarca && (
-                <DetailField label="Vara / Comarca" icon={MapPin} value={processo.vara_comarca} />
-              )}
-              {(processo as any).area && (
-                <DetailField label="Área" value={(processo as any).area} />
-              )}
-              {(processo as any).foro && (
-                <DetailField label="Foro" icon={Building} value={(processo as any).foro} />
-              )}
-              {(processo as any).juiz && (
-                <DetailField label="Juiz" icon={Gavel} value={(processo as any).juiz} />
-              )}
-              {(processo as any).competencia && (
-                <DetailField label="Competência" value={(processo as any).competencia} />
-              )}
-              {(processo as any).data_autuacao && (
-                <DetailField label="Autuação" value={formatDate((processo as any).data_autuacao)} />
-              )}
-              {processo.data_distribuicao && (
-                <DetailField label="Distribuição" value={formatDate(processo.data_distribuicao)} />
-              )}
+          {/* ── Row 2: Dados do processo (grid 3 colunas) ── */}
+          <div className="px-4 pb-3 border-t border-border/20 pt-3 space-y-3">
+            <div className="grid grid-cols-3 gap-x-8 gap-y-2">
+              {detailFields.map(f => (
+                <div key={f.label}>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-0.5">{f.label}</p>
+                  <p className="text-xs font-medium text-foreground leading-snug">{f.value}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Partes with hierarchy: Autor + Adv Autor | Réu + Adv Réu */}
-            <div className="flex items-start gap-8 text-xs flex-wrap">
-              {/* Polo Ativo */}
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Autor:</span>
-                  {primeiroAutor ? (
-                    <button onClick={() => openPessoaSheet(primeiroAutor)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
-                      {primeiroAutor.nome}
-                    </button>
-                  ) : (
-                    <button onClick={() => openPessoaSheetByName(processo.parte_autora)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
-                      {processo.parte_autora}
-                    </button>
-                  )}
-                  {primeiroAutor?.cpf_cnpj && <span className="text-muted-foreground">({primeiroAutor.cpf_cnpj})</span>}
-                </div>
-                {advogadosAutor.length > 0 && (
-                  <div className="flex items-center gap-1.5 ml-5">
-                    <Gavel className="w-3 h-3 text-muted-foreground shrink-0" />
-                    <span className="text-[10px] text-muted-foreground">Adv. Autor:</span>
-                    {advogadosAutor.map((adv, i) => (
-                      <span key={adv.id}>
-                        {i > 0 && <span className="text-muted-foreground">, </span>}
-                        <button onClick={() => openPessoaSheet(adv)} className="font-medium text-primary hover:underline cursor-pointer">{adv.nome}</button>
-                        {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">({adv.advogado_oab})</span>}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Polo Passivo */}
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Réu:</span>
-                  {primeiroReu ? (
-                    <button onClick={() => openPessoaSheet(primeiroReu)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
-                      {primeiroReu.nome}
-                    </button>
-                  ) : (
-                    <button onClick={() => openPessoaSheetByName(processo.parte_re)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
-                      {processo.parte_re}
-                    </button>
-                  )}
-                  {primeiroReu?.cpf_cnpj && <span className="text-muted-foreground">({primeiroReu.cpf_cnpj})</span>}
-                </div>
-                {advogadosReu.length > 0 && (
-                  <div className="flex items-center gap-1.5 ml-5">
-                    <Gavel className="w-3 h-3 text-muted-foreground shrink-0" />
-                    <span className="text-[10px] text-muted-foreground">Adv. Réu:</span>
-                    {advogadosReu.map((adv, i) => (
-                      <span key={adv.id}>
-                        {i > 0 && <span className="text-muted-foreground">, </span>}
-                        <button onClick={() => openPessoaSheet(adv)} className="font-medium text-primary hover:underline cursor-pointer">{adv.nome}</button>
-                        {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">({adv.advogado_oab})</span>}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {/* ── Partes ── */}
+            <div className="flex items-start gap-10 text-xs pt-1 border-t border-border/10">
+              <PartesBlock
+                icon={User}
+                iconClass="text-primary"
+                label="Autor"
+                parte={primeiroAutor}
+                fallbackNome={processo.parte_autora}
+                advogados={advogadosAutor}
+                onClickParte={primeiroAutor ? () => openPessoaSheet(primeiroAutor) : () => openPessoaSheetByName(processo.parte_autora)}
+                onClickAdv={openPessoaSheet}
+              />
+              <PartesBlock
+                icon={Users}
+                iconClass="text-muted-foreground"
+                label="Réu"
+                parte={primeiroReu}
+                fallbackNome={processo.parte_re}
+                advogados={advogadosReu}
+                onClickParte={primeiroReu ? () => openPessoaSheet(primeiroReu) : () => openPessoaSheetByName(processo.parte_re)}
+                onClickAdv={openPessoaSheet}
+              />
             </div>
 
-            {/* Observações inline */}
             {processo.observacoes && (
-              <p className="text-xs text-muted-foreground italic border-t border-border/10 pt-2 mt-1">
+              <p className="text-xs text-muted-foreground italic border-t border-border/10 pt-2">
                 {processo.observacoes}
               </p>
             )}
           </div>
 
-          {/* Row 3: Summary mini-cards */}
+          {/* ── Row 3: Summary footer ── */}
           <div className="grid grid-cols-3 border-t border-border/20">
-            <SummaryCell icon={DollarSign} label="Valor Estimado" value={formatCurrency(processo.valor_estimado)} accent="text-primary" />
-            <SummaryCell icon={Clock} label="Último Movimento" value={ultimoMov ? ultimoMov.titulo : "Nenhum"} sub={ultimoMov ? formatDate(ultimoMov.data_andamento) : undefined} />
+            <SummaryCell icon={DollarSign} label="Valor da Causa" value={fmt(processo.valor_estimado)} accent="text-primary" />
+            <SummaryCell icon={Clock} label="Último Movimento" value={ultimoMov ? ultimoMov.titulo : "Nenhum"} sub={ultimoMov ? fmtDate(ultimoMov.data_andamento) : undefined} />
             <SummaryCell icon={CalendarClock} label="Prazos" value="Nenhum" accent="text-muted-foreground" />
           </div>
         </div>
@@ -351,9 +271,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
       {/* Edit valor dialog */}
       <Dialog open={editValorOpen} onOpenChange={setEditValorOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-sm">Editar Valor Estimado</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-sm">Editar Valor da Causa</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <Label className="text-xs">Valor (R$)</Label>
             <Input type="number" value={valorEdit} onChange={e => setValorEdit(Number(e.target.value))} className="h-9 text-sm" />
@@ -365,7 +283,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
         </DialogContent>
       </Dialog>
 
-      {/* Pessoa Sheet */}
       <PessoaSheet
         open={pessoaSheetOpen}
         onOpenChange={setPessoaSheetOpen}
@@ -377,6 +294,41 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   );
 }
 
+/* ── Sub-components ── */
+
+function PartesBlock({ icon: Icon, iconClass, label, parte, fallbackNome, advogados, onClickParte, onClickAdv }: {
+  icon: React.ElementType;
+  iconClass: string;
+  label: string;
+  parte?: ProcessoParte;
+  fallbackNome: string;
+  advogados: ProcessoParte[];
+  onClickParte: () => void;
+  onClickAdv: (adv: ProcessoParte) => void;
+}) {
+  const nome = parte?.nome ?? fallbackNome;
+  const cpf = parte?.cpf_cnpj;
+
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`w-3.5 h-3.5 ${iconClass} shrink-0`} />
+        <span className="text-[10px] text-muted-foreground uppercase font-semibold">{label}:</span>
+        <button onClick={onClickParte} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[280px]">{nome}</button>
+        {cpf && <span className="text-muted-foreground">({cpf})</span>}
+      </div>
+      {advogados.map(adv => (
+        <div key={adv.id} className="flex items-center gap-1.5 ml-5">
+          <Gavel className="w-3 h-3 text-muted-foreground shrink-0" />
+          <span className="text-[10px] text-muted-foreground">Adv. {label}:</span>
+          <button onClick={() => onClickAdv(adv)} className="font-medium text-primary hover:underline cursor-pointer">{adv.nome}</button>
+          {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">({adv.advogado_oab})</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SummaryCell({ icon: Icon, label, value, sub, accent = "text-foreground" }: {
   icon: React.ElementType;
   label: string;
@@ -385,29 +337,13 @@ function SummaryCell({ icon: Icon, label, value, sub, accent = "text-foreground"
   accent?: string;
 }) {
   return (
-    <div className="px-3 py-2.5 border-r border-border/20 last:border-r-0">
+    <div className="px-4 py-2.5 border-r border-border/20 last:border-r-0">
       <div className="flex items-center gap-1 mb-0.5">
         <Icon className={`w-3 h-3 ${accent}`} />
         <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{label}</span>
       </div>
       <p className={`text-[11px] font-semibold truncate ${accent}`}>{value}</p>
       {sub && <p className="text-[9px] text-muted-foreground">{sub}</p>}
-    </div>
-  );
-}
-
-function DetailField({ label, value, icon: Icon }: {
-  label: string;
-  value: string;
-  icon?: React.ElementType;
-}) {
-  return (
-    <div>
-      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
-      <p className="font-medium flex items-center gap-1">
-        {Icon && <Icon className="w-3 h-3 text-muted-foreground shrink-0" />}
-        {value}
-      </p>
     </div>
   );
 }
