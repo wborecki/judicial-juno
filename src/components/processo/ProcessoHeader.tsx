@@ -17,14 +17,22 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users } from "lucide-react";
+import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
-import { useProcessoPartes } from "@/hooks/useProcessoPartes";
+import { useProcessoPartes, ProcessoParte } from "@/hooks/useProcessoPartes";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, Clock, CalendarClock, Shield, TrendingUp, Briefcase } from "lucide-react";
+import PessoaSheet from "@/components/PessoaSheet";
+
+const STATUS_LABELS: Record<number, string> = {
+  1: "Não Ajuizado",
+  2: "Fase de Conhecimento",
+  3: "Cumprimento de Sentença",
+  4: "Ofício Requisitório",
+};
 
 const TRIAGEM_COLORS: Record<string, string> = {
   pendente: "bg-warning/10 text-warning border-warning/20",
@@ -67,6 +75,10 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   const [editValorOpen, setEditValorOpen] = useState(false);
   const [valorEdit, setValorEdit] = useState(processo.valor_estimado ?? 0);
 
+  // Pessoa sheet state
+  const [pessoaSheetOpen, setPessoaSheetOpen] = useState(false);
+  const [pessoaSheetData, setPessoaSheetData] = useState<{ pessoaId?: string | null; nome?: string; cpfCnpj?: string | null }>({});
+
   const triagem = processo.triagem_resultado ?? "pendente";
 
   const handleCopyCNJ = async () => {
@@ -86,13 +98,34 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
     }
   };
 
+  const openPessoaSheet = (parte: ProcessoParte) => {
+    setPessoaSheetData({
+      pessoaId: parte.pessoa_id,
+      nome: parte.nome,
+      cpfCnpj: parte.cpf_cnpj,
+    });
+    setPessoaSheetOpen(true);
+  };
+
+  const openPessoaSheetByName = (nome: string) => {
+    setPessoaSheetData({ nome });
+    setPessoaSheetOpen(true);
+  };
+
   const tribunalUrl = TRIBUNAL_URLS[processo.tribunal]
     ? `${TRIBUNAL_URLS[processo.tribunal]}${processo.numero_processo}`
     : null;
 
-  // First autor and first reu
-  const primeiroAutor = partes.find(p => p.tipo === "autor");
-  const primeiroReu = partes.find(p => p.tipo === "reu");
+  // Categorize partes
+  const autores = partes.filter(p => p.tipo === "autor");
+  const reus = partes.filter(p => p.tipo === "reu");
+  const advogadosAutor = partes.filter(p => p.tipo === "advogado_autor");
+  const advogadosReu = partes.filter(p => p.tipo === "advogado_reu");
+  // Fallback: advogados sem tipo específico que tenham OAB
+  const advogadosGeral = partes.filter(p => p.advogado_oab && !p.tipo.startsWith("advogado"));
+
+  const primeiroAutor = autores[0];
+  const primeiroReu = reus[0];
 
   // Resumo data
   const ultimoMov = andamentos[0];
@@ -133,6 +166,9 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                   <Badge variant="outline" className="text-[10px]">{processo.natureza}</Badge>
                   <Badge variant="outline" className="text-[10px]">{processo.tipo_pagamento}</Badge>
                   {processo.classe_fase && <Badge variant="outline" className="text-[10px]">{processo.classe_fase}</Badge>}
+                  <Badge variant="outline" className="text-[10px]">
+                    S{processo.status_processo} — {STATUS_LABELS[processo.status_processo] ?? "—"}
+                  </Badge>
                   <Badge
                     variant="outline"
                     className={`text-[10px] ${processo.transito_julgado ? "border-success/30 text-success" : "border-muted-foreground/30 text-muted-foreground"}`}
@@ -197,27 +233,91 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
             </div>
           </div>
 
-          {/* Row 2: Partes inline */}
-          <div className="px-4 pb-3 flex items-center gap-6 text-xs border-t border-border/20 pt-3">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <User className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="text-[10px] text-muted-foreground uppercase">Autor:</span>
-              <span className="font-medium truncate max-w-[200px]">
-                {primeiroAutor?.nome ?? processo.parte_autora}
-              </span>
-              {primeiroAutor?.cpf_cnpj && (
-                <span className="text-muted-foreground">({primeiroAutor.cpf_cnpj})</span>
+          {/* Row 2: Processo details + Partes */}
+          <div className="px-4 pb-3 border-t border-border/20 pt-3 space-y-2">
+            {/* Process details row */}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              {processo.vara_comarca && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {processo.vara_comarca}
+                </span>
+              )}
+              <span>Captação: {formatDate(processo.data_captacao)}</span>
+              {processo.data_distribuicao && <span>Distribuição: {formatDate(processo.data_distribuicao)}</span>}
+              {processo.triagem_data && <span>Triagem: {formatDate(processo.triagem_data)}</span>}
+              {processo.precificacao_data && <span>Precificação: {formatDate(processo.precificacao_data)}</span>}
+            </div>
+
+            {/* Partes row - clickable names */}
+            <div className="flex items-center gap-6 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <User className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="text-[10px] text-muted-foreground uppercase">Autor:</span>
+                {primeiroAutor ? (
+                  <button
+                    onClick={() => openPessoaSheet(primeiroAutor)}
+                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
+                  >
+                    {primeiroAutor.nome}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openPessoaSheetByName(processo.parte_autora)}
+                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
+                  >
+                    {processo.parte_autora}
+                  </button>
+                )}
+                {primeiroAutor?.cpf_cnpj && <span className="text-muted-foreground">({primeiroAutor.cpf_cnpj})</span>}
+              </div>
+
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span className="text-[10px] text-muted-foreground uppercase">Réu:</span>
+                {primeiroReu ? (
+                  <button
+                    onClick={() => openPessoaSheet(primeiroReu)}
+                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
+                  >
+                    {primeiroReu.nome}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openPessoaSheetByName(processo.parte_re)}
+                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
+                  >
+                    {processo.parte_re}
+                  </button>
+                )}
+              </div>
+
+              {/* Advogados */}
+              {(advogadosAutor.length > 0 || advogadosGeral.length > 0) && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Gavel className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-[10px] text-muted-foreground uppercase">Adv:</span>
+                  {[...advogadosAutor, ...advogadosGeral].slice(0, 2).map((adv, i) => (
+                    <span key={adv.id}>
+                      {i > 0 && <span className="text-muted-foreground">, </span>}
+                      <button
+                        onClick={() => openPessoaSheet(adv)}
+                        className="font-medium text-primary hover:underline cursor-pointer"
+                      >
+                        {adv.nome}
+                      </button>
+                      {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">(OAB {adv.advogado_oab})</span>}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              <span className="text-[10px] text-muted-foreground uppercase">Réu:</span>
-              <span className="font-medium truncate max-w-[200px]">
-                {primeiroReu?.nome ?? processo.parte_re}
-              </span>
-            </div>
-            {processo.vara_comarca && (
-              <span className="text-muted-foreground ml-auto shrink-0">{processo.vara_comarca}</span>
+
+            {/* Observações inline */}
+            {processo.observacoes && (
+              <p className="text-xs text-muted-foreground italic border-t border-border/10 pt-2 mt-1">
+                {processo.observacoes}
+              </p>
             )}
           </div>
 
@@ -249,6 +349,15 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Pessoa Sheet */}
+      <PessoaSheet
+        open={pessoaSheetOpen}
+        onOpenChange={setPessoaSheetOpen}
+        pessoaId={pessoaSheetData.pessoaId}
+        nome={pessoaSheetData.nome}
+        cpfCnpj={pessoaSheetData.cpfCnpj}
+      />
     </>
   );
 }

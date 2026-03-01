@@ -7,11 +7,11 @@ import { useProcessoPartes } from "@/hooks/useProcessoPartes";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowLeft, FileText, Users, Clock, Database, Link2, StickyNote, Landmark } from "lucide-react";
+import { ArrowLeft, FileText, Users, Clock, Link2, StickyNote, Landmark } from "lucide-react";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
 import ModalDescartar from "@/components/processo/ModalDescartar";
-import TabDadosGerais from "@/components/processo/TabDadosGerais";
+// TabDadosGerais removed - all data now in ProcessoHeader
 import TabPartes from "@/components/processo/TabPartes";
 import TabAndamentos from "@/components/processo/TabAndamentos";
 import TabDocumentos from "@/components/processo/TabDocumentos";
@@ -70,18 +70,7 @@ export default function ProcessoDetalhe() {
 
       {/* Accordions - full width, no sidebar */}
       <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
-        <Accordion type="multiple" defaultValue={["dados", "partes"]} className="divide-y divide-border/40">
-          <AccordionItem value="dados" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Database className="w-4 h-4 text-muted-foreground" />
-                Dados do Processo
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <TabDadosGerais processo={processo} />
-            </AccordionContent>
-          </AccordionItem>
+        <Accordion type="multiple" defaultValue={["partes"]} className="divide-y divide-border/40">
 
           <AccordionItem value="partes" className="border-0">
             <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
