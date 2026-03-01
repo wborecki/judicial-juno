@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNegocios } from "@/hooks/useNegocios";
 import { useProcessos } from "@/hooks/useProcessos";
 import { usePessoas } from "@/hooks/usePessoas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,17 +22,17 @@ const statusConfig: Record<string, { label: string; icon: React.ElementType; var
 };
 
 export default function Negocios() {
-  const { data: processos = [], isLoading } = useProcessos();
+  const { data: negocios = [], isLoading } = useNegocios();
+  const { data: processos = [] } = useProcessos();
   const { data: pessoas = [] } = usePessoas();
 
-  const negocios = useMemo(() => {
-    return processos
-      .filter(p => p.negocio_status)
-      .map(p => {
-        const pessoa = pessoas.find(pe => pe.id === p.pessoa_id);
-        return { ...p, pessoaNome: pessoa?.nome ?? "—" };
-      });
-  }, [processos, pessoas]);
+  const negociosEnriquecidos = useMemo(() => {
+    return negocios.map(n => {
+      const processo = processos.find(p => p.id === n.processo_id);
+      const pessoa = pessoas.find(pe => pe.id === n.pessoa_id);
+      return { ...n, processoNumero: processo?.numero_processo ?? "—", pessoaNome: pessoa?.nome ?? "—" };
+    });
+  }, [negocios, processos, pessoas]);
 
   const stats = {
     total: negocios.length,
@@ -71,11 +72,11 @@ export default function Negocios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {negocios.map(n => {
-                const cfg = statusConfig[n.negocio_status ?? "em_andamento"];
+              {negociosEnriquecidos.map(n => {
+                const cfg = statusConfig[n.negocio_status];
                 return (
                   <TableRow key={n.id}>
-                    <TableCell className="font-mono text-xs">{n.numero_processo}</TableCell>
+                    <TableCell className="font-mono text-xs">{n.processoNumero}</TableCell>
                     <TableCell>{n.pessoaNome}</TableCell>
                     <TableCell className="text-xs">{n.tipo_servico ? TIPO_SERVICO_LABELS[n.tipo_servico] ?? n.tipo_servico : "—"}</TableCell>
                     <TableCell>{n.valor_proposta ? `R$ ${n.valor_proposta.toLocaleString("pt-BR")}` : "—"}</TableCell>

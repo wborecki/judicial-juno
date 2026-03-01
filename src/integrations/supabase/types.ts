@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      contatos: {
+        Row: {
+          created_at: string
+          id: string
+          observacoes: string | null
+          pessoa_id: string
+          principal: boolean
+          tipo: string
+          valor: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          pessoa_id: string
+          principal?: boolean
+          tipo?: string
+          valor: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          pessoa_id?: string
+          principal?: boolean
+          tipo?: string
+          valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contatos_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipe_membros: {
         Row: {
           equipe_id: string
@@ -71,6 +109,76 @@ export type Database = {
         }
         Relationships: []
       }
+      negocios: {
+        Row: {
+          created_at: string
+          data_abertura: string
+          data_fechamento: string | null
+          id: string
+          negocio_status: string
+          observacoes: string | null
+          pessoa_id: string | null
+          processo_id: string
+          responsavel_id: string | null
+          tipo_servico: string | null
+          updated_at: string
+          valor_fechamento: number | null
+          valor_proposta: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_abertura?: string
+          data_fechamento?: string | null
+          id?: string
+          negocio_status?: string
+          observacoes?: string | null
+          pessoa_id?: string | null
+          processo_id: string
+          responsavel_id?: string | null
+          tipo_servico?: string | null
+          updated_at?: string
+          valor_fechamento?: number | null
+          valor_proposta?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_abertura?: string
+          data_fechamento?: string | null
+          id?: string
+          negocio_status?: string
+          observacoes?: string | null
+          pessoa_id?: string | null
+          processo_id?: string
+          responsavel_id?: string | null
+          tipo_servico?: string | null
+          updated_at?: string
+          valor_fechamento?: number | null
+          valor_proposta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negocios_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negocios_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negocios_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pessoas: {
         Row: {
           cidade: string | null
@@ -116,13 +224,11 @@ export type Database = {
           created_at: string
           data_captacao: string
           data_distribuicao: string | null
-          data_fechamento: string | null
           distribuido_em: string | null
           distribuido_por: string | null
           equipe_id: string | null
           id: string
           natureza: string
-          negocio_status: string | null
           numero_processo: string
           observacoes: string | null
           parte_autora: string
@@ -133,7 +239,6 @@ export type Database = {
           precificado_por: string | null
           status_processo: number
           tipo_pagamento: string
-          tipo_servico: string | null
           transito_julgado: boolean
           triagem_data: string | null
           triagem_observacoes: string | null
@@ -142,22 +247,18 @@ export type Database = {
           tribunal: string
           updated_at: string
           valor_estimado: number | null
-          valor_fechamento: number | null
           valor_precificado: number | null
-          valor_proposta: number | null
         }
         Insert: {
           analista_id?: string | null
           created_at?: string
           data_captacao?: string
           data_distribuicao?: string | null
-          data_fechamento?: string | null
           distribuido_em?: string | null
           distribuido_por?: string | null
           equipe_id?: string | null
           id?: string
           natureza: string
-          negocio_status?: string | null
           numero_processo: string
           observacoes?: string | null
           parte_autora: string
@@ -168,7 +269,6 @@ export type Database = {
           precificado_por?: string | null
           status_processo?: number
           tipo_pagamento: string
-          tipo_servico?: string | null
           transito_julgado?: boolean
           triagem_data?: string | null
           triagem_observacoes?: string | null
@@ -177,22 +277,18 @@ export type Database = {
           tribunal: string
           updated_at?: string
           valor_estimado?: number | null
-          valor_fechamento?: number | null
           valor_precificado?: number | null
-          valor_proposta?: number | null
         }
         Update: {
           analista_id?: string | null
           created_at?: string
           data_captacao?: string
           data_distribuicao?: string | null
-          data_fechamento?: string | null
           distribuido_em?: string | null
           distribuido_por?: string | null
           equipe_id?: string | null
           id?: string
           natureza?: string
-          negocio_status?: string | null
           numero_processo?: string
           observacoes?: string | null
           parte_autora?: string
@@ -203,7 +299,6 @@ export type Database = {
           precificado_por?: string | null
           status_processo?: number
           tipo_pagamento?: string
-          tipo_servico?: string | null
           transito_julgado?: boolean
           triagem_data?: string | null
           triagem_observacoes?: string | null
@@ -212,9 +307,7 @@ export type Database = {
           tribunal?: string
           updated_at?: string
           valor_estimado?: number | null
-          valor_fechamento?: number | null
           valor_precificado?: number | null
-          valor_proposta?: number | null
         }
         Relationships: [
           {

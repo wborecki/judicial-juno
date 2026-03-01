@@ -27,11 +27,6 @@ export type Processo = {
   valor_precificado: number | null;
   precificacao_data: string | null;
   precificado_por: string | null;
-  tipo_servico: string | null;
-  valor_proposta: number | null;
-  valor_fechamento: number | null;
-  data_fechamento: string | null;
-  negocio_status: string | null;
   observacoes: string | null;
   created_at: string;
   updated_at: string;
