@@ -322,18 +322,82 @@ export type Database = {
         }
         Relationships: []
       }
+      negocio_atividades: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          negocio_id: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          negocio_id: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          negocio_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negocio_atividades_negocio_id_fkey"
+            columns: ["negocio_id"]
+            isOneToOne: false
+            referencedRelation: "negocios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      negocio_pipelines: {
+        Row: {
+          created_at: string
+          etapas: Json
+          id: string
+          nome: string
+          padrao: boolean
+        }
+        Insert: {
+          created_at?: string
+          etapas?: Json
+          id?: string
+          nome: string
+          padrao?: boolean
+        }
+        Update: {
+          created_at?: string
+          etapas?: Json
+          id?: string
+          nome?: string
+          padrao?: boolean
+        }
+        Relationships: []
+      }
       negocios: {
         Row: {
           created_at: string
           data_abertura: string
           data_fechamento: string | null
           id: string
+          motivo_perda: string | null
           negocio_status: string
           observacoes: string | null
+          ordem_kanban: number
           pessoa_id: string | null
+          pipeline_etapa: string
+          prioridade: string
           processo_id: string | null
           responsavel_id: string | null
           tipo_servico: string | null
+          titulo: string | null
           updated_at: string
           valor_fechamento: number | null
           valor_proposta: number | null
@@ -343,12 +407,17 @@ export type Database = {
           data_abertura?: string
           data_fechamento?: string | null
           id?: string
+          motivo_perda?: string | null
           negocio_status?: string
           observacoes?: string | null
+          ordem_kanban?: number
           pessoa_id?: string | null
+          pipeline_etapa?: string
+          prioridade?: string
           processo_id?: string | null
           responsavel_id?: string | null
           tipo_servico?: string | null
+          titulo?: string | null
           updated_at?: string
           valor_fechamento?: number | null
           valor_proposta?: number | null
@@ -358,12 +427,17 @@ export type Database = {
           data_abertura?: string
           data_fechamento?: string | null
           id?: string
+          motivo_perda?: string | null
           negocio_status?: string
           observacoes?: string | null
+          ordem_kanban?: number
           pessoa_id?: string | null
+          pipeline_etapa?: string
+          prioridade?: string
           processo_id?: string | null
           responsavel_id?: string | null
           tipo_servico?: string | null
+          titulo?: string | null
           updated_at?: string
           valor_fechamento?: number | null
           valor_proposta?: number | null

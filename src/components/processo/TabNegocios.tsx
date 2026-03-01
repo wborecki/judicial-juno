@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useNegocios, useCreateNegocio, NegocioDB } from "@/hooks/useNegocios";
+import { useNegocios, useCreateNegocio, NegocioWithRelations } from "@/hooks/useNegocios";
 import { Processo } from "@/hooks/useProcessos";
 
 const TIPO_SERVICO_LABELS: Record<string, string> = {
@@ -87,7 +87,7 @@ export default function TabNegocios({ processo }: Props) {
   );
 }
 
-function NegocioRow({ negocio }: { negocio: NegocioDB }) {
+function NegocioRow({ negocio }: { negocio: NegocioWithRelations }) {
   const statusLabel = negocio.negocio_status === "ganho" ? "Ganho" : negocio.negocio_status === "perdido" ? "Perdido" : "Em Andamento";
   const statusColor = negocio.negocio_status === "ganho" ? "bg-success/10 text-success" : negocio.negocio_status === "perdido" ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent-foreground";
 
