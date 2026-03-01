@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Processo = {
@@ -103,6 +103,7 @@ export function useProcessosPaginated(
       if (error) throw error;
       return { data: (data ?? []) as Processo[], count: count ?? 0 };
     },
+    placeholderData: keepPreviousData,
   });
 }
 

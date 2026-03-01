@@ -111,7 +111,7 @@ export default function Processos() {
     dateTo: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
   }), [searchDebounced, filterTribunal, filterNatureza, filterTipoPagamento, filterTriagem, filterTransito, dateRange]);
 
-  const { data, isLoading } = useProcessosPaginated(page, PAGE_SIZE, filters);
+  const { data, isLoading, isFetching } = useProcessosPaginated(page, PAGE_SIZE, filters);
   const { data: usuarios } = useUsuarios();
   const processos = data?.data ?? [];
   const totalCount = data?.count ?? 0;
@@ -269,7 +269,7 @@ export default function Processos() {
       </div>
 
       {/* Table with sticky header and scrollable body */}
-      <div className="flex-1 min-h-0 mt-4 glass-card rounded-xl overflow-hidden flex flex-col">
+      <div className={`flex-1 min-h-0 mt-4 glass-card rounded-xl overflow-hidden flex flex-col transition-opacity duration-150 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow className="border-border/50 hover:bg-transparent">
