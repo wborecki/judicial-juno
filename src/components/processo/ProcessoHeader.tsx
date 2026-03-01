@@ -258,11 +258,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
           ))}
         </div>
 
-        {processo.observacoes && (
-          <p className="text-xs text-muted-foreground italic border-t border-border/10 pt-2">
-            {processo.observacoes}
-          </p>
-        )}
       </div>
 
       {/* Edit valor dialog */}
