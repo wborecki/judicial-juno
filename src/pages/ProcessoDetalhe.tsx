@@ -4,10 +4,11 @@ import { useProcesso } from "@/hooks/useProcessos";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useProcessoDocumentos } from "@/hooks/useProcessoDocumentos";
 import { useProcessoPartes } from "@/hooks/useProcessoPartes";
+import { useNegocios } from "@/hooks/useNegocios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Users, Clock, Link2, StickyNote, Landmark } from "lucide-react";
+import { ArrowLeft, FileText, Users, Clock, Link2, StickyNote, Landmark, DollarSign, Briefcase } from "lucide-react";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
 import ModalDescartar from "@/components/processo/ModalDescartar";
@@ -23,7 +24,7 @@ export default function ProcessoDetalhe() {
   const { data: andamentos = [] } = useProcessoAndamentos(id);
   const { data: documentos = [] } = useProcessoDocumentos(id);
   const { data: partes = [] } = useProcessoPartes(id);
-
+  const { data: negocios = [] } = useNegocios(id);
   const [convertOpen, setConvertOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
 
@@ -98,30 +99,67 @@ export default function ProcessoDetalhe() {
         </TabsContent>
 
         <TabsContent value="financeiro" className="mt-4">
-          <div className="bg-card border border-border/40 rounded-xl p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <PlaceholderField label="Nº Requisitório" value="—" />
-              <PlaceholderField label="Ente Devedor" value="—" />
-              <PlaceholderField label="Data-Base" value="—" />
-              <PlaceholderField label="Valor Bruto" value="—" />
-              <PlaceholderField label="Deduções" value="—" />
-              <PlaceholderField label="Valor Líquido" value="—" />
-              <PlaceholderField label="LOA" value="—" />
-              <PlaceholderField label="Status" value="—" />
+          <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-3">
+              <PlaceholderField label="Valor da Causa" value={processo.valor_estimado ? processo.valor_estimado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"} />
+              <PlaceholderField label="Valor Precificado" value={processo.valor_precificado ? processo.valor_precificado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"} />
+              <PlaceholderField label="Data Precificação" value={processo.precificacao_data ? new Date(processo.precificacao_data).toLocaleDateString("pt-BR") : "—"} />
+              <PlaceholderField label="Tipo Pagamento" value={processo.tipo_pagamento || "—"} />
             </div>
-            <p className="text-[10px] text-muted-foreground mt-3 italic">Dados financeiros ainda não disponíveis.</p>
+
+            {negocios.length > 0 && (
+              <div className="border-t border-border/20 pt-4 space-y-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium flex items-center gap-1.5">
+                  <Briefcase className="w-3 h-3" />Negócios Vinculados ({negocios.length})
+                </p>
+                <div className="space-y-2">
+                  {negocios.map(n => (
+                    <div key={n.id} className="bg-muted/30 border border-border/30 rounded-lg p-3 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-xs">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tipo Serviço</p>
+                        <p className="font-medium">{n.tipo_servico || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor Proposta</p>
+                        <p className="font-medium">{n.valor_proposta ? n.valor_proposta.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor Fechamento</p>
+                        <p className="font-medium">{n.valor_fechamento ? n.valor_fechamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</p>
+                        <p className="font-medium capitalize">{n.negocio_status?.replace(/_/g, " ") || "—"}</p>
+                      </div>
+                      {n.observacoes && (
+                        <div className="col-span-full">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Observações</p>
+                          <p className="font-medium text-muted-foreground">{n.observacoes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {negocios.length === 0 && (
+              <p className="text-[10px] text-muted-foreground italic">Nenhum negócio vinculado a este processo.</p>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="relacionados" className="mt-4">
-          <div className="bg-card border border-border/40 rounded-xl p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <PlaceholderField label="Processo Principal" value="—" />
-              <PlaceholderField label="Cumprimentos" value="Nenhum" />
-              <PlaceholderField label="Apensos" value="Nenhum" />
-              <PlaceholderField label="Recursos" value="Nenhum" />
+          <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3">
+              <PlaceholderField label="Tribunal" value={processo.tribunal} />
+              <PlaceholderField label="Jurisdição" value={(processo as any).jurisdicao || "—"} />
+              <PlaceholderField label="Parte Autora" value={processo.parte_autora} />
+              <PlaceholderField label="Parte Ré" value={processo.parte_re} />
+              <PlaceholderField label="Pipeline" value={processo.pipeline_status?.replace(/_/g, " ") || "—"} />
+              <PlaceholderField label="Data Captação" value={new Date(processo.data_captacao).toLocaleDateString("pt-BR")} />
             </div>
-            <p className="text-[10px] text-muted-foreground mt-3 italic">Vinculação de processos ainda não disponível.</p>
+            <p className="text-[10px] text-muted-foreground italic border-t border-border/20 pt-3">Vinculação de processos relacionados será disponibilizada em breve.</p>
           </div>
         </TabsContent>
 
