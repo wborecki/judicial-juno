@@ -146,12 +146,12 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
         <SheetHeader>
           <SheetTitle className="text-sm flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
-            Converter em Negócio
+            Criar Negócio
           </SheetTitle>
           <SheetDescription className="text-xs">
             {hasStructuredAutores
-              ? "Selecione os autores para criar um negócio por autor. Cada negócio será vinculado ao(s) réu(s) do processo."
-              : "O processo será marcado como Apto e um novo negócio será criado."}
+              ? "Selecione os autores para criar um negócio por autor."
+              : "Um novo negócio será criado a partir deste processo."}
           </SheetDescription>
         </SheetHeader>
 
@@ -260,7 +260,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
             <Briefcase className="w-3.5 h-3.5" />
             {hasStructuredAutores && selectedAutores.size > 1
               ? `Criar ${selectedAutores.size} Negócios`
-              : "Converter em Negócio"}
+              : "Criar Negócio"}
           </Button>
         </SheetFooter>
       </SheetContent>
