@@ -1,52 +1,77 @@
 
 
-## Reestruturar Processos para Analistas + Negócios com Etapas
+## Plano: Processo Detalhe Completo
 
-### Contexto
-Analistas precisam processar ~1000 processos/dia. A tela atual tem abas demais e pipeline steps que pertencem a negócios, não a processos. Processos são dados judiciais puros. Negócios têm etapas comerciais e podem existir sem processo.
+O processo atual armazena `parte_autora` e `parte_re` como campos de texto simples e nao tem suporte a andamentos, documentos ou edicao inline. Vou reestruturar isso completamente.
 
-### 1. Listagem `/processos` — Otimizada para volume
+---
 
-**Filtro de data completo** (DateRange picker):
-- Período de captação (data_captacao) com presets: Hoje, 7d, 30d, 90d, custom range
-- Usar Popover + Calendar (mode="range") com date-fns
+### 1. Novas Tabelas no Banco de Dados (migration)
 
-**Paginação server-side** via Supabase `.range()` para suportar milhões de registros — exibir 50 por página com controles prev/next e contagem total
+**`processo_partes`** — Multiplos autores e reus por processo
+| Coluna | Tipo |
+|---|---|
+| id | uuid PK |
+| processo_id | uuid FK processos |
+| nome | text |
+| cpf_cnpj | text nullable |
+| tipo | text ('autor' / 'reu') |
+| pessoa_id | uuid FK pessoas nullable |
+| created_at | timestamptz |
 
-**Tabela densa** com linhas compactas, link direto para consulta pública do tribunal (formato URL por tribunal), informações-chave visíveis sem clicar
+**`processo_andamentos`** — Movimentacoes processuais
+| Coluna | Tipo |
+|---|---|
+| id | uuid PK |
+| processo_id | uuid FK processos |
+| data_andamento | timestamptz |
+| titulo | text |
+| descricao | text nullable |
+| tipo | text ('despacho', 'decisao', 'sentenca', 'intimacao', 'peticao', 'outros') |
+| criado_por | uuid nullable |
+| created_at | timestamptz |
 
-**Remover conceito de "pipeline" da listagem** — substituir por status simples do processo (triagem_resultado) já que pipeline pertence a negócios
+**`processo_documentos`** — Documentos uploadados
+| Coluna | Tipo |
+|---|---|
+| id | uuid PK |
+| processo_id | uuid FK processos |
+| nome | text |
+| arquivo_url | text |
+| arquivo_nome | text |
+| tamanho | bigint nullable |
+| tipo_documento | text ('peticao', 'sentenca', 'recurso', 'procuracao', 'comprovante', 'outros') |
+| criado_por | uuid nullable |
+| created_at | timestamptz |
 
-### 2. Detalhe `/processos/:id` — One Page para Análise
+- Storage bucket `processo-documentos` (public) para os arquivos
+- RLS permissiva (`true`) em todas as novas tabelas (padrao atual do projeto)
 
-**Layout single-page** sem abas — tudo visível de uma vez, inspirado na experiência dos tribunais:
-- **Cabeçalho**: número do processo (link para tribunal), tribunal, natureza, tipo pagamento, valor estimado, trânsito
-- **Seção Partes**: autora e ré lado a lado
-- **Seção Análise/Triagem**: botões de ação rápida (Apto/Descartar/Reanálise), observações inline
-- **Seção Negócios vinculados**: lista de negócios existentes + botão criar (crédito advogado, crédito autores, etc.)
-- **Timeline** compacta no rodapé
+### 2. Hooks (src/hooks/)
 
-Remover as abas separadas (Dados, Partes, Documentos, Triagem, Análise, Precificação, Comercial) — consolidar em seções visuais na mesma página
+- **`useProcessoPartes.ts`** — CRUD para partes (listar, adicionar, remover por processo_id)
+- **`useProcessoAndamentos.ts`** — CRUD para andamentos (listar ordenado por data desc, criar, deletar)
+- **`useProcessoDocumentos.ts`** — CRUD para documentos (listar, upload com storage, deletar)
 
-### 3. Modelo de Negócios — Etapas + Independente de Processo
+### 3. Pagina ProcessoDetalhe Refatorada com Abas
 
-**Migration**: tornar `processo_id` nullable na tabela `negocios` (negócio pode existir sem processo)
+Reorganizar a pagina usando `Tabs` com as seguintes abas:
 
-**Página `/negocios`**: adicionar filtros, busca, e ao clicar abrir detalhe do negócio com suas etapas (em_andamento → proposta → negociação → ganho/perdido)
+- **Dados Gerais** — Cabecalho com informacoes editaveis inline (tribunal, natureza, tipo pagamento, status, transito julgado, valor estimado, observacoes). Botao de editar que transforma campos em inputs/selects.
+- **Partes** — Lista de autores e reus com botao para adicionar novo. Cada parte pode ser removida. Vinculacao opcional com pessoa cadastrada.
+- **Andamentos** — Timeline vertical de movimentacoes com data, tipo (badge colorido), titulo e descricao. Formulario para adicionar novo andamento no topo.
+- **Documentos** — Lista de documentos com nome, tipo, data de upload. Botao de upload (drag-and-drop ou file input). Download e exclusao.
+- **Triagem** — Secao atual de triagem (observacoes + botoes apto/reanalise/descartar)
+- **Negocios** — Secao atual de negocios vinculados
 
-### 4. Ajustes no Sidebar
+### 4. Edicao Inline dos Dados do Processo
 
-Reorganizar: separar "Processos" (análise técnica) de "Negócios" (CRM comercial) visualmente
+Na aba "Dados Gerais", um botao "Editar" ativa modo de edicao onde os campos do cabecalho (tribunal, natureza, tipo_pagamento, status_processo, transito_julgado, valor_estimado, data_distribuicao, observacoes) se tornam editaveis com selects/inputs. Botoes "Salvar" e "Cancelar" para confirmar.
 
-### 5. Remover pipeline_status de processos
+### Resumo Tecnico
 
-O campo `pipeline_status` na tabela processos será mantido por compatibilidade mas não será mais exibido na listagem — a progressão comercial agora vive em `negocios.negocio_status`
-
-### Arquivos afetados
-- `src/pages/Processos.tsx` — reescrever com date range filter, paginação server-side, layout denso
-- `src/pages/ProcessoDetalhe.tsx` — reescrever como one-page sem abas
-- `src/pages/Negocios.tsx` — adicionar filtros e detalhe
-- `src/hooks/useProcessos.ts` — adicionar suporte a paginação e filtro de data server-side
-- `src/hooks/useNegocios.ts` — atualizar para processo_id nullable
-- Migration SQL — ALTER TABLE negocios ALTER COLUMN processo_id DROP NOT NULL
+- 1 migration SQL com 3 tabelas + 1 storage bucket + RLS policies
+- 3 novos hooks
+- ProcessoDetalhe.tsx reescrito com Tabs e componentes internos para cada aba
+- Campos editaveis usando estado local + useUpdateProcesso existente
 
