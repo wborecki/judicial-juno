@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUsuarios, useEquipes } from "@/hooks/useEquipes";
+import { useTrocarAnalista } from "@/hooks/useDistribuicao";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -241,6 +245,9 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
         </div>
       </div>
 
+      {/* ── Analista + Equipe ── */}
+      <AnalistaEquipeSection processo={processo} />
+
       {/* ── Detail fields card ── */}
       <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] p-5 space-y-3">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3">
@@ -255,7 +262,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
             </div>
           ))}
         </div>
-
       </div>
 
 
@@ -267,6 +273,53 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
         cpfCnpj={pessoaSheetData.cpfCnpj}
       />
     </>
+  );
+}
+
+function AnalistaEquipeSection({ processo }: { processo: Processo }) {
+  const { data: usuarios } = useUsuarios();
+  const { data: equipes } = useEquipes();
+  const trocar = useTrocarAnalista();
+  const analista = (usuarios ?? []).find(u => u.id === processo.analista_id);
+  const equipe = (equipes ?? []).find(e => e.id === processo.equipe_id);
+  const initials = (nome: string) => nome.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  const activeUsers = (usuarios ?? []).filter(u => u.ativo);
+
+  const handleChange = async (v: string) => {
+    try {
+      await trocar.mutateAsync({ id: processo.id, analista_id: v });
+      toast.success("Analista atualizado");
+    } catch {
+      toast.error("Erro ao trocar analista");
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-4 text-sm">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Analista:</span>
+        {analista ? (
+          <div className="flex items-center gap-1.5">
+            <Avatar className="w-5 h-5">
+              <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium">{analista.nome}</span>
+          </div>
+        ) : <span className="text-xs text-muted-foreground">Não atribuído</span>}
+        <Select value={processo.analista_id ?? ""} onValueChange={handleChange}>
+          <SelectTrigger className="h-6 text-[10px] w-[140px] ml-1"><SelectValue placeholder="Trocar" /></SelectTrigger>
+          <SelectContent>
+            {activeUsers.map(u => <SelectItem key={u.id} value={u.id} className="text-xs">{u.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      {equipe && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Equipe:</span>
+          <Badge variant="outline" className="text-[10px]">{equipe.nome}</Badge>
+        </div>
+      )}
+    </div>
   );
 }
 

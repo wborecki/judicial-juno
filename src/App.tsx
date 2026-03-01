@@ -24,6 +24,7 @@ import ConfiguracoesGeral from "./pages/ConfiguracoesGeral";
 import CamposAnalise from "./pages/CamposAnalise";
 import ConfigPipelines from "./pages/ConfigPipelines";
 import Notificacoes from "./pages/Notificacoes";
+import ConfigRoteamento from "./pages/ConfigRoteamento";
 import Integracoes from "./pages/Integracoes";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
 import Auth from "./pages/Auth";
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="usuarios" element={<UsuariosPage />} />
                 <Route path="campos-analise" element={<CamposAnalise />} />
                 <Route path="pipelines" element={<ConfigPipelines />} />
+                <Route path="roteamento" element={<ConfigRoteamento />} />
                 <Route path="notificacoes" element={<Notificacoes />} />
                 <Route path="integracoes" element={<Integracoes />} />
               </Route>

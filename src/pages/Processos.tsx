@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProcessosPaginated, ProcessoFilters } from "@/hooks/useProcessos";
+import { useUsuarios } from "@/hooks/useEquipes";
 import { useCreateNegocio } from "@/hooks/useNegocios";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, X, Scale, CalendarIcon, ChevronLeft, ChevronRight, ExternalLink, MoreHorizontal, Eye, CheckCircle2, Briefcase } from "lucide-react";
 import { TRIBUNAIS } from "@/lib/types";
 import { format, subDays, startOfDay } from "date-fns";
@@ -110,8 +112,11 @@ export default function Processos() {
   }), [searchDebounced, filterTribunal, filterNatureza, filterTipoPagamento, filterTriagem, filterTransito, dateRange]);
 
   const { data, isLoading } = useProcessosPaginated(page, PAGE_SIZE, filters);
+  const { data: usuarios } = useUsuarios();
   const processos = data?.data ?? [];
   const totalCount = data?.count ?? 0;
+  const getUsuario = (id: string | null) => (usuarios ?? []).find(u => u.id === id);
+  const initials = (nome: string) => nome.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const hasFilters = filterTribunal !== "all" || filterNatureza !== "all" || filterTipoPagamento !== "all" || filterTriagem !== "all" || filterTransito !== "all" || search !== "" || !!dateRange;
@@ -277,6 +282,7 @@ export default function Processos() {
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Captação</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-24">Analista</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
             </TableRow>
           </TableHeader>
@@ -331,6 +337,20 @@ export default function Processos() {
                     <TableCell className="text-[10px] py-1.5 w-16">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
                     <TableCell className="text-[11px] font-medium text-right py-1.5 w-24">{formatCurrency(p.valor_estimado)}</TableCell>
                     <TableCell className="text-[10px] text-muted-foreground py-1.5 w-20">{formatDate(p.data_captacao)}</TableCell>
+                    <TableCell className="py-1.5 w-24">
+                      {(() => {
+                        const analista = getUsuario(p.analista_id);
+                        if (!analista) return <span className="text-[10px] text-muted-foreground">—</span>;
+                        return (
+                          <div className="flex items-center gap-1">
+                            <Avatar className="w-5 h-5">
+                              <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] truncate max-w-[60px]">{analista.nome.split(" ")[0]}</span>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="py-1.5 w-10" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
