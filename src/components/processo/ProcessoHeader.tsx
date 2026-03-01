@@ -298,16 +298,15 @@ function AnalistaEquipeSection({ processo }: { processo: Processo }) {
     <div className="flex items-center gap-4 text-sm">
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Analista:</span>
-        {analista ? (
-          <div className="flex items-center gap-1.5">
-            <Avatar className="w-5 h-5">
-              <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
-            </Avatar>
-            <span className="text-xs font-medium">{analista.nome}</span>
-          </div>
-        ) : <span className="text-xs text-muted-foreground">Não atribuído</span>}
+        {analista && (
+          <Avatar className="w-5 h-5">
+            <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
+          </Avatar>
+        )}
         <Select value={processo.analista_id ?? ""} onValueChange={handleChange}>
-          <SelectTrigger className="h-6 text-[10px] w-[140px] ml-1"><SelectValue placeholder="Trocar" /></SelectTrigger>
+          <SelectTrigger className="h-7 text-xs w-[160px] border-dashed">
+            <SelectValue placeholder="Não atribuído" />
+          </SelectTrigger>
           <SelectContent>
             {activeUsers.map(u => <SelectItem key={u.id} value={u.id} className="text-xs">{u.nome}</SelectItem>)}
           </SelectContent>
