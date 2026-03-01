@@ -194,7 +194,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
 
         {/* ── Row 2: Detail fields grid (2 columns) ── */}
         <div className="px-4 pb-4 border-t border-border/20 pt-3 space-y-3">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
             {detailFields.map(f => (
               <div key={f.label}>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-0.5">{f.label}</p>
