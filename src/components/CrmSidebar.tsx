@@ -1,10 +1,9 @@
 import {
-  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, LogOut, PanelLeftClose, PanelLeft
+  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { MegaTecLogo } from "./MegaTecLogo";
-import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -73,12 +72,7 @@ function SidebarSection({ title, items, collapsed }: { title: string; items: Nav
 }
 
 export function CrmSidebar() {
-  const { user, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
-  const initials = user?.user_metadata?.full_name
-    ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user?.email?.slice(0, 2).toUpperCase() ?? "??";
-  const displayName = user?.user_metadata?.full_name || user?.email || "Usuário";
 
   return (
     <aside className={cn(
@@ -109,41 +103,6 @@ export function CrmSidebar() {
         <SidebarSection title="Sistema" items={sistemaItems} collapsed={collapsed} />
       </nav>
 
-      {/* User */}
-      <div className={cn("border-t border-sidebar-border", collapsed ? "p-2" : "p-4")}>
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={signOut}
-                className="w-full flex justify-center p-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
-              >
-                <div className="w-7 h-7 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-semibold text-[10px]">
-                  {initials}
-                </div>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs">{displayName} · Sair</TooltipContent>
-          </Tooltip>
-        ) : (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-semibold text-xs">
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">{displayName}</p>
-              <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email}</p>
-            </div>
-            <button
-              onClick={signOut}
-              className="p-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
-              title="Sair"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
     </aside>
   );
 }
