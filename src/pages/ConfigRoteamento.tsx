@@ -235,12 +235,12 @@ export default function ConfigRoteamento() {
       </Tabs>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] overflow-y-auto">
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col overflow-hidden">
           <SheetHeader>
             <SheetTitle>{editingId ? "Editar Regra" : "Nova Regra"}</SheetTitle>
             <SheetDescription>Defina os critérios para distribuição automática</SheetDescription>
           </SheetHeader>
-          <div className="space-y-4 mt-6">
+          <div className="space-y-4 mt-6 flex-1 overflow-y-auto pr-1">
             <div>
               <label className="text-xs font-medium mb-1.5 block">Nome da Regra</label>
               <Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} className="h-9 text-sm" placeholder="Ex: Processos TRF1 Previdenciários" />
@@ -373,7 +373,8 @@ export default function ConfigRoteamento() {
                 </div>
               </>
             )}
-
+          </div>
+          <div className="border-t border-border pt-4 mt-2 shrink-0">
             <Button className="w-full" onClick={handleSave} disabled={createRegra.isPending || updateRegra.isPending}>
               {editingId ? "Salvar Alterações" : "Criar Regra"}
             </Button>
