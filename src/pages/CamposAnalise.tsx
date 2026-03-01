@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ export default function CamposAnalise() {
   const updateCampo = useUpdateCampoAnalise();
   const deleteCampo = useDeleteCampoAnalise();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<CampoAnalise | null>(null);
 
   // Form state
@@ -48,7 +48,7 @@ export default function CamposAnalise() {
     setObrigatorio(false);
     setOrdem(0);
     setOpcoes("");
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const openEdit = (c: CampoAnalise) => {
@@ -59,7 +59,7 @@ export default function CamposAnalise() {
     setObrigatorio(c.obrigatorio);
     setOrdem(c.ordem);
     setOpcoes(Array.isArray(c.opcoes) ? c.opcoes.join(", ") : "");
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleSave = async () => {
@@ -84,7 +84,7 @@ export default function CamposAnalise() {
         await createCampo.mutateAsync(payload);
         toast.success("Campo criado");
       }
-      setDialogOpen(false);
+      setSheetOpen(false);
     } catch {
       toast.error("Erro ao salvar campo");
     }
@@ -170,12 +170,12 @@ export default function CamposAnalise() {
         </div>
       ))}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Editar Campo" : "Novo Campo"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>{editing ? "Editar Campo" : "Novo Campo"}</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 py-4">
             <div>
               <Label className="text-xs">Nome do campo</Label>
               <Input value={nome} onChange={(e) => setNome(e.target.value)} className="mt-1" placeholder="Ex: Valor de risco" />
@@ -212,14 +212,14 @@ export default function CamposAnalise() {
               <Label htmlFor="obrigatorio" className="text-xs">Campo obrigatório</Label>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+          <SheetFooter>
+            <Button variant="outline" onClick={() => setSheetOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createCampo.isPending || updateCampo.isPending}>
               {editing ? "Salvar" : "Criar"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
