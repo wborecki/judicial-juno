@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useAllCamposAnalise, useCreateCampoAnalise, useUpdateCampoAnalise, useDeleteCampoAnalise, type CampoAnalise } from "@/hooks/useCamposAnalise";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TIPOS = [
   { value: "texto", label: "Texto" },
@@ -23,8 +24,14 @@ const TIPOS = [
 
 const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS.map((t) => [t.value, t.label]));
 
+const ENTIDADES = [
+  { value: "processo", label: "Processos" },
+  { value: "negocio", label: "Negócios" },
+];
+
 export default function CamposAnalise() {
-  const { data: campos = [], isLoading } = useAllCamposAnalise();
+  const [entidade, setEntidade] = useState("processo");
+  const { data: campos = [], isLoading } = useAllCamposAnalise(entidade);
   const createCampo = useCreateCampoAnalise();
   const updateCampo = useUpdateCampoAnalise();
   const deleteCampo = useDeleteCampoAnalise();
@@ -74,7 +81,7 @@ export default function CamposAnalise() {
       ordem,
       opcoes: tipo === "select" ? opcoes.split(",").map((o) => o.trim()).filter(Boolean) : [],
       ativo: true,
-      entidade: "processo" as string,
+      entidade,
     };
 
     try {
@@ -113,13 +120,21 @@ export default function CamposAnalise() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Campos de Análise</h1>
-          <p className="text-xs text-muted-foreground mt-1">Configure os campos personalizados que aparecerão na aba Análise dos processos</p>
+          <h1 className="text-xl font-bold tracking-tight">Campos Personalizados</h1>
+          <p className="text-xs text-muted-foreground mt-1">Configure os campos que aparecerão na aba Análise de cada entidade</p>
         </div>
         <Button size="sm" onClick={openNew} className="gap-1.5">
           <Plus className="w-3.5 h-3.5" />Novo Campo
         </Button>
       </div>
+
+      <Tabs value={entidade} onValueChange={setEntidade}>
+        <TabsList>
+          {ENTIDADES.map((e) => (
+            <TabsTrigger key={e.value} value={e.value}>{e.label}</TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {Object.keys(grouped).length === 0 && !isLoading && (
         <Card className="glass-card">
