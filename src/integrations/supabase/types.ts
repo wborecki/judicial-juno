@@ -14,6 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_conversas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_mensagens: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_url: string | null
+          conteudo: string | null
+          conversa_id: string
+          created_at: string
+          id: string
+          referencia_id: string | null
+          sender_id: string
+          tipo: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_url?: string | null
+          conteudo?: string | null
+          conversa_id: string
+          created_at?: string
+          id?: string
+          referencia_id?: string | null
+          sender_id: string
+          tipo?: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_url?: string | null
+          conteudo?: string | null
+          conversa_id?: string
+          created_at?: string
+          id?: string
+          referencia_id?: string | null
+          sender_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participantes: {
+        Row: {
+          conversa_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          conversa_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          conversa_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participantes_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contatos: {
         Row: {
           created_at: string
