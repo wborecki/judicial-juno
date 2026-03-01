@@ -171,7 +171,7 @@ export default function Processos() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden p-6">
 
       {/* Filters — sticky */}
       <div className="shrink-0 glass-card rounded-xl p-3 space-y-2">

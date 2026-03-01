@@ -48,7 +48,7 @@ export default function Negocios() {
   const activeCount = negocios.filter((n) => n.negocio_status === "em_andamento").length;
 
   return (
-    <div className="flex flex-col h-full gap-2">
+    <div className="flex flex-col h-full gap-2 p-6">
       {/* Compact toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* View toggles */}
