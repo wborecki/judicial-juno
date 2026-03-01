@@ -20,6 +20,13 @@ export type UsuarioDB = {
   created_at: string;
 };
 
+export type EquipeMembroDB = {
+  id: string;
+  equipe_id: string;
+  usuario_id: string;
+  peso: number;
+};
+
 export function useEquipes() {
   return useQuery({
     queryKey: ["equipes"],
@@ -48,7 +55,24 @@ export function useEquipeMembros() {
     queryFn: async () => {
       const { data, error } = await supabase.from("equipe_membros").select("*");
       if (error) throw error;
-      return data as { id: string; equipe_id: string; usuario_id: string }[];
+      return data as EquipeMembroDB[];
+    },
+  });
+}
+
+export function useUserRole() {
+  return useQuery({
+    queryKey: ["user-role"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.role as string | null;
     },
   });
 }

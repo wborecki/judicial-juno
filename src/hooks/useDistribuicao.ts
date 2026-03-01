@@ -9,6 +9,10 @@ export type RegraRoteamento = {
   criterio_tribunal: string[];
   criterio_natureza: string[];
   criterio_tipo_pagamento: string[];
+  entidade: string; // 'processo' | 'negocio'
+  criterio_tipo_servico: string[];
+  criterio_valor_min: number | null;
+  criterio_valor_max: number | null;
   ativa: boolean;
   prioridade: number;
   created_at: string;
@@ -95,14 +99,18 @@ export function useTrocarAnalista() {
 }
 
 // CRUD regras de roteamento
-export function useRegrasRoteamento() {
+export function useRegrasRoteamento(entidade?: string) {
   return useQuery({
-    queryKey: ["regras-roteamento"],
+    queryKey: ["regras-roteamento", entidade],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("regras_roteamento")
         .select("*")
         .order("prioridade", { ascending: true });
+      if (entidade) {
+        query = query.eq("entidade", entidade);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as RegraRoteamento[];
     },
@@ -142,44 +150,71 @@ export function useDeleteRegra() {
   });
 }
 
-// Distribuição automática
+type MembroComPeso = { equipe_id: string; usuario_id: string; peso: number };
+
+// Distribuição automática com pesos
 export function useDistribuicaoAutomatica() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ processos, regras, membros }: {
       processos: Processo[];
       regras: RegraRoteamento[];
-      membros: { equipe_id: string; usuario_id: string }[];
+      membros: MembroComPeso[];
     }) => {
-      const counters: Record<string, number> = {};
+      // Track current workload per analyst
+      const { data: currentProcessos } = await supabase
+        .from("processos")
+        .select("analista_id")
+        .not("analista_id", "is", null)
+        .in("pipeline_status", ["distribuido", "em_analise"]);
+
+      const workload: Record<string, number> = {};
+      (currentProcessos ?? []).forEach(p => {
+        if (p.analista_id) workload[p.analista_id] = (workload[p.analista_id] ?? 0) + 1;
+      });
+
       const updates: { id: string; analista_id: string; equipe_id: string }[] = [];
 
+      // Check for conflicting rules (same criteria matching multiple rules)
+      const activeRegras = regras.filter(r => r.ativa && r.entidade === "processo").sort((a, b) => a.prioridade - b.prioridade);
+
       for (const p of processos) {
-        const regra = regras
-          .filter(r => r.ativa)
-          .sort((a, b) => a.prioridade - b.prioridade)
-          .find(r => {
-            const matchTribunal = r.criterio_tribunal.length === 0 || r.criterio_tribunal.includes(p.tribunal);
-            const matchNatureza = r.criterio_natureza.length === 0 || r.criterio_natureza.includes(p.natureza);
-            const matchTipo = r.criterio_tipo_pagamento.length === 0 || r.criterio_tipo_pagamento.includes(p.tipo_pagamento);
-            return matchTribunal && matchNatureza && matchTipo;
-          });
+        // Find first matching rule (by priority)
+        const regra = activeRegras.find(r => {
+          const matchTribunal = r.criterio_tribunal.length === 0 || r.criterio_tribunal.includes(p.tribunal);
+          const matchNatureza = r.criterio_natureza.length === 0 || r.criterio_natureza.includes(p.natureza);
+          const matchTipo = r.criterio_tipo_pagamento.length === 0 || r.criterio_tipo_pagamento.includes(p.tipo_pagamento);
+          return matchTribunal && matchNatureza && matchTipo;
+        });
 
         if (!regra) continue;
 
         const equipeMembros = membros.filter(m => m.equipe_id === regra.equipe_id);
         if (equipeMembros.length === 0) continue;
 
-        const key = regra.equipe_id;
-        counters[key] = (counters[key] ?? 0);
-        const idx = counters[key] % equipeMembros.length;
-        counters[key]++;
+        // Weighted distribution: pick member with lowest (workload / peso)
+        // Lower ratio = should receive more work
+        let bestMember = equipeMembros[0];
+        let bestScore = Infinity;
+
+        for (const m of equipeMembros) {
+          const load = workload[m.usuario_id] ?? 0;
+          const peso = m.peso || 100;
+          const score = load / (peso / 100); // normalized: more peso = lower score
+          if (score < bestScore) {
+            bestScore = score;
+            bestMember = m;
+          }
+        }
 
         updates.push({
           id: p.id,
-          analista_id: equipeMembros[idx].usuario_id,
+          analista_id: bestMember.usuario_id,
           equipe_id: regra.equipe_id,
         });
+
+        // Update local workload tracker
+        workload[bestMember.usuario_id] = (workload[bestMember.usuario_id] ?? 0) + 1;
       }
 
       const now = new Date().toISOString();
@@ -205,4 +240,35 @@ export function useDistribuicaoAutomatica() {
       qc.invalidateQueries({ queryKey: ["processos-paginated"] });
     },
   });
+}
+
+// Check for conflicting routing rules
+export function useCheckConflicts(regras: RegraRoteamento[] | undefined) {
+  if (!regras) return [];
+  const active = regras.filter(r => r.ativa);
+  const conflicts: { ruleA: string; ruleB: string; overlap: string }[] = [];
+
+  for (let i = 0; i < active.length; i++) {
+    for (let j = i + 1; j < active.length; j++) {
+      const a = active[i], b = active[j];
+      if (a.entidade !== b.entidade) continue;
+
+      const overlapTrib = a.criterio_tribunal.length === 0 || b.criterio_tribunal.length === 0 ||
+        a.criterio_tribunal.some(t => b.criterio_tribunal.includes(t));
+      const overlapNat = a.criterio_natureza.length === 0 || b.criterio_natureza.length === 0 ||
+        a.criterio_natureza.some(n => b.criterio_natureza.includes(n));
+      const overlapTipo = a.criterio_tipo_pagamento.length === 0 || b.criterio_tipo_pagamento.length === 0 ||
+        a.criterio_tipo_pagamento.some(t => b.criterio_tipo_pagamento.includes(t));
+
+      if (overlapTrib && overlapNat && overlapTipo) {
+        const overlaps: string[] = [];
+        if (a.criterio_tribunal.length > 0 && b.criterio_tribunal.length > 0)
+          overlaps.push("tribunal: " + a.criterio_tribunal.filter(t => b.criterio_tribunal.includes(t)).join(", "));
+        if (a.criterio_natureza.length > 0 && b.criterio_natureza.length > 0)
+          overlaps.push("natureza: " + a.criterio_natureza.filter(n => b.criterio_natureza.includes(n)).join(", "));
+        conflicts.push({ ruleA: a.nome, ruleB: b.nome, overlap: overlaps.join("; ") || "critérios amplos" });
+      }
+    }
+  }
+  return conflicts;
 }
