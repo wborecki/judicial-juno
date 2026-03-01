@@ -9,9 +9,7 @@ export type PipelineStatus =
   | "distribuido"
   | "em_analise"
   | "precificado"
-  | "comercial"
-  | "ganho"
-  | "perdido";
+  | "comercial";
 
 export type TipoServico =
   | "compra_credito"
@@ -100,8 +98,6 @@ export const PIPELINE_LABELS: Record<PipelineStatus, string> = {
   em_analise: "Em Análise",
   precificado: "Precificado",
   comercial: "Comercial",
-  ganho: "Ganho",
-  perdido: "Perdido",
 };
 
 export const TIPO_SERVICO_LABELS: Record<TipoServico, string> = {

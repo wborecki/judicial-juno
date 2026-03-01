@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useProcesso, useUpdateProcesso, Processo } from "@/hooks/useProcessos";
+import { useNegocios, useCreateNegocio, useUpdateNegocio, NegocioDB } from "@/hooks/useNegocios";
 import { useUsuarios } from "@/hooks/useEquipes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { useState, useEffect } from "react";
 import {
   ArrowLeft, Scale, CheckCircle2, XCircle, RotateCcw, Clock,
   Gavel, FileText, Banknote, MapPin, Calendar, User, Users,
-  DollarSign, Briefcase, TrendingUp
+  DollarSign, Briefcase, TrendingUp, Plus
 } from "lucide-react";
 
 const STATUS_LABELS: Record<number, string> = {
@@ -32,8 +33,6 @@ const PIPELINE_LABELS: Record<string, string> = {
   em_analise: "Em Análise",
   precificado: "Precificado",
   comercial: "Comercial",
-  ganho: "Ganho",
-  perdido: "Perdido",
 };
 
 const PIPELINE_COLORS: Record<string, string> = {
@@ -43,8 +42,6 @@ const PIPELINE_COLORS: Record<string, string> = {
   em_analise: "bg-accent/10 text-accent",
   precificado: "bg-primary/10 text-primary",
   comercial: "bg-info/10 text-info",
-  ganho: "bg-success/10 text-success",
-  perdido: "bg-destructive/10 text-destructive",
 };
 
 const TRIAGEM_LABELS: Record<string, string> = {
@@ -81,8 +78,10 @@ export default function ProcessoDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: processo, isLoading } = useProcesso(id);
+  const { data: negocios = [] } = useNegocios(id);
   const { data: usuarios } = useUsuarios();
   const updateProcesso = useUpdateProcesso();
+  const createNegocio = useCreateNegocio();
 
   const [tribunal, setTribunal] = useState("");
   const [natureza, setNatureza] = useState("");
@@ -119,7 +118,7 @@ export default function ProcessoDetalhe() {
           triagem_resultado: resultado,
           triagem_observacoes: triageObs,
           triagem_data: new Date().toISOString(),
-          pipeline_status: resultado === "apto" ? "distribuido" : resultado === "descartado" ? "perdido" : "triagem",
+          pipeline_status: resultado === "apto" ? "distribuido" : "triagem",
         },
       });
       toast.success(`Processo marcado como ${TRIAGEM_LABELS[resultado]}`);
@@ -173,13 +172,13 @@ export default function ProcessoDetalhe() {
   const analista = usuarios?.find(u => u.id === processo.analista_id);
   const precificador = usuarios?.find(u => u.id === processo.precificado_por);
 
-  const pipelineSteps = ["captado", "triagem", "distribuido", "em_analise", "precificado", "comercial", "ganho"];
+  const pipelineSteps = ["captado", "triagem", "distribuido", "em_analise", "precificado", "comercial"];
   const currentStepIdx = pipelineSteps.indexOf(processo.pipeline_status);
 
   const defaultTab = processo.pipeline_status === "triagem" ? "triagem"
     : processo.pipeline_status === "em_analise" ? "analise"
     : processo.pipeline_status === "precificado" ? "precificacao"
-    : processo.pipeline_status === "comercial" || processo.pipeline_status === "ganho" || processo.pipeline_status === "perdido" ? "comercial"
+    : processo.pipeline_status === "comercial" ? "comercial"
     : "dados";
 
   return (
@@ -217,7 +216,7 @@ export default function ProcessoDetalhe() {
             {pipelineSteps.map((step, idx) => {
               const isActive = idx === currentStepIdx;
               const isPast = idx < currentStepIdx;
-              const isLost = processo.pipeline_status === "perdido";
+              const isLost = false;
               return (
                 <div key={step} className="flex-1 flex flex-col items-center gap-1.5">
                   <div className={`h-2 w-full rounded-full transition-colors ${
@@ -243,13 +242,13 @@ export default function ProcessoDetalhe() {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="dados">Dados do Processo</TabsTrigger>
           <TabsTrigger value="triagem">Triagem</TabsTrigger>
-          <TabsTrigger value="analise" disabled={currentStepIdx < 3 && processo.pipeline_status !== "perdido"}>
+          <TabsTrigger value="analise" disabled={currentStepIdx < 3}>
             Análise
           </TabsTrigger>
-          <TabsTrigger value="precificacao" disabled={currentStepIdx < 4 && processo.pipeline_status !== "perdido"}>
+          <TabsTrigger value="precificacao" disabled={currentStepIdx < 4}>
             Precificação
           </TabsTrigger>
-          <TabsTrigger value="comercial" disabled={currentStepIdx < 5 && processo.pipeline_status !== "perdido"}>
+          <TabsTrigger value="comercial" disabled={currentStepIdx < 5}>
             Comercial
           </TabsTrigger>
         </TabsList>
@@ -440,21 +439,58 @@ export default function ProcessoDetalhe() {
 
         {/* Tab: Comercial */}
         <TabsContent value="comercial">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="glass-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-info" />Negócio
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <InfoField label="Tipo de Serviço" value={processo.tipo_servico ? TIPO_SERVICO_LABELS[processo.tipo_servico] : "—"} />
-                <InfoField label="Valor Proposta" value={formatCurrency(processo.valor_proposta)} />
-                <InfoField label="Valor Fechamento" value={formatCurrency(processo.valor_fechamento)} />
-                <InfoField label="Data Fechamento" value={formatDate(processo.data_fechamento)} />
-                <InfoField label="Status Negócio" value={processo.negocio_status ?? "—"} />
-              </CardContent>
-            </Card>
+          <div className="space-y-4">
+            {negocios.length === 0 && (
+              <Card className="glass-card">
+                <CardContent className="p-8 text-center">
+                  <p className="text-sm text-muted-foreground mb-4">Nenhum negócio vinculado a este processo.</p>
+                  <Button
+                    onClick={async () => {
+                      if (!processo) return;
+                      try {
+                        await createNegocio.mutateAsync({
+                          processo_id: processo.id,
+                          pessoa_id: processo.pessoa_id,
+                          tipo_servico: null,
+                          negocio_status: "em_andamento",
+                          valor_proposta: null,
+                          valor_fechamento: null,
+                          data_abertura: new Date().toISOString(),
+                          data_fechamento: null,
+                          responsavel_id: null,
+                          observacoes: null,
+                        });
+                        toast.success("Negócio criado com sucesso");
+                      } catch {
+                        toast.error("Erro ao criar negócio");
+                      }
+                    }}
+                    disabled={createNegocio.isPending}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />Criar Negócio
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            {negocios.map(n => {
+              const statusLabel = n.negocio_status === "ganho" ? "Ganho" : n.negocio_status === "perdido" ? "Perdido" : "Em Andamento";
+              return (
+                <Card key={n.id} className="glass-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-info" />Negócio — {statusLabel}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <InfoField label="Tipo de Serviço" value={n.tipo_servico ? TIPO_SERVICO_LABELS[n.tipo_servico] : "—"} />
+                    <InfoField label="Valor Proposta" value={formatCurrency(n.valor_proposta)} />
+                    <InfoField label="Valor Fechamento" value={formatCurrency(n.valor_fechamento)} />
+                    <InfoField label="Data Fechamento" value={formatDate(n.data_fechamento)} />
+                    <InfoField label="Status" value={statusLabel} />
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>
@@ -481,9 +517,9 @@ export default function ProcessoDetalhe() {
             {processo.precificacao_data && (
               <TimelineItem date={processo.precificacao_data} label={`Precificado: ${formatCurrency(processo.valor_precificado)}`} />
             )}
-            {processo.data_fechamento && (
-              <TimelineItem date={processo.data_fechamento} label={`Negócio ${processo.negocio_status}: ${formatCurrency(processo.valor_fechamento)}`} />
-            )}
+            {negocios.filter(n => n.data_fechamento).map(n => (
+              <TimelineItem key={n.id} date={n.data_fechamento} label={`Negócio ${n.negocio_status}: ${formatCurrency(n.valor_fechamento)}`} />
+            ))}
           </div>
         </CardContent>
       </Card>
