@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -13,18 +13,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   MessageSquare, Send, Paperclip, Search, Plus, Scale, Briefcase,
-  FileText, Image, File, X, Users, User
+  FileText, File, X, Users, User, UserPlus
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-// We'll use profiles table for display names since we can't query auth.users
-// For now, we show email/id and the current user's name
 
 export default function Chat() {
   const { user } = useAuth();
@@ -32,13 +30,15 @@ export default function Chat() {
   const [activeConversaId, setActiveConversaId] = useState<string | null>(null);
   const [searchConversas, setSearchConversas] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showAddMembers, setShowAddMembers] = useState(false);
 
-  // Auto-select first conversa
   useEffect(() => {
     if (!activeConversaId && conversas.length > 0) {
       setActiveConversaId(conversas[0].id);
     }
   }, [conversas, activeConversaId]);
+
+  const activeConversa = conversas.find(c => c.id === activeConversaId);
 
   const filteredConversas = useMemo(() => {
     if (!searchConversas) return conversas;
@@ -48,9 +48,8 @@ export default function Chat() {
 
   return (
     <div className="flex h-[calc(100vh-64px)] -m-8 animate-fade-in">
-      {/* Left panel — Conversation list */}
+      {/* Left panel */}
       <div className="w-80 border-r border-border flex flex-col bg-muted/10 shrink-0">
-        {/* Header */}
         <div className="p-4 border-b border-border space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold flex items-center gap-2">
@@ -63,42 +62,30 @@ export default function Chat() {
           </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar conversas..."
-              value={searchConversas}
-              onChange={e => setSearchConversas(e.target.value)}
-              className="pl-8 h-8 text-xs"
-            />
+            <Input placeholder="Buscar conversas..." value={searchConversas} onChange={e => setSearchConversas(e.target.value)} className="pl-8 h-8 text-xs" />
           </div>
         </div>
 
-        {/* Conversation list */}
         <ScrollArea className="flex-1">
-          {loadingConversas && (
-            <div className="p-4 space-y-3">
-              {[1,2,3].map(i => <Skeleton key={i} className="h-14 w-full" />)}
-            </div>
-          )}
+          {loadingConversas && <div className="p-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-14 w-full" />)}</div>}
           {!loadingConversas && filteredConversas.length === 0 && (
-            <div className="p-8 text-center text-xs text-muted-foreground">
-              Nenhuma conversa encontrada.
-            </div>
+            <div className="p-8 text-center text-xs text-muted-foreground">Nenhuma conversa encontrada.</div>
           )}
           {filteredConversas.map(c => (
-            <ConversaItem
-              key={c.id}
-              conversa={c}
-              isActive={c.id === activeConversaId}
-              onClick={() => setActiveConversaId(c.id)}
-            />
+            <ConversaItem key={c.id} conversa={c} isActive={c.id === activeConversaId} onClick={() => setActiveConversaId(c.id)} />
           ))}
         </ScrollArea>
       </div>
 
-      {/* Right panel — Messages */}
+      {/* Right panel */}
       <div className="flex-1 flex flex-col min-w-0">
         {activeConversaId ? (
-          <MessagePanel conversaId={activeConversaId} userId={user?.id ?? ""} />
+          <MessagePanel
+            conversaId={activeConversaId}
+            userId={user?.id ?? ""}
+            conversa={activeConversa}
+            onAddMembers={() => setShowAddMembers(true)}
+          />
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center space-y-2">
@@ -109,12 +96,20 @@ export default function Chat() {
         )}
       </div>
 
-      {/* New chat dialog */}
-      {showNewChat && (
-        <NewChatOverlay
-          userId={user?.id ?? ""}
-          onClose={() => setShowNewChat(false)}
-          onCreated={(id) => { setActiveConversaId(id); setShowNewChat(false); }}
+      {/* New Chat Sheet */}
+      <NewChatSheet
+        open={showNewChat}
+        onOpenChange={setShowNewChat}
+        userId={user?.id ?? ""}
+        onCreated={(id) => { setActiveConversaId(id); setShowNewChat(false); }}
+      />
+
+      {/* Add Members Sheet */}
+      {activeConversaId && (
+        <AddMembersSheet
+          open={showAddMembers}
+          onOpenChange={setShowAddMembers}
+          conversaId={activeConversaId}
         />
       )}
     </div>
@@ -148,7 +143,7 @@ function ConversaItem({ conversa, isActive, onClick }: { conversa: ChatConversa;
   );
 }
 
-function MessagePanel({ conversaId, userId }: { conversaId: string; userId: string }) {
+function MessagePanel({ conversaId, userId, conversa, onAddMembers }: { conversaId: string; userId: string; conversa?: ChatConversa; onAddMembers: () => void }) {
   const { data: mensagens = [], isLoading } = useMensagens(conversaId);
   const { data: participantes = [] } = useParticipantes(conversaId);
   const sendMessage = useSendMessage();
@@ -158,33 +153,24 @@ function MessagePanel({ conversaId, userId }: { conversaId: string; userId: stri
 
   const [text, setText] = useState("");
   const [showAttach, setShowAttach] = useState(false);
-  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [shareSearch, setShareSearch] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [mensagens]);
 
   const handleSend = async () => {
     if (!text.trim()) return;
+    const t = text.trim();
     setText("");
-    await sendMessage.mutateAsync({
-      conversa_id: conversaId,
-      sender_id: userId,
-      conteudo: text.trim(),
-      tipo: "texto",
-    });
+    await sendMessage.mutateAsync({ conversa_id: conversaId, sender_id: userId, conteudo: t, tipo: "texto" });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,40 +178,19 @@ function MessagePanel({ conversaId, userId }: { conversaId: string; userId: stri
     if (!file) return;
     try {
       const result = await uploadFile.mutateAsync(file);
-      await sendMessage.mutateAsync({
-        conversa_id: conversaId,
-        sender_id: userId,
-        conteudo: result.name,
-        tipo: "arquivo",
-        arquivo_url: result.url,
-        arquivo_nome: result.name,
-      });
-    } catch {
-      // error handled by mutation
-    }
+      await sendMessage.mutateAsync({ conversa_id: conversaId, sender_id: userId, conteudo: result.name, tipo: "arquivo", arquivo_url: result.url, arquivo_nome: result.name });
+    } catch {}
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleShareProcesso = async (processoId: string, numero: string) => {
-    await sendMessage.mutateAsync({
-      conversa_id: conversaId,
-      sender_id: userId,
-      conteudo: `📋 Processo: ${numero}`,
-      tipo: "processo",
-      referencia_id: processoId,
-    });
-    setShowShareMenu(false);
+    await sendMessage.mutateAsync({ conversa_id: conversaId, sender_id: userId, conteudo: `📋 Processo: ${numero}`, tipo: "processo", referencia_id: processoId });
+    setShowShareSheet(false);
   };
 
   const handleShareNegocio = async (negocioId: string, tipo: string | null) => {
-    await sendMessage.mutateAsync({
-      conversa_id: conversaId,
-      sender_id: userId,
-      conteudo: `💼 Negócio: ${tipo ?? "Sem tipo"}`,
-      tipo: "negocio",
-      referencia_id: negocioId,
-    });
-    setShowShareMenu(false);
+    await sendMessage.mutateAsync({ conversa_id: conversaId, sender_id: userId, conteudo: `💼 Negócio: ${tipo ?? "Sem tipo"}`, tipo: "negocio", referencia_id: negocioId });
+    setShowShareSheet(false);
   };
 
   const filteredProcessos = useMemo(() => {
@@ -234,56 +199,47 @@ function MessagePanel({ conversaId, userId }: { conversaId: string; userId: stri
     return processos.filter(p => p.numero_processo.toLowerCase().includes(q) || p.parte_autora.toLowerCase().includes(q)).slice(0, 10);
   }, [processos, shareSearch]);
 
-  const filteredNegocios = useMemo(() => {
-    return negocios.slice(0, 5);
-  }, [negocios]);
+  const filteredNegocios = useMemo(() => negocios.slice(0, 5), [negocios]);
+
+  const isGroup = conversa?.tipo === "grupo";
 
   return (
     <>
       {/* Header */}
-      <div className="h-14 border-b border-border flex items-center px-4 gap-3 shrink-0">
-        <p className="text-sm font-medium">Conversa</p>
-        <Badge variant="secondary" className="text-[10px]">{participantes.length} participante{participantes.length !== 1 ? "s" : ""}</Badge>
+      <div className="h-14 border-b border-border flex items-center px-4 gap-3 shrink-0 justify-between">
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-medium">{conversa?.nome ?? "Conversa"}</p>
+          <Badge variant="secondary" className="text-[10px]">{participantes.length} participante{participantes.length !== 1 ? "s" : ""}</Badge>
+        </div>
+        {isGroup && (
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={onAddMembers}>
+            <UserPlus className="w-3.5 h-3.5" />
+            Adicionar
+          </Button>
+        )}
       </div>
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {isLoading && (
-          <div className="space-y-3">
-            {[1,2,3].map(i => <Skeleton key={i} className="h-12 w-2/3" />)}
-          </div>
-        )}
+        {isLoading && <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-2/3" />)}</div>}
         {!isLoading && mensagens.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground text-xs">
-            Nenhuma mensagem ainda. Comece a conversa!
-          </div>
+          <div className="text-center py-12 text-muted-foreground text-xs">Nenhuma mensagem ainda. Comece a conversa!</div>
         )}
-        {mensagens.map((msg) => (
-          <MessageBubble key={msg.id} msg={msg} isOwn={msg.sender_id === userId} />
-        ))}
+        {mensagens.map(msg => <MessageBubble key={msg.id} msg={msg} isOwn={msg.sender_id === userId} />)}
       </div>
 
       {/* Input */}
       <div className="border-t border-border p-3">
         <div className="flex items-end gap-2">
-          {/* Attach button */}
           <Popover open={showAttach} onOpenChange={setShowAttach}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0">
-                <Paperclip className="w-4 h-4" />
-              </Button>
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0"><Paperclip className="w-4 h-4" /></Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-1" align="start">
-              <button
-                className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2"
-                onClick={() => { fileInputRef.current?.click(); setShowAttach(false); }}
-              >
+              <button className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2" onClick={() => { fileInputRef.current?.click(); setShowAttach(false); }}>
                 <File className="w-3.5 h-3.5" />Enviar Arquivo
               </button>
-              <button
-                className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2"
-                onClick={() => { setShowShareMenu(true); setShowAttach(false); }}
-              >
+              <button className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2" onClick={() => { setShowShareSheet(true); setShowAttach(false); }}>
                 <Scale className="w-3.5 h-3.5" />Compartilhar Processo/Negócio
               </button>
             </PopoverContent>
@@ -291,61 +247,34 @@ function MessagePanel({ conversaId, userId }: { conversaId: string; userId: stri
 
           <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
 
-          <Input
-            placeholder="Digite uma mensagem..."
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 text-sm"
-          />
-          <Button
-            size="sm"
-            className="h-9 w-9 p-0 shrink-0"
-            onClick={handleSend}
-            disabled={!text.trim() || sendMessage.isPending}
-          >
+          <Input placeholder="Digite uma mensagem..." value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 text-sm" />
+          <Button size="sm" className="h-9 w-9 p-0 shrink-0" onClick={handleSend} disabled={!text.trim() || sendMessage.isPending}>
             <Send className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Share process/negocio overlay */}
-      {showShareMenu && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowShareMenu(false)}>
-          <div className="bg-background border border-border rounded-xl w-[420px] max-h-[500px] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Compartilhar</h3>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowShareMenu(false)}><X className="w-4 h-4" /></Button>
-            </div>
-            <div className="p-3">
-              <Input
-                placeholder="Buscar processo..."
-                value={shareSearch}
-                onChange={e => setShareSearch(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-            <ScrollArea className="flex-1 max-h-[350px]">
-              <div className="px-3 pb-2">
+      {/* Share Sheet */}
+      <Sheet open={showShareSheet} onOpenChange={setShowShareSheet}>
+        <SheetContent side="right" className="w-[400px] sm:w-[440px]">
+          <SheetHeader>
+            <SheetTitle>Compartilhar</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <Input placeholder="Buscar processo..." value={shareSearch} onChange={e => setShareSearch(e.target.value)} className="h-9 text-xs" />
+            <ScrollArea className="h-[calc(100vh-200px)]">
+              <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-1 py-1.5">Processos</p>
                 {filteredProcessos.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => handleShareProcesso(p.id, p.numero_processo)}
-                    className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2"
-                  >
+                  <button key={p.id} onClick={() => handleShareProcesso(p.id, p.numero_processo)} className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2">
                     <Scale className="w-3.5 h-3.5 text-primary shrink-0" />
                     <span className="font-mono">{p.numero_processo}</span>
                     <span className="text-muted-foreground truncate">{p.parte_autora}</span>
                   </button>
                 ))}
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-1 py-1.5 mt-2">Negócios</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-1 py-1.5 mt-3">Negócios</p>
                 {filteredNegocios.map(n => (
-                  <button
-                    key={n.id}
-                    onClick={() => handleShareNegocio(n.id, n.tipo_servico)}
-                    className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2"
-                  >
+                  <button key={n.id} onClick={() => handleShareNegocio(n.id, n.tipo_servico)} className="w-full text-left px-3 py-2 text-xs rounded hover:bg-muted flex items-center gap-2">
                     <Briefcase className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>{n.tipo_servico ?? "Sem tipo"}</span>
                     <Badge variant="secondary" className="text-[9px]">{n.negocio_status}</Badge>
@@ -354,8 +283,8 @@ function MessagePanel({ conversaId, userId }: { conversaId: string; userId: stri
               </div>
             </ScrollArea>
           </div>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
@@ -364,7 +293,6 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMensagem; isOwn: boolean }) {
   const isFile = msg.tipo === "arquivo";
   const isProcesso = msg.tipo === "processo";
   const isNegocio = msg.tipo === "negocio";
-
   const fileExt = msg.arquivo_nome?.split(".").pop()?.toLowerCase();
   const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(fileExt ?? "");
 
@@ -372,14 +300,9 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMensagem; isOwn: boolean }) {
     <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
       <div className={cn(
         "max-w-[70%] rounded-2xl px-4 py-2.5 text-sm",
-        isOwn
-          ? "bg-primary text-primary-foreground rounded-br-md"
-          : "bg-muted rounded-bl-md"
+        isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
       )}>
-        {/* Text message */}
         {msg.tipo === "texto" && <p className="whitespace-pre-wrap break-words">{msg.conteudo}</p>}
-
-        {/* File */}
         {isFile && (
           <a href={msg.arquivo_url ?? "#"} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80">
             {isImage ? (
@@ -388,30 +311,20 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMensagem; isOwn: boolean }) {
                 <p className="text-[10px] opacity-70">{msg.arquivo_nome}</p>
               </div>
             ) : (
-              <>
-                <FileText className="w-4 h-4 shrink-0" />
-                <span className="underline text-xs">{msg.arquivo_nome ?? "Arquivo"}</span>
-              </>
+              <><FileText className="w-4 h-4 shrink-0" /><span className="underline text-xs">{msg.arquivo_nome ?? "Arquivo"}</span></>
             )}
           </a>
         )}
-
-        {/* Process share */}
         {isProcesso && (
           <a href={`/processos/${msg.referencia_id}`} className="flex items-center gap-2 hover:opacity-80">
-            <Scale className="w-4 h-4 shrink-0" />
-            <span className="text-xs font-medium">{msg.conteudo}</span>
+            <Scale className="w-4 h-4 shrink-0" /><span className="text-xs font-medium">{msg.conteudo}</span>
           </a>
         )}
-
-        {/* Negocio share */}
         {isNegocio && (
           <div className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4 shrink-0" />
-            <span className="text-xs font-medium">{msg.conteudo}</span>
+            <Briefcase className="w-4 h-4 shrink-0" /><span className="text-xs font-medium">{msg.conteudo}</span>
           </div>
         )}
-
         <p className={cn("text-[9px] mt-1", isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
           {format(new Date(msg.created_at), "HH:mm", { locale: ptBR })}
         </p>
@@ -420,71 +333,55 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMensagem; isOwn: boolean }) {
   );
 }
 
-function NewChatOverlay({ userId, onClose, onCreated }: { userId: string; onClose: () => void; onCreated: (id: string) => void }) {
+/* ─── New Chat Sheet ─── */
+function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean; onOpenChange: (v: boolean) => void; userId: string; onCreated: (id: string) => void }) {
   const [search, setSearch] = useState("");
   const [nome, setNome] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState<{ id: string; nome: string; email: string }[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<{ id: string; nome: string }[]>([]);
   const createConversa = useCreateConversa();
 
-  // Get usuarios for user search (these are system users with test data)
-  const { data: profiles = [] } = useQuery({
+  const { data: usuarios = [] } = useQuery({
     queryKey: ["usuarios-search", search],
     queryFn: async () => {
       let query = supabase.from("usuarios").select("id, nome, email");
-      if (search) {
-        query = query.ilike("nome", `%${search}%`);
-      }
+      if (search) query = query.ilike("nome", `%${search}%`);
       const { data, error } = await query.limit(20);
       if (error) throw error;
-      return (data ?? []).map((u: any) => ({ user_id: u.id, nome: u.nome, email: u.email }));
+      return data ?? [];
     },
   });
+
+  const toggleUser = (u: { id: string; nome: string }) => {
+    setSelectedUsers(prev => prev.some(s => s.id === u.id) ? prev.filter(s => s.id !== u.id) : [...prev, u]);
+  };
 
   const handleCreate = async () => {
     if (selectedUsers.length === 0) return;
     const allIds = [userId, ...selectedUsers.map(u => u.id)];
-    const tipo = allIds.length > 2 ? "grupo" : "direto";
+    const tipo = selectedUsers.length > 1 ? "grupo" : "direto";
     const conversaNome = tipo === "grupo"
-      ? nome || selectedUsers.map(u => u.nome || "Usuário").join(", ")
-      : selectedUsers[0]?.nome || "Conversa";
+      ? nome || selectedUsers.map(u => u.nome).join(", ")
+      : selectedUsers[0].nome;
 
     try {
-      const conversa = await createConversa.mutateAsync({
-        nome: conversaNome,
-        tipo,
-        participantIds: allIds,
-      });
+      const conversa = await createConversa.mutateAsync({ nome: conversaNome, tipo, participantIds: allIds });
+      setSelectedUsers([]);
+      setNome("");
+      setSearch("");
       onCreated(conversa.id);
-    } catch {
-      // error
-    }
-  };
-
-  const toggleUser = (profile: any) => {
-    const exists = selectedUsers.find(u => u.id === profile.user_id);
-    if (exists) {
-      setSelectedUsers(prev => prev.filter(u => u.id !== profile.user_id));
-    } else {
-      setSelectedUsers(prev => [...prev, { id: profile.user_id, nome: profile.nome ?? "Usuário", email: "" }]);
-    }
+    } catch {}
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-background border border-border rounded-xl w-[400px] max-h-[500px] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Nova Conversa</h3>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onClose}><X className="w-4 h-4" /></Button>
-        </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[400px] sm:w-[440px] flex flex-col">
+        <SheetHeader>
+          <SheetTitle>Nova Conversa</SheetTitle>
+        </SheetHeader>
 
-        <div className="p-3 space-y-2">
+        <div className="mt-4 space-y-3 flex-1 flex flex-col min-h-0">
           {selectedUsers.length > 1 && (
-            <Input
-              placeholder="Nome do grupo..."
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              className="h-8 text-xs"
-            />
+            <Input placeholder="Nome do grupo..." value={nome} onChange={e => setNome(e.target.value)} className="h-9 text-xs" />
           )}
 
           {selectedUsers.length > 0 && (
@@ -492,9 +389,7 @@ function NewChatOverlay({ userId, onClose, onCreated }: { userId: string; onClos
               {selectedUsers.map(u => (
                 <Badge key={u.id} variant="secondary" className="text-[10px] gap-1">
                   {u.nome}
-                  <button onClick={() => setSelectedUsers(prev => prev.filter(p => p.id !== u.id))}>
-                    <X className="w-2.5 h-2.5" />
-                  </button>
+                  <button onClick={() => setSelectedUsers(prev => prev.filter(p => p.id !== u.id))}><X className="w-2.5 h-2.5" /></button>
                 </Badge>
               ))}
             </div>
@@ -502,52 +397,118 @@ function NewChatOverlay({ userId, onClose, onCreated }: { userId: string; onClos
 
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar pessoas..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-8 h-8 text-xs"
-            />
+            <Input placeholder="Buscar pessoas..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9 text-xs" />
           </div>
-        </div>
 
-        <ScrollArea className="flex-1 max-h-[250px]">
-          <div className="px-3 pb-3 space-y-0.5">
-            {profiles.map((p: any) => {
-              const isSelected = selectedUsers.some(u => u.id === p.user_id);
-              return (
-                <button
-                  key={p.user_id}
-                  onClick={() => toggleUser(p)}
-                  className={cn(
-                    "w-full text-left px-3 py-2 text-xs rounded flex items-center gap-2 transition-colors",
+          <ScrollArea className="flex-1">
+            <div className="space-y-0.5">
+              {usuarios.map(u => {
+                const isSelected = selectedUsers.some(s => s.id === u.id);
+                return (
+                  <button key={u.id} onClick={() => toggleUser({ id: u.id, nome: u.nome })} className={cn(
+                    "w-full text-left px-3 py-2.5 text-xs rounded-lg flex items-center gap-3 transition-colors",
                     isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                  )}
-                >
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-[10px] shrink-0">
-                    {(p.nome ?? "?")[0]?.toUpperCase()}
-                  </div>
-                  <span className="font-medium">{p.nome ?? "Usuário"}</span>
-                </button>
-              );
-            })}
-            {profiles.length === 0 && (
-              <p className="text-center text-xs text-muted-foreground py-4">Nenhuma pessoa encontrada</p>
-            )}
-          </div>
-        </ScrollArea>
+                  )}>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                      {u.nome[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium">{u.nome}</p>
+                      <p className="text-[10px] text-muted-foreground">{u.email}</p>
+                    </div>
+                    {isSelected && <Badge variant="default" className="text-[9px]">✓</Badge>}
+                  </button>
+                );
+              })}
+              {usuarios.length === 0 && <p className="text-center text-xs text-muted-foreground py-6">Nenhuma pessoa encontrada</p>}
+            </div>
+          </ScrollArea>
 
-        <div className="p-3 border-t border-border">
-          <Button
-            className="w-full text-xs"
-            size="sm"
-            onClick={handleCreate}
-            disabled={selectedUsers.length === 0 || createConversa.isPending}
-          >
-            {createConversa.isPending ? "Criando..." : `Iniciar Conversa (${selectedUsers.length})`}
+          <Button className="w-full" onClick={handleCreate} disabled={selectedUsers.length === 0 || createConversa.isPending}>
+            {createConversa.isPending ? "Criando..." : selectedUsers.length > 1 ? `Criar Grupo (${selectedUsers.length})` : "Iniciar Conversa"}
           </Button>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/* ─── Add Members Sheet ─── */
+function AddMembersSheet({ open, onOpenChange, conversaId }: { open: boolean; onOpenChange: (v: boolean) => void; conversaId: string }) {
+  const [search, setSearch] = useState("");
+  const [adding, setAdding] = useState(false);
+  const queryClient = useQueryClient();
+  const { data: participantes = [] } = useParticipantes(conversaId);
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ["usuarios-add-members", search],
+    queryFn: async () => {
+      let query = supabase.from("usuarios").select("id, nome, email");
+      if (search) query = query.ilike("nome", `%${search}%`);
+      const { data, error } = await query.limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const participantIds = participantes.map(p => p.user_id);
+  const available = usuarios.filter(u => !participantIds.includes(u.id));
+
+  const handleAdd = async (userId: string) => {
+    setAdding(true);
+    try {
+      await supabase.from("chat_participantes").insert({ conversa_id: conversaId, user_id: userId });
+      queryClient.invalidateQueries({ queryKey: ["chat-participantes", conversaId] });
+    } catch {}
+    setAdding(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[400px] sm:w-[440px] flex flex-col">
+        <SheetHeader>
+          <SheetTitle>Adicionar Membros</SheetTitle>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-3 flex-1 flex flex-col min-h-0">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input placeholder="Buscar pessoas..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9 text-xs" />
+          </div>
+
+          {participantes.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Participantes atuais ({participantes.length})</p>
+              <div className="flex flex-wrap gap-1">
+                {participantes.map(p => (
+                  <Badge key={p.id} variant="outline" className="text-[10px]">{p.user_id.slice(0, 8)}…</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <ScrollArea className="flex-1">
+            <div className="space-y-0.5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Disponíveis</p>
+              {available.map(u => (
+                <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                    {u.nome[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium">{u.nome}</p>
+                    <p className="text-[10px] text-muted-foreground">{u.email}</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleAdd(u.id)} disabled={adding}>
+                    <UserPlus className="w-3 h-3 mr-1" />Adicionar
+                  </Button>
+                </div>
+              ))}
+              {available.length === 0 && <p className="text-center text-xs text-muted-foreground py-6">Todos já estão no grupo</p>}
+            </div>
+          </ScrollArea>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
