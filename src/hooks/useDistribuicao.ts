@@ -2,20 +2,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Processo } from "./useProcessos";
 
+export type RegraEquipe = {
+  id: string;
+  regra_id: string;
+  equipe_id: string;
+  peso: number;
+};
+
 export type RegraRoteamento = {
   id: string;
   nome: string;
-  equipe_id: string;
+  equipe_id: string; // legacy, kept for backward compat
   criterio_tribunal: string[];
   criterio_natureza: string[];
   criterio_tipo_pagamento: string[];
-  entidade: string; // 'processo' | 'negocio'
+  entidade: string;
   criterio_tipo_servico: string[];
   criterio_valor_min: number | null;
   criterio_valor_max: number | null;
   ativa: boolean;
   prioridade: number;
   created_at: string;
+  // joined
+  regra_equipes?: RegraEquipe[];
 };
 
 // Processos aptos sem analista
@@ -98,21 +107,28 @@ export function useTrocarAnalista() {
   });
 }
 
-// CRUD regras de roteamento
+// CRUD regras de roteamento (with joined equipes)
 export function useRegrasRoteamento(entidade?: string) {
   return useQuery({
     queryKey: ["regras-roteamento", entidade],
     queryFn: async () => {
       let query = supabase
         .from("regras_roteamento")
-        .select("*")
+        .select("*, regra_equipes(*)")
         .order("prioridade", { ascending: true });
       if (entidade) {
         query = query.eq("entidade", entidade);
       }
       const { data, error } = await query;
       if (error) throw error;
-      return data as RegraRoteamento[];
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        criterio_tribunal: r.criterio_tribunal ?? [],
+        criterio_natureza: r.criterio_natureza ?? [],
+        criterio_tipo_pagamento: r.criterio_tipo_pagamento ?? [],
+        criterio_tipo_servico: r.criterio_tipo_servico ?? [],
+        regra_equipes: r.regra_equipes ?? [],
+      })) as RegraRoteamento[];
     },
   });
 }
@@ -120,9 +136,20 @@ export function useRegrasRoteamento(entidade?: string) {
 export function useCreateRegra() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (regra: Omit<RegraRoteamento, "id" | "created_at">) => {
-      const { error } = await supabase.from("regras_roteamento").insert(regra);
+    mutationFn: async (input: {
+      regra: Omit<RegraRoteamento, "id" | "created_at" | "regra_equipes">;
+      equipes: { equipe_id: string; peso: number }[];
+    }) => {
+      const { regra, equipes } = input;
+      // Use first equipe as legacy equipe_id
+      const regraData = { ...regra, equipe_id: equipes[0]?.equipe_id ?? regra.equipe_id };
+      const { data, error } = await supabase.from("regras_roteamento").insert(regraData).select("id").single();
       if (error) throw error;
+      if (equipes.length > 0) {
+        const rows = equipes.map(e => ({ regra_id: data.id, equipe_id: e.equipe_id, peso: e.peso }));
+        const { error: eqError } = await supabase.from("regra_equipes").insert(rows);
+        if (eqError) throw eqError;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["regras-roteamento"] }),
   });
@@ -131,9 +158,27 @@ export function useCreateRegra() {
 export function useUpdateRegra() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<RegraRoteamento> }) => {
-      const { error } = await supabase.from("regras_roteamento").update(updates).eq("id", id);
+    mutationFn: async (input: {
+      id: string;
+      updates: Partial<RegraRoteamento>;
+      equipes?: { equipe_id: string; peso: number }[];
+    }) => {
+      const { id, updates, equipes } = input;
+      const { regra_equipes, ...cleanUpdates } = updates as any;
+      if (equipes) {
+        cleanUpdates.equipe_id = equipes[0]?.equipe_id ?? cleanUpdates.equipe_id;
+      }
+      const { error } = await supabase.from("regras_roteamento").update(cleanUpdates).eq("id", id);
       if (error) throw error;
+      if (equipes) {
+        // Replace all equipe associations
+        await supabase.from("regra_equipes").delete().eq("regra_id", id);
+        if (equipes.length > 0) {
+          const rows = equipes.map(e => ({ regra_id: id, equipe_id: e.equipe_id, peso: e.peso }));
+          const { error: eqError } = await supabase.from("regra_equipes").insert(rows);
+          if (eqError) throw eqError;
+        }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["regras-roteamento"] }),
   });
@@ -152,7 +197,7 @@ export function useDeleteRegra() {
 
 type MembroComPeso = { equipe_id: string; usuario_id: string; peso: number };
 
-// Distribuição automática com pesos
+// Distribuição automática com pesos (multi-team)
 export function useDistribuicaoAutomatica() {
   const qc = useQueryClient();
   return useMutation({
@@ -161,7 +206,6 @@ export function useDistribuicaoAutomatica() {
       regras: RegraRoteamento[];
       membros: MembroComPeso[];
     }) => {
-      // Track current workload per analyst
       const { data: currentProcessos } = await supabase
         .from("processos")
         .select("analista_id")
@@ -174,12 +218,9 @@ export function useDistribuicaoAutomatica() {
       });
 
       const updates: { id: string; analista_id: string; equipe_id: string }[] = [];
-
-      // Check for conflicting rules (same criteria matching multiple rules)
       const activeRegras = regras.filter(r => r.ativa && r.entidade === "processo").sort((a, b) => a.prioridade - b.prioridade);
 
       for (const p of processos) {
-        // Find first matching rule (by priority)
         const regra = activeRegras.find(r => {
           const matchTribunal = r.criterio_tribunal.length === 0 || r.criterio_tribunal.includes(p.tribunal);
           const matchNatureza = r.criterio_natureza.length === 0 || r.criterio_natureza.includes(p.natureza);
@@ -189,18 +230,37 @@ export function useDistribuicaoAutomatica() {
 
         if (!regra) continue;
 
-        const equipeMembros = membros.filter(m => m.equipe_id === regra.equipe_id);
+        // Get teams for this rule (from junction table or fallback to legacy equipe_id)
+        const regraEquipes = regra.regra_equipes && regra.regra_equipes.length > 0
+          ? regra.regra_equipes
+          : [{ equipe_id: regra.equipe_id, peso: 100 }];
+
+        // Step 1: Pick the best team (weighted by team peso and team workload)
+        let bestTeamEquipeId = regraEquipes[0].equipe_id;
+        if (regraEquipes.length > 1) {
+          let bestTeamScore = Infinity;
+          for (const re of regraEquipes) {
+            const teamMembers = membros.filter(m => m.equipe_id === re.equipe_id);
+            const teamLoad = teamMembers.reduce((sum, m) => sum + (workload[m.usuario_id] ?? 0), 0);
+            const teamPeso = re.peso || 100;
+            const score = teamLoad / (teamPeso / 100);
+            if (score < bestTeamScore) {
+              bestTeamScore = score;
+              bestTeamEquipeId = re.equipe_id;
+            }
+          }
+        }
+
+        // Step 2: Pick the best member within the chosen team
+        const equipeMembros = membros.filter(m => m.equipe_id === bestTeamEquipeId);
         if (equipeMembros.length === 0) continue;
 
-        // Weighted distribution: pick member with lowest (workload / peso)
-        // Lower ratio = should receive more work
         let bestMember = equipeMembros[0];
         let bestScore = Infinity;
-
         for (const m of equipeMembros) {
           const load = workload[m.usuario_id] ?? 0;
           const peso = m.peso || 100;
-          const score = load / (peso / 100); // normalized: more peso = lower score
+          const score = load / (peso / 100);
           if (score < bestScore) {
             bestScore = score;
             bestMember = m;
@@ -210,10 +270,9 @@ export function useDistribuicaoAutomatica() {
         updates.push({
           id: p.id,
           analista_id: bestMember.usuario_id,
-          equipe_id: regra.equipe_id,
+          equipe_id: bestTeamEquipeId,
         });
 
-        // Update local workload tracker
         workload[bestMember.usuario_id] = (workload[bestMember.usuario_id] ?? 0) + 1;
       }
 
