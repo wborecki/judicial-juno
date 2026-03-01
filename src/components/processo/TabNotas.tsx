@@ -44,29 +44,17 @@ export default function TabNotas({ processoId }: Props) {
 
   return (
     <div className="space-y-3">
-      {showForm ? (
-        <div className="space-y-2">
-          <Textarea
-            placeholder="Escreva uma nota interna..."
-            value={conteudo}
-            onChange={(e) => setConteudo(e.target.value)}
-            className="min-h-[80px] text-sm"
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleAdd} disabled={createNota.isPending || !conteudo.trim()} className="text-xs gap-1.5">
-              <Plus className="w-3.5 h-3.5" />Salvar
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => { setShowForm(false); setConteudo(""); }} className="text-xs">
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="text-xs gap-1.5">
-          <Plus className="w-3.5 h-3.5" />Nova Nota
+      <div className="space-y-2">
+        <Textarea
+          placeholder="Escreva uma nota interna..."
+          value={conteudo}
+          onChange={(e) => setConteudo(e.target.value)}
+          className="min-h-[80px] text-sm"
+        />
+        <Button size="sm" onClick={handleAdd} disabled={createNota.isPending || !conteudo.trim()} className="text-xs gap-1.5">
+          <Plus className="w-3.5 h-3.5" />Salvar Nota
         </Button>
-      )}
+      </div>
 
       {isLoading ? (
         <p className="text-xs text-muted-foreground">Carregando...</p>
