@@ -103,8 +103,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
   if (processo.classe_fase) detailFields.push({ label: "Classe Judicial", value: processo.classe_fase });
   if (p.assunto) detailFields.push({ label: "Assunto", value: p.assunto });
   detailFields.push({ label: "Valor da Causa", value: fmt(processo.valor_estimado) });
-  if (p.orgao_julgador) detailFields.push({ label: "Órgão Julgador", value: p.orgao_julgador });
-  if (processo.vara_comarca) detailFields.push({ label: "Vara / Comarca", value: processo.vara_comarca });
+  if (processo.vara_comarca || p.orgao_julgador) detailFields.push({ label: "Vara / Comarca", value: processo.vara_comarca || p.orgao_julgador });
   if (p.area) detailFields.push({ label: "Área", value: p.area });
   if (p.foro) detailFields.push({ label: "Foro", value: p.foro });
   if (p.juiz) detailFields.push({ label: "Juiz", value: p.juiz });
