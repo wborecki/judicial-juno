@@ -17,7 +17,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, Briefcase } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, Briefcase, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 import PessoaSheet from "@/components/PessoaSheet";
@@ -133,14 +138,39 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5">{processo.tribunal}</Badge>
                 <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.natureza}</Badge>
-                <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.tipo_pagamento}</Badge>
+
+                {/* Tipo Pagamento - editable */}
+                <EditableBadge
+                  value={processo.tipo_pagamento}
+                  options={[
+                    { value: "RPV", label: "RPV" },
+                    { value: "Precatório", label: "Precatório" },
+                    { value: "Alvará", label: "Alvará" },
+                    { value: "Depósito Judicial", label: "Depósito Judicial" },
+                    { value: "Outro", label: "Outro" },
+                  ]}
+                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { tipo_pagamento: v } }).then(() => toast.success("Tipo atualizado"))}
+                />
+
                 {processo.classe_fase && <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.classe_fase}</Badge>}
-                <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">
-                  S{processo.status_processo} — {STATUS_LABELS[processo.status_processo] ?? "—"}
-                </Badge>
-                <Badge variant="secondary" className={`rounded-full text-[11px] px-2.5 py-0.5 ${processo.transito_julgado ? "bg-success/10 text-success" : ""}`}>
-                  Trânsito: {processo.transito_julgado ? "Sim" : "Não"}
-                </Badge>
+
+                {/* Status Processo - editable */}
+                <EditableBadge
+                  value={`S${processo.status_processo} — ${STATUS_LABELS[processo.status_processo] ?? "—"}`}
+                  options={Object.entries(STATUS_LABELS).map(([k, v]) => ({ value: k, label: `S${k} — ${v}` }))}
+                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { status_processo: Number(v) } }).then(() => toast.success("Status atualizado"))}
+                />
+
+                {/* Trânsito Julgado - editable */}
+                <EditableBadge
+                  value={`Trânsito: ${processo.transito_julgado ? "Sim" : "Não"}`}
+                  className={processo.transito_julgado ? "bg-success/10 text-success" : ""}
+                  options={[
+                    { value: "true", label: "Trânsito: Sim" },
+                    { value: "false", label: "Trânsito: Não" },
+                  ]}
+                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { transito_julgado: v === "true" } }).then(() => toast.success("Trânsito atualizado"))}
+                />
               </div>
 
               {/* Action buttons */}
@@ -238,5 +268,48 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
         cpfCnpj={pessoaSheetData.cpfCnpj}
       />
     </>
+  );
+}
+
+function EditableBadge({
+  value,
+  options,
+  onSave,
+  className = "",
+}: {
+  value: string;
+  options: { value: string; label: string }[];
+  onSave: (value: string) => Promise<any>;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className={`inline-flex items-center gap-1 rounded-full text-[11px] px-2.5 py-0.5 border cursor-pointer transition-colors hover:bg-accent bg-secondary text-secondary-foreground border-transparent ${className}`}>
+          {value}
+          <ChevronDown className="w-3 h-3 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-1 min-w-[160px]" align="start">
+        {options.map(opt => (
+          <button
+            key={opt.value}
+            className="w-full text-left text-xs px-3 py-1.5 rounded-sm hover:bg-accent transition-colors"
+            onClick={async () => {
+              try {
+                await onSave(opt.value);
+                setOpen(false);
+              } catch {
+                toast.error("Erro ao atualizar");
+              }
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }
