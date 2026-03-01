@@ -1,92 +1,82 @@
 
 
-## Plano: Supabase + Tela de Detalhe estilo Salesforce
+## Reestruturação do Modelo de Dados — Separar Negócios de Processos + Criar Contatos
 
-### 1. Conectar Lovable Cloud (Supabase)
+### Problema Atual
+Hoje, a tabela `processos` acumula campos de negócio (`negocio_status`, `valor_proposta`, `valor_fechamento`, `data_fechamento`, `tipo_servico`). Isso mistura conceitos: um processo judicial é diferente de um negócio/oportunidade comercial. Além disso, não existe a entidade "contatos" (telefone, email de contato ligados a uma pessoa).
 
-Ativar o Lovable Cloud e criar as tabelas:
-
-```text
-pessoas (id, nome, cpf_cnpj, email, telefone, endereco, cidade, uf, tipo, created_at)
-equipes (id, nome, tipo, ativa, created_at)
-usuarios (id, nome, email, equipe_id FK, cargo, avatar_url, ativo, created_at)
-equipe_membros (id, equipe_id FK, usuario_id FK)  -- relação N:N
-
-processos (id, numero_processo, tribunal, natureza, tipo_pagamento, 
-  status_processo, transito_julgado, parte_autora, parte_re, 
-  valor_estimado, data_distribuicao, data_captacao,
-  triagem_resultado, triagem_observacoes, triagem_data, triagem_por FK,
-  pipeline_status, pessoa_id FK, equipe_id FK, analista_id FK,
-  -- campos de precificação (preenchidos depois)
-  valor_precificado, precificacao_data, precificado_por FK,
-  -- campos comercial
-  tipo_servico, valor_proposta, valor_fechamento,
-  data_fechamento, negocio_status,
-  created_at, updated_at)
-```
-
-Unifica `ProcessoLead` e `Negocio` em uma única tabela `processos` que acompanha o lead por todo o pipeline -- como o usuário pediu.
-
-Seed data com os mesmos dados mock atuais via migration.
-
-### 2. Tela de Detalhe do Processo (estilo Salesforce)
-
-Substituir o `TriageModal` por uma página dedicada `/processos/:id`:
+### Novo Modelo de Dados
 
 ```text
-┌──────────────────────────────────────────────────────────┐
-│  ← Voltar    #0001234-56.2024...    [Pipeline: Triagem ▾]│
-│  Maria Silva Santos · TJSP · Precatório · R$ 85.000     │
-├──────────────────────────────────────────────────────────┤
-│  [Dados do Processo] [Triagem] [Análise] [Precif.] [Com]│
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌─ Informações Gerais ──────┐  ┌─ Triagem ───────────┐ │
-│  │ Tribunal: TJSP            │  │ Resultado: Pendente  │ │
-│  │ Natureza: Cível           │  │ Trânsito: Sim        │ │
-│  │ Tipo Pgto: Precatório     │  │ Status: S3           │ │
-│  │ Parte Autora: Maria...    │  │ Observações: ...     │ │
-│  │ Parte Ré: INSS            │  │                      │ │
-│  │ Valor Est: R$ 85.000      │  │ [Apto] [Reanálise]   │ │
-│  │ Data Dist: 15/03/2024     │  │ [Descartar]          │ │
-│  └───────────────────────────┘  └──────────────────────┘ │
-│                                                          │
-│  ┌─ Timeline / Histórico ────────────────────────────┐   │
-│  │ 27/02 - Lead captado                              │   │
-│  │ 27/02 - Enviado para triagem                      │   │
-│  └───────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────┘
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   processos  │────→│   negocios   │────→│   pessoas    │
+│              │ 1:N │              │     │              │
+│ dados do     │     │ tipo_servico │     │ nome, cpf    │
+│ processo     │     │ status       │     │ tipo         │
+│ judicial     │     │ valor_prop.  │     └──────┬───────┘
+│ triagem      │     │ valor_fech.  │            │ 1:N
+│ pipeline     │     │ data_fech.   │     ┌──────┴───────┐
+│ análise      │     │ observacoes  │     │   contatos   │
+└──────────────┘     └──────────────┘     │              │
+                                          │ tipo (tel,   │
+┌──────────────┐     ┌──────────────┐     │  email, etc) │
+│   equipes    │────→│equipe_membros│     │ valor        │
+└──────────────┘     └──────┬───────┘     │ principal    │
+                            │             └──────────────┘
+                     ┌──────┴───────┐
+                     │   usuarios   │
+                     └──────────────┘
 ```
 
-Campos editáveis inline. Tabs para seções do pipeline (dados visíveis conforme a etapa avança). Botões de ação contextual por etapa.
+### Etapa 1 — Migration: Criar tabela `negocios`
 
-### 3. Etapas de Implementação
+Nova tabela `negocios` com:
+- `id`, `processo_id` (FK → processos), `pessoa_id` (FK → pessoas)
+- `tipo_servico`, `negocio_status` (em_andamento, ganho, perdido)
+- `valor_proposta`, `valor_fechamento`, `data_abertura`, `data_fechamento`
+- `responsavel_id` (FK → usuarios), `observacoes`
+- `created_at`, `updated_at`
+- RLS permissiva (fase dev)
 
-**Etapa 1 -- Supabase schema + seed**
-- Criar tabela `pessoas`, `equipes`, `usuarios`, `equipe_membros`, `processos`
-- RLS básica (sem auth por enquanto, policies permissivas para desenvolvimento)
-- Seed com dados mock atuais
+Migrar dados existentes: INSERT INTO `negocios` SELECT dos campos de negócio que já estão em `processos` (onde `negocio_status IS NOT NULL`).
 
-**Etapa 2 -- Hooks e integração de dados**
-- Criar hooks com TanStack Query: `useProcessos`, `usePessoas`, `useEquipes`, `useProcesso(id)`
-- Substituir imports de mock-data pelos hooks em todas as páginas
+Remover colunas de negócio da tabela `processos`: `negocio_status`, `valor_proposta`, `valor_fechamento`, `data_fechamento`, `tipo_servico`.
 
-**Etapa 3 -- Página de detalhe do processo**
-- Nova rota `/processos/:id` com layout Salesforce-like
-- Seções: Dados Gerais, Triagem (com botões Apto/Descartar/Reanálise), Timeline
-- Tabs para etapas futuras (Análise, Precificação, Comercial) -- visíveis mas desabilitadas até o processo chegar lá
-- Na tabela de triagem, clicar no processo navega para `/processos/:id` em vez de abrir modal
+### Etapa 2 — Migration: Criar tabela `contatos`
 
-**Etapa 4 -- Atualizar páginas existentes**
-- Dashboard, Triagem, Pessoas, Equipes: todos lendo do Supabase
-- Triagem: tabela com link para detalhe, sem modal
-- Pessoas/Equipes: CRUD funcional com Supabase
+Nova tabela `contatos`:
+- `id`, `pessoa_id` (FK → pessoas)
+- `tipo` (telefone, email, whatsapp, outro)
+- `valor` (o número/email em si)
+- `principal` (boolean, default false)
+- `observacoes`
+- `created_at`
+- RLS permissiva (fase dev)
+
+### Etapa 3 — Hooks e tipos
+
+- Criar `useNegocios.ts` com queries para listar, buscar por ID, criar e atualizar negócios
+- Criar `useContatos.ts` com queries para listar contatos de uma pessoa
+- Atualizar `useProcessos.ts` removendo campos de negócio do tipo `Processo`
+- Atualizar `src/lib/types.ts` com as novas interfaces
+
+### Etapa 4 — Atualizar páginas
+
+- **Negocios.tsx**: Buscar da tabela `negocios` (join com processos e pessoas) em vez de filtrar processos
+- **ProcessoDetalhe.tsx**: Aba "Comercial" agora lista/cria negócios vinculados ao processo. Botão "Criar Negócio" quando processo está apto
+- **Dashboard.tsx**: Ajustar KPIs para consultar `negocios` separadamente
+- **Pessoas.tsx**: Adicionar coluna/seção de contatos
+- **CrmSidebar.tsx**: Adicionar "Contatos" ao menu de Cadastros (opcional, pode ficar dentro de Pessoas)
+
+### Etapa 5 — Seed data
+
+- Inserir negócios de exemplo nas diferentes fases
+- Inserir contatos vinculados às pessoas existentes
 
 ### Detalhes Técnicos
 
-- Supabase client via `@supabase/supabase-js` (já disponível com Lovable Cloud)
-- TanStack Query para cache e mutations
-- Tabela unificada `processos` com `pipeline_status` controlando em qual etapa está
-- Campos de precificação/comercial ficam null até o processo chegar nessas etapas
-- Componente `ProcessoDetail` com layout de grid 2 colunas, cards por seção
+- A migration será feita em uma única SQL com: CREATE TABLE negocios, INSERT INTO negocios (migração), ALTER TABLE processos DROP COLUMN (5 colunas), CREATE TABLE contatos
+- O `pipeline_status` do processo continua existindo (captado → triagem → distribuido → em_analise → precificado → comercial), mas "ganho"/"perdido" passam a ser status do negócio, não do processo
+- Um processo pode ter múltiplos negócios (ex: compra de crédito + compensação tributária)
+- Contatos ficam dentro da página de detalhe da Pessoa, sem rota separada
 
