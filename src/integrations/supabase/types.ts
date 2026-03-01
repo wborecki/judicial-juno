@@ -357,6 +357,48 @@ export type Database = {
           },
         ]
       }
+      negocio_campos_valores: {
+        Row: {
+          campo_id: string
+          created_at: string
+          id: string
+          negocio_id: string
+          updated_at: string
+          valor: string | null
+        }
+        Insert: {
+          campo_id: string
+          created_at?: string
+          id?: string
+          negocio_id: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Update: {
+          campo_id?: string
+          created_at?: string
+          id?: string
+          negocio_id?: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negocio_campos_valores_campo_id_fkey"
+            columns: ["campo_id"]
+            isOneToOne: false
+            referencedRelation: "campos_analise"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negocio_campos_valores_negocio_id_fkey"
+            columns: ["negocio_id"]
+            isOneToOne: false
+            referencedRelation: "negocios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       negocio_pipelines: {
         Row: {
           created_at: string
