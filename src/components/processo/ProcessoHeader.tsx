@@ -249,68 +249,69 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
               {processo.precificacao_data && <span>Precificação: {formatDate(processo.precificacao_data)}</span>}
             </div>
 
-            {/* Partes row - clickable names */}
-            <div className="flex items-center gap-6 text-xs flex-wrap">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <User className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span className="text-[10px] text-muted-foreground uppercase">Autor:</span>
-                {primeiroAutor ? (
-                  <button
-                    onClick={() => openPessoaSheet(primeiroAutor)}
-                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
-                  >
-                    {primeiroAutor.nome}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => openPessoaSheetByName(processo.parte_autora)}
-                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
-                  >
-                    {processo.parte_autora}
-                  </button>
-                )}
-                {primeiroAutor?.cpf_cnpj && <span className="text-muted-foreground">({primeiroAutor.cpf_cnpj})</span>}
-              </div>
-
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                <span className="text-[10px] text-muted-foreground uppercase">Réu:</span>
-                {primeiroReu ? (
-                  <button
-                    onClick={() => openPessoaSheet(primeiroReu)}
-                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
-                  >
-                    {primeiroReu.nome}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => openPessoaSheetByName(processo.parte_re)}
-                    className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[200px]"
-                  >
-                    {processo.parte_re}
-                  </button>
-                )}
-              </div>
-
-              {/* Advogados */}
-              {(advogadosAutor.length > 0 || advogadosGeral.length > 0) && (
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Gavel className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-[10px] text-muted-foreground uppercase">Adv:</span>
-                  {[...advogadosAutor, ...advogadosGeral].slice(0, 2).map((adv, i) => (
-                    <span key={adv.id}>
-                      {i > 0 && <span className="text-muted-foreground">, </span>}
-                      <button
-                        onClick={() => openPessoaSheet(adv)}
-                        className="font-medium text-primary hover:underline cursor-pointer"
-                      >
-                        {adv.nome}
-                      </button>
-                      {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">(OAB {adv.advogado_oab})</span>}
-                    </span>
-                  ))}
+            {/* Partes with hierarchy: Autor + Adv Autor | Réu + Adv Réu */}
+            <div className="flex items-start gap-8 text-xs flex-wrap">
+              {/* Polo Ativo */}
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Autor:</span>
+                  {primeiroAutor ? (
+                    <button onClick={() => openPessoaSheet(primeiroAutor)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
+                      {primeiroAutor.nome}
+                    </button>
+                  ) : (
+                    <button onClick={() => openPessoaSheetByName(processo.parte_autora)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
+                      {processo.parte_autora}
+                    </button>
+                  )}
+                  {primeiroAutor?.cpf_cnpj && <span className="text-muted-foreground">({primeiroAutor.cpf_cnpj})</span>}
                 </div>
-              )}
+                {advogadosAutor.length > 0 && (
+                  <div className="flex items-center gap-1.5 ml-5">
+                    <Gavel className="w-3 h-3 text-muted-foreground shrink-0" />
+                    <span className="text-[10px] text-muted-foreground">Adv. Autor:</span>
+                    {advogadosAutor.map((adv, i) => (
+                      <span key={adv.id}>
+                        {i > 0 && <span className="text-muted-foreground">, </span>}
+                        <button onClick={() => openPessoaSheet(adv)} className="font-medium text-primary hover:underline cursor-pointer">{adv.nome}</button>
+                        {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">({adv.advogado_oab})</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Polo Passivo */}
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Réu:</span>
+                  {primeiroReu ? (
+                    <button onClick={() => openPessoaSheet(primeiroReu)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
+                      {primeiroReu.nome}
+                    </button>
+                  ) : (
+                    <button onClick={() => openPessoaSheetByName(processo.parte_re)} className="font-medium text-primary hover:underline cursor-pointer truncate max-w-[220px]">
+                      {processo.parte_re}
+                    </button>
+                  )}
+                  {primeiroReu?.cpf_cnpj && <span className="text-muted-foreground">({primeiroReu.cpf_cnpj})</span>}
+                </div>
+                {advogadosReu.length > 0 && (
+                  <div className="flex items-center gap-1.5 ml-5">
+                    <Gavel className="w-3 h-3 text-muted-foreground shrink-0" />
+                    <span className="text-[10px] text-muted-foreground">Adv. Réu:</span>
+                    {advogadosReu.map((adv, i) => (
+                      <span key={adv.id}>
+                        {i > 0 && <span className="text-muted-foreground">, </span>}
+                        <button onClick={() => openPessoaSheet(adv)} className="font-medium text-primary hover:underline cursor-pointer">{adv.nome}</button>
+                        {adv.advogado_oab && <span className="text-muted-foreground ml-0.5">({adv.advogado_oab})</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Observações inline */}
