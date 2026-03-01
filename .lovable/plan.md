@@ -1,67 +1,42 @@
 
+## Problema
 
-## Plano: Distribuição e Controle de Análise de Processos
+Existem **duas barras de rolagem sobrepostas** porque a cadeia de containers cria scroll duplicado:
 
-### Contexto
-O sistema já tem `analista_id`, `equipe_id`, `distribuido_em` e `distribuido_por` na tabela `processos`. Precisa-se de:
-1. Visibilidade de quem está analisando cada processo
-2. Capacidade de trocar o analista
-3. Página de Distribuição funcional com roteamento automático/manual
-4. Configuração de regras de roteamento por equipe
+```text
+AppLayout
+ └─ <main overflow-y-auto>          ← scroll 1
+     └─ ConfiguracoesLayout
+         └─ <div overflow-y-auto>   ← scroll 2 (conteúdo)
+```
 
-### Mudanças
+O `main` rola o conteúdo inteiro, e dentro dele o `ConfiguracoesLayout` também rola. O mesmo padrão se repete na página de Chat e em Processos, que gerenciam seu próprio scroll interno.
 
-**1. Nova tabela `regras_roteamento`** (migração)
-- Armazena regras de distribuição automática
-- Campos: `id`, `nome`, `equipe_id`, `criterio_tribunal` (jsonb array), `criterio_natureza` (jsonb array), `criterio_tipo_pagamento` (jsonb array), `ativa`, `prioridade` (int), `created_at`
-- RLS permissiva (dev)
+## Solução
 
-**2. Página `Distribuicao.tsx` — Implementação completa**
-- Lista processos com `triagem_resultado = 'apto'` e `analista_id IS NULL` (fila de distribuição)
-- Tabela compacta: nº processo, tribunal, natureza, tipo pgto, valor, captação
-- Seleção múltipla (checkboxes) para distribuição em lote
-- Botão "Distribuir Selecionados" abre sheet lateral para escolher equipe + analista
-- Distribuição automática: botão que aplica regras de roteamento (match por tribunal/natureza/tipo_pagamento → atribui à equipe correspondente, round-robin entre membros)
-- Ao distribuir: seta `analista_id`, `equipe_id`, `distribuido_em`, `distribuido_por`, `pipeline_status = 'distribuido'`
+Aplicar uma regra simples: **páginas que gerenciam seu próprio layout (configurações, chat, processos, análise) devem receber `overflow-hidden` no `main`, delegando o scroll para o filho.** Páginas simples continuam usando o scroll do `main`.
 
-**3. Página `Analise.tsx` — Implementação completa**
-- Lista processos com `analista_id IS NOT NULL` e `pipeline_status IN ('distribuido', 'em_analise')`
-- Mostra analista responsável (avatar + nome) em cada linha
-- Filtro por equipe e analista
-- Ação de trocar analista via dropdown em cada linha
-- Badge de status: "Aguardando Análise", "Em Análise"
+### Alterações
 
-**4. `ProcessoHeader.tsx` — Exibir analista responsável**
-- Novo campo no header do detalhe do processo mostrando o analista atribuído
-- Dropdown editável para trocar analista (lista de usuários ativos)
-- Badge de equipe atribuída
+1. **`AppLayout.tsx`** — Quando a rota é full-width (`/configuracoes`, `/chat`), usar `overflow-hidden` no `main` em vez de `overflow-y-auto`, para que o filho controle o scroll:
+   ```tsx
+   <main className={cn("flex-1", isFullWidth ? "overflow-hidden" : "overflow-y-auto")}>
+   ```
 
-**5. `Processos.tsx` — Coluna de analista**
-- Nova coluna "Analista" na tabela de processos mostrando nome/iniciais do responsável
-- Filtro por analista no painel de filtros
+2. **`ConfiguracoesLayout.tsx`** — Trocar `min-h-screen` por `h-full` no container raiz (ele já está dentro de um flex que define a altura). A sidebar interna e o conteúdo mantêm `overflow-y-auto` individual:
+   ```tsx
+   <div className="flex h-full">
+   ```
 
-**6. Configuração de roteamento (nova página `ConfigRoteamento.tsx`)**
-- CRUD de regras: nome, equipe destino, critérios (tribunal, natureza, tipo pagamento)
-- Prioridade das regras (ordem)
-- Registrar rota em `/configuracoes/roteamento` e link no sidebar de configurações
+3. **`Processos.tsx`** — Já usa `h-full overflow-hidden` no container, mas precisa que o `main` pai não adicione scroll. Será coberto pela mudança no `AppLayout` adicionando `/processos` à lista de rotas full-width.
 
-**7. Hook `useDistribuicao.ts`** (novo)
-- `useProcessosFila()`: processos aptos sem analista
-- `useDistribuirProcessos()`: mutation para atribuir analista/equipe em lote
-- `useDistribuicaoAutomatica()`: aplica regras de roteamento
-- `useRegrasRoteamento()`: CRUD de regras
+4. **`AppLayout.tsx`** — Expandir a lógica de `isFullWidth` para incluir as rotas que gerenciam scroll próprio:
+   ```tsx
+   const isFullWidth = 
+     location.pathname.startsWith("/configuracoes") || 
+     location.pathname === "/chat" ||
+     location.pathname === "/processos" ||
+     location.pathname.startsWith("/processos/");
+   ```
 
-### Arquivos afetados
-
-| Arquivo | Ação |
-|---|---|
-| Migração SQL | Criar tabela `regras_roteamento` |
-| `src/hooks/useDistribuicao.ts` | Criar — hooks de distribuição e roteamento |
-| `src/pages/Distribuicao.tsx` | Reescrever — fila de distribuição funcional |
-| `src/pages/Analise.tsx` | Reescrever — lista de processos em análise com analista |
-| `src/components/processo/ProcessoHeader.tsx` | Editar — campo analista editável |
-| `src/pages/Processos.tsx` | Editar — coluna analista + filtro |
-| `src/pages/ConfigRoteamento.tsx` | Criar — CRUD de regras de roteamento |
-| `src/components/ConfiguracoesLayout.tsx` | Editar — link roteamento no menu |
-| `src/App.tsx` | Editar — registrar rota roteamento |
-
+5. **Revisão das demais páginas** — Verificar `Analise.tsx`, `Negocios.tsx`, `Distribuicao.tsx` e outras listagens para garantir que sigam o mesmo padrão sem scroll duplo.
