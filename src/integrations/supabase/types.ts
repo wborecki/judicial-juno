@@ -259,6 +259,30 @@ export type Database = {
         }
         Relationships: []
       }
+      motivos_descarte: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       negocios: {
         Row: {
           created_at: string
@@ -525,6 +549,7 @@ export type Database = {
           distribuido_por: string | null
           equipe_id: string | null
           id: string
+          motivo_descarte_id: string | null
           natureza: string
           numero_processo: string
           observacoes: string | null
@@ -558,6 +583,7 @@ export type Database = {
           distribuido_por?: string | null
           equipe_id?: string | null
           id?: string
+          motivo_descarte_id?: string | null
           natureza: string
           numero_processo: string
           observacoes?: string | null
@@ -591,6 +617,7 @@ export type Database = {
           distribuido_por?: string | null
           equipe_id?: string | null
           id?: string
+          motivo_descarte_id?: string | null
           natureza?: string
           numero_processo?: string
           observacoes?: string | null
@@ -634,6 +661,13 @@ export type Database = {
             columns: ["equipe_id"]
             isOneToOne: false
             referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_motivo_descarte_id_fkey"
+            columns: ["motivo_descarte_id"]
+            isOneToOne: false
+            referencedRelation: "motivos_descarte"
             referencedColumns: ["id"]
           },
           {
