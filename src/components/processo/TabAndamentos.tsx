@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, ExternalLink, Clock } from "lucide-react";
+import { Search, FileText, ExternalLink, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useProcessoDocumentos } from "@/hooks/useProcessoDocumentos";
 
@@ -31,7 +32,8 @@ export default function TabAndamentos({ processoId }: Props) {
   const { data: andamentos = [], isLoading } = useProcessoAndamentos(processoId);
   const { data: documentos = [] } = useProcessoDocumentos(processoId);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 10;
   const docsMap = useMemo(() => {
     const map: Record<string, { nome: string; tipo: string; url: string }> = {};
     documentos.forEach(d => { map[d.id] = { nome: d.nome, tipo: d.tipo_documento, url: d.arquivo_url }; });
@@ -43,6 +45,12 @@ export default function TabAndamentos({ processoId }: Props) {
     const q = searchQuery.toLowerCase();
     return andamentos.filter(a => a.titulo.toLowerCase().includes(q) || a.resumo?.toLowerCase().includes(q));
   }, [andamentos, searchQuery]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Reset page when search changes
+  useMemo(() => setPage(0), [searchQuery]);
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("pt-BR");
   const formatTime = (d: string) => new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -80,7 +88,7 @@ export default function TabAndamentos({ processoId }: Props) {
           <div className="absolute left-[9px] top-1 bottom-1 w-px bg-border/60" />
 
           <div className="space-y-0">
-            {filtered.map((a) => {
+            {paged.map((a) => {
               const doc = a.documento_id ? docsMap[a.documento_id] : null;
               const tipoColor = TIPO_ANDAMENTO_COLORS[a.tipo] ?? TIPO_ANDAMENTO_COLORS.outros;
 
@@ -123,6 +131,33 @@ export default function TabAndamentos({ processoId }: Props) {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2 border-t border-border/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            disabled={page === 0}
+            onClick={() => setPage(p => p - 1)}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" /> Anterior
+          </Button>
+          <span className="text-[11px] text-muted-foreground">
+            {page + 1} de {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(p => p + 1)}
+          >
+            Próximo <ChevronRight className="w-3.5 h-3.5" />
+          </Button>
         </div>
       )}
     </div>
