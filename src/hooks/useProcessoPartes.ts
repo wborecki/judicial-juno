@@ -9,6 +9,7 @@ export interface ProcessoParte {
   tipo: string;
   pessoa_id: string | null;
   advogado_oab: string | null;
+  representado_id: string | null;
   created_at: string;
 }
 
