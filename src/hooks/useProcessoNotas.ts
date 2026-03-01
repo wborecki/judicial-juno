@@ -8,6 +8,7 @@ export interface ProcessoNota {
   criado_por: string | null;
   created_at: string;
   updated_at: string;
+  anexos: any[] | null;
 }
 
 export function useProcessoNotas(processoId?: string) {
@@ -29,7 +30,7 @@ export function useProcessoNotas(processoId?: string) {
 export function useCreateProcessoNota() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (nota: { processo_id: string; conteudo: string }) => {
+    mutationFn: async (nota: { processo_id: string; conteudo: string; anexos?: any[] }) => {
       const { data, error } = await supabase
         .from("processo_notas" as any)
         .insert(nota as any)

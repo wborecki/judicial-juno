@@ -8,7 +8,7 @@ import { useNegocios } from "@/hooks/useNegocios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Users, Clock, StickyNote, Landmark, Briefcase } from "lucide-react";
+import { ArrowLeft, FileText, Users, Clock, StickyNote, Landmark, Briefcase, History } from "lucide-react";
 import { toast } from "sonner";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
@@ -17,6 +17,7 @@ import TabPartes from "@/components/processo/TabPartes";
 import TabAndamentos from "@/components/processo/TabAndamentos";
 import TabDocumentos from "@/components/processo/TabDocumentos";
 import TabNotas from "@/components/processo/TabNotas";
+import TabHistorico from "@/components/processo/TabHistorico";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -113,6 +114,9 @@ export default function ProcessoDetalhe() {
           <TabsTrigger value="notas" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
             <StickyNote className="w-3.5 h-3.5" />Anotações
           </TabsTrigger>
+          <TabsTrigger value="historico" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
+            <History className="w-3.5 h-3.5" />Histórico
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="partes" className="mt-4">
@@ -193,6 +197,10 @@ export default function ProcessoDetalhe() {
 
         <TabsContent value="notas" className="mt-4">
           <TabNotas processoId={processo.id} />
+        </TabsContent>
+
+        <TabsContent value="historico" className="mt-4">
+          <TabHistorico processoId={processo.id} />
         </TabsContent>
       </Tabs>
 

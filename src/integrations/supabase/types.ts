@@ -490,8 +490,66 @@ export type Database = {
           },
         ]
       }
+      processo_historico: {
+        Row: {
+          campo: string | null
+          created_at: string
+          descricao: string
+          id: string
+          metadata: Json | null
+          processo_id: string
+          tipo: string
+          usuario_id: string | null
+          usuario_nome: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          campo?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          metadata?: Json | null
+          processo_id: string
+          tipo?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          campo?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          metadata?: Json | null
+          processo_id?: string
+          tipo?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_historico_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processo_historico_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processo_notas: {
         Row: {
+          anexos: Json | null
           conteudo: string
           created_at: string
           criado_por: string | null
@@ -500,6 +558,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          anexos?: Json | null
           conteudo: string
           created_at?: string
           criado_por?: string | null
@@ -508,6 +567,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          anexos?: Json | null
           conteudo?: string
           created_at?: string
           criado_por?: string | null
