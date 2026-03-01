@@ -490,6 +490,41 @@ export type Database = {
           },
         ]
       }
+      processo_notas: {
+        Row: {
+          conteudo: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          processo_id: string
+          updated_at: string
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          processo_id: string
+          updated_at?: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          processo_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_notas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processo_partes: {
         Row: {
           advogado_oab: string | null
