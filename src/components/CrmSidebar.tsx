@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Filter, ArrowRightLeft, FileSearch, DollarSign,
+  LayoutDashboard, Scale, Filter, ArrowRightLeft, FileSearch, DollarSign,
   Phone, Briefcase, Users, Building2, UserCog, MessageSquare, Settings, LogOut
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
@@ -16,7 +16,7 @@ interface NavItem {
 
 const pipelineItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  
+  { to: "/processos", label: "Processos", icon: Scale },
   { to: "/triagem", label: "Triagem", icon: Filter },
   { to: "/distribuicao", label: "Distribuição", icon: ArrowRightLeft },
   { to: "/analise", label: "Análise", icon: FileSearch },

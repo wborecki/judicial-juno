@@ -239,8 +239,10 @@ export default function ProcessoDetalhe() {
 
       {/* Main Content */}
       <Tabs defaultValue={defaultTab} className="space-y-4">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="dados">Dados do Processo</TabsTrigger>
+        <TabsList className="w-full justify-start flex-wrap">
+          <TabsTrigger value="dados">Dados Gerais</TabsTrigger>
+          <TabsTrigger value="partes">Partes</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="triagem">Triagem</TabsTrigger>
           <TabsTrigger value="analise" disabled={currentStepIdx < 3}>
             Análise
@@ -331,6 +333,55 @@ export default function ProcessoDetalhe() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Tab: Partes */}
+        <TabsContent value="partes">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="glass-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />Parte Autora
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <InfoField label="Nome" value={processo.parte_autora} />
+                {processo.pessoa_id && (
+                  <p className="text-xs text-muted-foreground">Pessoa vinculada: {processo.pessoa_id.slice(0, 8)}...</p>
+                )}
+                {!processo.pessoa_id && (
+                  <p className="text-xs text-muted-foreground italic">Nenhuma pessoa vinculada ao processo.</p>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="glass-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />Parte Ré
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <InfoField label="Nome" value={processo.parte_re} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab: Documentos */}
+        <TabsContent value="documentos">
+          <Card className="glass-card">
+            <CardContent className="p-8 text-center space-y-3">
+              <FileText className="w-10 h-10 text-muted-foreground mx-auto" />
+              <p className="text-sm font-medium">Documentos do Processo</p>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                Em breve será possível fazer upload e gerenciar documentos vinculados a este processo,
+                como petições, decisões, ofícios requisitórios e outros anexos.
+              </p>
+              <Button variant="outline" size="sm" disabled>
+                <Plus className="w-4 h-4 mr-2" />Adicionar Documento (em breve)
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Tab: Triagem */}
