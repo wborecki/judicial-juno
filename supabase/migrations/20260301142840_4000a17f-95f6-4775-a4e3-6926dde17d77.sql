@@ -1,0 +1,1 @@
+ALTER TABLE public.negocios ALTER COLUMN processo_id DROP NOT NULL;

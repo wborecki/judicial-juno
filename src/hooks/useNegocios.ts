@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type NegocioDB = {
   id: string;
-  processo_id: string;
+  processo_id: string | null;
   pessoa_id: string | null;
   tipo_servico: string | null;
   negocio_status: string;
