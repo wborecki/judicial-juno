@@ -534,6 +534,7 @@ export type Database = {
           nome: string
           pessoa_id: string | null
           processo_id: string
+          representado_id: string | null
           tipo: string
         }
         Insert: {
@@ -544,6 +545,7 @@ export type Database = {
           nome: string
           pessoa_id?: string | null
           processo_id: string
+          representado_id?: string | null
           tipo?: string
         }
         Update: {
@@ -554,6 +556,7 @@ export type Database = {
           nome?: string
           pessoa_id?: string | null
           processo_id?: string
+          representado_id?: string | null
           tipo?: string
         }
         Relationships: [
@@ -569,6 +572,13 @@ export type Database = {
             columns: ["processo_id"]
             isOneToOne: false
             referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processo_partes_representado_id_fkey"
+            columns: ["representado_id"]
+            isOneToOne: false
+            referencedRelation: "processo_partes"
             referencedColumns: ["id"]
           },
         ]
