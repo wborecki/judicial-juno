@@ -22,7 +22,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, Briefcase, ChevronDown } from "lucide-react";
+import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, Briefcase, ChevronDown, Eye, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 import PessoaSheet from "@/components/PessoaSheet";
@@ -41,7 +41,7 @@ const TRIAGEM_COLORS: Record<string, string> = {
   "reanálise": "bg-info/10 text-info border-info/20",
 };
 const TRIAGEM_LABELS: Record<string, string> = {
-  pendente: "Pendente", apto: "Apto", descartado: "Descartado", "reanálise": "Reanálise",
+  pendente: "Pendente", apto: "Apto", descartado: "Descartado", "reanálise": "Em Acompanhamento",
 };
 
 const TRIBUNAL_URLS: Record<string, string> = {
@@ -63,6 +63,7 @@ interface Props {
   processo: Processo;
   onConvert: () => void;
   onDiscard: () => void;
+  onReanalyse: () => void;
 }
 
 type DetailField = {
@@ -74,7 +75,7 @@ type DetailField = {
   };
 };
 
-export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props) {
+export default function ProcessoHeader({ processo, onConvert, onDiscard, onReanalyse }: Props) {
   const updateProcesso = useUpdateProcesso();
   const [copied, setCopied] = useState(false);
   const [editValorOpen, setEditValorOpen] = useState(false);
@@ -193,20 +194,21 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
           )}
           <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5 shrink-0">{processo.tribunal}</Badge>
 
-          {triagem === "apto" ? (
-            <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg shrink-0">
-              <Briefcase className="w-3.5 h-3.5" />Criar Negócio
-            </Button>
-          ) : triagem === "pendente" || triagem === "reanálise" ? (
+          {triagem !== "descartado" && (
             <>
               <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg bg-success hover:bg-success/90 text-success-foreground shrink-0">
-                <Briefcase className="w-3.5 h-3.5" />Converter
+                <Briefcase className="w-3.5 h-3.5" />Criar Negócio
               </Button>
+              {triagem !== "reanálise" && (
+                <Button size="sm" variant="outline" onClick={onReanalyse} className="text-xs gap-1.5 h-7 rounded-lg border-info/40 text-info hover:bg-info/10 shrink-0">
+                  <Eye className="w-3.5 h-3.5" />Acompanhar
+                </Button>
+              )}
               <Button size="sm" variant="outline" onClick={onDiscard} className="text-xs gap-1.5 h-7 rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10 shrink-0">
-                Descartar
+                <XCircle className="w-3.5 h-3.5" />Descartar
               </Button>
             </>
-          ) : null}
+          )}
         </div>
 
         <div className="flex items-center gap-3 shrink-0">

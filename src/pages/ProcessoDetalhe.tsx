@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useProcesso } from "@/hooks/useProcessos";
+import { useProcesso, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useProcessoDocumentos } from "@/hooks/useProcessoDocumentos";
 import { useProcessoPartes } from "@/hooks/useProcessoPartes";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, FileText, Users, Clock, Link2, StickyNote, Landmark, DollarSign, Briefcase } from "lucide-react";
+import { toast } from "sonner";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
 import ModalDescartar from "@/components/processo/ModalDescartar";
@@ -27,6 +28,7 @@ export default function ProcessoDetalhe() {
   const { data: negocios = [] } = useNegocios(id);
   const [convertOpen, setConvertOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const updateProcesso = useUpdateProcesso();
 
   if (isLoading) {
     return (
@@ -59,6 +61,20 @@ export default function ProcessoDetalhe() {
         processo={processo}
         onConvert={() => setConvertOpen(true)}
         onDiscard={() => setDiscardOpen(true)}
+        onReanalyse={async () => {
+          try {
+            await updateProcesso.mutateAsync({
+              id: processo.id,
+              updates: {
+                triagem_resultado: "reanálise",
+                triagem_data: new Date().toISOString(),
+              },
+            });
+            toast.success("Processo em acompanhamento para reanálise futura");
+          } catch {
+            toast.error("Erro ao atualizar status");
+          }
+        }}
       />
 
       <Tabs defaultValue="partes" className="w-full">
