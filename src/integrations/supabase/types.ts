@@ -374,8 +374,10 @@ export type Database = {
           criado_por: string | null
           data_andamento: string
           descricao: string | null
+          documento_id: string | null
           id: string
           processo_id: string
+          resumo: string | null
           tipo: string
           titulo: string
         }
@@ -384,8 +386,10 @@ export type Database = {
           criado_por?: string | null
           data_andamento?: string
           descricao?: string | null
+          documento_id?: string | null
           id?: string
           processo_id: string
+          resumo?: string | null
           tipo?: string
           titulo: string
         }
@@ -394,12 +398,21 @@ export type Database = {
           criado_por?: string | null
           data_andamento?: string
           descricao?: string | null
+          documento_id?: string | null
           id?: string
           processo_id?: string
+          resumo?: string | null
           tipo?: string
           titulo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "processo_andamentos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "processo_documentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "processo_andamentos_processo_id_fkey"
             columns: ["processo_id"]
@@ -455,6 +468,7 @@ export type Database = {
       }
       processo_partes: {
         Row: {
+          advogado_oab: string | null
           cpf_cnpj: string | null
           created_at: string
           id: string
@@ -464,6 +478,7 @@ export type Database = {
           tipo: string
         }
         Insert: {
+          advogado_oab?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           id?: string
@@ -473,6 +488,7 @@ export type Database = {
           tipo?: string
         }
         Update: {
+          advogado_oab?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           id?: string
@@ -501,6 +517,7 @@ export type Database = {
       processos: {
         Row: {
           analista_id: string | null
+          classe_fase: string | null
           created_at: string
           data_captacao: string
           data_distribuicao: string | null
@@ -521,6 +538,7 @@ export type Database = {
           tipo_pagamento: string
           transito_julgado: boolean
           triagem_data: string | null
+          triagem_motivo_inaptidao: string | null
           triagem_observacoes: string | null
           triagem_por: string | null
           triagem_resultado: string | null
@@ -528,9 +546,11 @@ export type Database = {
           updated_at: string
           valor_estimado: number | null
           valor_precificado: number | null
+          vara_comarca: string | null
         }
         Insert: {
           analista_id?: string | null
+          classe_fase?: string | null
           created_at?: string
           data_captacao?: string
           data_distribuicao?: string | null
@@ -551,6 +571,7 @@ export type Database = {
           tipo_pagamento: string
           transito_julgado?: boolean
           triagem_data?: string | null
+          triagem_motivo_inaptidao?: string | null
           triagem_observacoes?: string | null
           triagem_por?: string | null
           triagem_resultado?: string | null
@@ -558,9 +579,11 @@ export type Database = {
           updated_at?: string
           valor_estimado?: number | null
           valor_precificado?: number | null
+          vara_comarca?: string | null
         }
         Update: {
           analista_id?: string | null
+          classe_fase?: string | null
           created_at?: string
           data_captacao?: string
           data_distribuicao?: string | null
@@ -581,6 +604,7 @@ export type Database = {
           tipo_pagamento?: string
           transito_julgado?: boolean
           triagem_data?: string | null
+          triagem_motivo_inaptidao?: string | null
           triagem_observacoes?: string | null
           triagem_por?: string | null
           triagem_resultado?: string | null
@@ -588,6 +612,7 @@ export type Database = {
           updated_at?: string
           valor_estimado?: number | null
           valor_precificado?: number | null
+          vara_comarca?: string | null
         }
         Relationships: [
           {

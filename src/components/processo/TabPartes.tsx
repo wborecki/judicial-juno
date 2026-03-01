@@ -37,6 +37,7 @@ export default function TabPartes({ processoId, parteAutoraLegacy, parteReLegacy
         cpf_cnpj: cpfCnpj.trim() || null,
         tipo,
         pessoa_id: null,
+        advogado_oab: null,
       });
       toast.success("Parte adicionada");
       setNome(""); setCpfCnpj(""); setShowForm(false);

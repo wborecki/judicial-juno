@@ -1,19 +1,23 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProcessosPaginated, ProcessoFilters } from "@/hooks/useProcessos";
+import { useProcessosPaginated, useProcessosStats, ProcessoFilters } from "@/hooks/useProcessos";
+import { useCreateNegocio } from "@/hooks/useNegocios";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Search, X, Scale, CalendarIcon, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Search, X, Scale, CalendarIcon, ChevronLeft, ChevronRight, ExternalLink, MoreHorizontal, Eye, CheckCircle2, Briefcase, FileBarChart } from "lucide-react";
 import { TRIBUNAIS } from "@/lib/types";
 import { format, subDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { DateRange } from "react-day-picker";
 
 const PAGE_SIZE = 50;
@@ -27,11 +31,17 @@ const TRIAGEM_OPTIONS = [
   { value: "reanálise", label: "Reanálise" },
 ];
 
+const STATUS_LABELS: Record<number, string> = {
+  1: "Ativo",
+  2: "Suspenso",
+  3: "Arquivado",
+};
+
 const TRIAGEM_COLORS: Record<string, string> = {
-  pendente: "bg-warning/10 text-warning",
-  apto: "bg-success/10 text-success",
-  descartado: "bg-destructive/10 text-destructive",
-  "reanálise": "bg-info/10 text-info",
+  pendente: "bg-warning/10 text-warning border-warning/20",
+  apto: "bg-success/10 text-success border-success/20",
+  descartado: "bg-destructive/10 text-destructive border-destructive/20",
+  "reanálise": "bg-info/10 text-info border-info/20",
 };
 
 const TRIBUNAL_URLS: Record<string, string> = {
@@ -66,6 +76,7 @@ const DATE_PRESETS = [
 
 export default function Processos() {
   const navigate = useNavigate();
+  const createNegocio = useCreateNegocio();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
@@ -76,7 +87,6 @@ export default function Processos() {
   const [filterTransito, setFilterTransito] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
-  // Debounce search
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout>>();
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -101,6 +111,7 @@ export default function Processos() {
   }), [searchDebounced, filterTribunal, filterNatureza, filterTipoPagamento, filterTriagem, filterTransito, dateRange]);
 
   const { data, isLoading } = useProcessosPaginated(page, PAGE_SIZE, filters);
+  const { data: stats } = useProcessosStats();
   const processos = data?.data ?? [];
   const totalCount = data?.count ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -126,11 +137,33 @@ export default function Processos() {
     setPage(0);
   };
 
+  const handleEnviarNegocios = async (processoId: string, valorEstimado: number | null) => {
+    try {
+      await createNegocio.mutateAsync({
+        processo_id: processoId,
+        valor_proposta: valorEstimado,
+        negocio_status: "em_andamento",
+        data_abertura: new Date().toISOString(),
+        pessoa_id: null,
+        responsavel_id: null,
+        tipo_servico: null,
+        observacoes: null,
+        valor_fechamento: null,
+        data_fechamento: null,
+      });
+      toast.success("Negócio criado com sucesso!");
+    } catch {
+      toast.error("Erro ao criar negócio");
+    }
+  };
+
   if (isLoading && page === 0) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-full" />
+        <div className="grid grid-cols-4 gap-3">
+          {[1,2,3,4].map(i => <Skeleton key={i} className="h-20" />)}
+        </div>
         <Skeleton className="h-96 w-full" />
       </div>
     );
@@ -152,20 +185,59 @@ export default function Processos() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="glass-card">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Total</p>
+              <FileBarChart className="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
+            <p className="text-2xl font-bold mt-1">{stats?.total ?? 0}</p>
+          </CardContent>
+        </Card>
+        <Card className="glass-card border-warning/20">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-wider text-warning font-medium">Pendentes</p>
+              <div className="w-2 h-2 rounded-full bg-warning" />
+            </div>
+            <p className="text-2xl font-bold mt-1 text-warning">{stats?.pendente ?? 0}</p>
+          </CardContent>
+        </Card>
+        <Card className="glass-card border-success/20">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-wider text-success font-medium">Aptos</p>
+              <div className="w-2 h-2 rounded-full bg-success" />
+            </div>
+            <p className="text-2xl font-bold mt-1 text-success">{stats?.apto ?? 0}</p>
+          </CardContent>
+        </Card>
+        <Card className="glass-card border-destructive/20">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-wider text-destructive font-medium">Descartados</p>
+              <div className="w-2 h-2 rounded-full bg-destructive" />
+            </div>
+            <p className="text-2xl font-bold mt-1 text-destructive">{stats?.descartado ?? 0}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <div className="glass-card rounded-xl p-3 space-y-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Buscar nº processo, parte autora, parte ré..."
+              placeholder="Buscar nº processo, parte, CPF/CNPJ..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-8 h-8 text-xs"
             />
           </div>
 
-          {/* Date Range */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5 min-w-[180px] justify-start", dateRange && "text-foreground")}>
@@ -253,21 +325,22 @@ export default function Processos() {
         <Table>
           <TableHeader>
             <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Número</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Nº CNJ</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Parte Autora</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Natureza</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Pgto</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vara/Comarca</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Classe/Fase</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Triagem</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Status</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
               <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Captação</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {processos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-12 text-muted-foreground text-sm">
+                <TableCell colSpan={10} className="text-center py-12 text-muted-foreground text-sm">
                   Nenhum processo encontrado.
                 </TableCell>
               </TableRow>
@@ -301,17 +374,42 @@ export default function Processos() {
                   <TableCell className="py-1.5">
                     <span className="text-[10px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
                   </TableCell>
-                  <TableCell className="text-[11px] py-1.5 max-w-[200px] truncate">{p.parte_autora}</TableCell>
-                  <TableCell className="text-[10px] py-1.5">{p.natureza}</TableCell>
-                  <TableCell className="text-[10px] py-1.5">{p.tipo_pagamento}</TableCell>
-                  <TableCell className="text-[10px] py-1.5">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
+                  <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
+                  <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
                   <TableCell className="py-1.5">
                     <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
                       {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-[10px] py-1.5">{STATUS_LABELS[p.status_processo] ?? "—"}</TableCell>
+                  <TableCell className="text-[10px] py-1.5">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
                   <TableCell className="text-[11px] font-medium text-right py-1.5">{formatCurrency(p.valor_estimado)}</TableCell>
                   <TableCell className="text-[10px] text-muted-foreground py-1.5">{formatDate(p.data_captacao)}</TableCell>
+                  <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}`)} className="text-xs gap-2">
+                          <Eye className="w-3.5 h-3.5" />Ver detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5" />Triagem
+                        </DropdownMenuItem>
+                        {triagem === "apto" && (
+                          <DropdownMenuItem
+                            onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
+                            className="text-xs gap-2"
+                          >
+                            <Briefcase className="w-3.5 h-3.5" />Enviar para Negócios
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               );
             })}
