@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -141,19 +141,19 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
   const canConvert = hasStructuredAutores ? selectedAutores.size > 0 : true;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-sm flex items-center gap-2">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-sm flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
             Converter em Negócio
-          </DialogTitle>
-          <DialogDescription className="text-xs">
+          </SheetTitle>
+          <SheetDescription className="text-xs">
             {hasStructuredAutores
               ? "Selecione os autores para criar um negócio por autor. Cada negócio será vinculado ao(s) réu(s) do processo."
               : "O processo será marcado como Apto e um novo negócio será criado."}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="space-y-4">
           {/* Resumo */}
@@ -249,7 +249,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
           </div>
         </div>
 
-        <DialogFooter>
+        <SheetFooter className="mt-4">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs">Cancelar</Button>
           <Button
             size="sm"
@@ -262,8 +262,8 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
               ? `Criar ${selectedAutores.size} Negócios`
               : "Converter em Negócio"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
