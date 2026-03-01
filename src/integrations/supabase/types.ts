@@ -368,6 +368,136 @@ export type Database = {
         }
         Relationships: []
       }
+      processo_andamentos: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          data_andamento: string
+          descricao: string | null
+          id: string
+          processo_id: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          data_andamento?: string
+          descricao?: string | null
+          id?: string
+          processo_id: string
+          tipo?: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          data_andamento?: string
+          descricao?: string | null
+          id?: string
+          processo_id?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_andamentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processo_documentos: {
+        Row: {
+          arquivo_nome: string
+          arquivo_url: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          nome: string
+          processo_id: string
+          tamanho: number | null
+          tipo_documento: string
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_url: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          nome: string
+          processo_id: string
+          tamanho?: number | null
+          tipo_documento?: string
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_url?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          nome?: string
+          processo_id?: string
+          tamanho?: number | null
+          tipo_documento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_documentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processo_partes: {
+        Row: {
+          cpf_cnpj: string | null
+          created_at: string
+          id: string
+          nome: string
+          pessoa_id: string | null
+          processo_id: string
+          tipo: string
+        }
+        Insert: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          pessoa_id?: string | null
+          processo_id: string
+          tipo?: string
+        }
+        Update: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          pessoa_id?: string | null
+          processo_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_partes_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processo_partes_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processos: {
         Row: {
           analista_id: string | null
