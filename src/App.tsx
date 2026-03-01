@@ -22,6 +22,7 @@ import UsuariosPage from "./pages/Usuarios";
 import Chat from "./pages/Chat";
 import ConfiguracoesGeral from "./pages/ConfiguracoesGeral";
 import CamposAnalise from "./pages/CamposAnalise";
+import ConfigPipelines from "./pages/ConfigPipelines";
 import Notificacoes from "./pages/Notificacoes";
 import Integracoes from "./pages/Integracoes";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
@@ -65,6 +66,7 @@ const App = () => (
                 <Route path="equipes" element={<Equipes />} />
                 <Route path="usuarios" element={<UsuariosPage />} />
                 <Route path="campos-analise" element={<CamposAnalise />} />
+                <Route path="pipelines" element={<ConfigPipelines />} />
                 <Route path="notificacoes" element={<Notificacoes />} />
                 <Route path="integracoes" element={<Integracoes />} />
               </Route>
