@@ -1,77 +1,89 @@
 
 
-## Plano: Processo Detalhe Completo
+## Plano: Redesign Processos > Triagem > Negócios
 
-O processo atual armazena `parte_autora` e `parte_re` como campos de texto simples e nao tem suporte a andamentos, documentos ou edicao inline. Vou reestruturar isso completamente.
+### 1. Schema — Migration SQL
 
----
+Novas colunas na tabela `processos`:
+- `vara_comarca` text nullable
+- `classe_fase` text nullable (ex: "Cumprimento de Sentença")
+- `triagem_motivo_inaptidao` text nullable (obrigatório quando inapto)
 
-### 1. Novas Tabelas no Banco de Dados (migration)
+Nova coluna em `processo_partes`:
+- `advogado_oab` text nullable (para registrar OAB de advogados)
+- Expandir `tipo` para aceitar: autor, reu, exequente, executado, advogado, terceiro
 
-**`processo_partes`** — Multiplos autores e reus por processo
-| Coluna | Tipo |
-|---|---|
-| id | uuid PK |
-| processo_id | uuid FK processos |
-| nome | text |
-| cpf_cnpj | text nullable |
-| tipo | text ('autor' / 'reu') |
-| pessoa_id | uuid FK pessoas nullable |
-| created_at | timestamptz |
+Nova coluna em `processo_andamentos`:
+- `documento_id` uuid nullable FK processo_documentos (link opcional ao documento)
+- `resumo` text nullable (resumo curto de 1 linha)
 
-**`processo_andamentos`** — Movimentacoes processuais
-| Coluna | Tipo |
-|---|---|
-| id | uuid PK |
-| processo_id | uuid FK processos |
-| data_andamento | timestamptz |
-| titulo | text |
-| descricao | text nullable |
-| tipo | text ('despacho', 'decisao', 'sentenca', 'intimacao', 'peticao', 'outros') |
-| criado_por | uuid nullable |
-| created_at | timestamptz |
+### 2. Tela: Lista de Processos (Processos.tsx) — Redesign
 
-**`processo_documentos`** — Documentos uploadados
-| Coluna | Tipo |
-|---|---|
-| id | uuid PK |
-| processo_id | uuid FK processos |
-| nome | text |
-| arquivo_url | text |
-| arquivo_nome | text |
-| tamanho | bigint nullable |
-| tipo_documento | text ('peticao', 'sentenca', 'recurso', 'procuracao', 'comprovante', 'outros') |
-| criado_por | uuid nullable |
-| created_at | timestamptz |
+Colunas da tabela:
+- Nº CNJ (com link externo tribunal)
+- Tribunal
+- Vara/Comarca
+- Classe/Fase
+- Triagem (badge: Pendente/Apto/Inapto)
+- Status Processo (Ativo/Arquivado/Suspenso)
+- Trânsito em Julgado (Sim/Não)
+- Valor Estimado
+- Data Captação
 
-- Storage bucket `processo-documentos` (public) para os arquivos
-- RLS permissiva (`true`) em todas as novas tabelas (padrao atual do projeto)
+Cards no topo: Total | Pendentes | Aptos | Descartados
 
-### 2. Hooks (src/hooks/)
+Ações por linha (dropdown ou botões inline):
+- Ver detalhes → navega para /processos/:id
+- Triagem → navega para /processos/:id com tab triagem
+- Enviar para Negócios (só se triagem = apto) → cria negócio direto
 
-- **`useProcessoPartes.ts`** — CRUD para partes (listar, adicionar, remover por processo_id)
-- **`useProcessoAndamentos.ts`** — CRUD para andamentos (listar ordenado por data desc, criar, deletar)
-- **`useProcessoDocumentos.ts`** — CRUD para documentos (listar, upload com storage, deletar)
+Filtros existentes mantidos + novos:
+- Classe/Fase
+- Faixa de valor (min/max)
+- Texto livre busca também CPF/CNPJ de partes
 
-### 3. Pagina ProcessoDetalhe Refatorada com Abas
+### 3. Tela: Detalhe do Processo (ProcessoDetalhe.tsx) — Redesign
 
-Reorganizar a pagina usando `Tabs` com as seguintes abas:
+**Cabeçalho forte** com: CNJ, tribunal, vara/comarca, classe/fase, status, triagem badge, valor estimado, botão "Editar" e botão "Enviar para Negócios" (condicional).
 
-- **Dados Gerais** — Cabecalho com informacoes editaveis inline (tribunal, natureza, tipo pagamento, status, transito julgado, valor estimado, observacoes). Botao de editar que transforma campos em inputs/selects.
-- **Partes** — Lista de autores e reus com botao para adicionar novo. Cada parte pode ser removida. Vinculacao opcional com pessoa cadastrada.
-- **Andamentos** — Timeline vertical de movimentacoes com data, tipo (badge colorido), titulo e descricao. Formulario para adicionar novo andamento no topo.
-- **Documentos** — Lista de documentos com nome, tipo, data de upload. Botao de upload (drag-and-drop ou file input). Download e exclusao.
-- **Triagem** — Secao atual de triagem (observacoes + botoes apto/reanalise/descartar)
-- **Negocios** — Secao atual de negocios vinculados
+Abas mantidas com melhorias:
 
-### 4. Edicao Inline dos Dados do Processo
+**Dados Gerais** — Adicionar campos vara/comarca, classe/fase na edição inline. Adicionar links externos, informações de distribuição/autuação.
 
-Na aba "Dados Gerais", um botao "Editar" ativa modo de edicao onde os campos do cabecalho (tribunal, natureza, tipo_pagamento, status_processo, transito_julgado, valor_estimado, data_distribuicao, observacoes) se tornam editaveis com selects/inputs. Botoes "Salvar" e "Cancelar" para confirmar.
+**Partes** — Expandir tipos (exequente, executado, advogado, terceiro). Mostrar OAB quando for advogado. Manter add/remove.
 
-### Resumo Tecnico
+**Movimentações** (simplificada) — Substituir timeline por tabela simples:
+- Colunas: Data/Hora | Título | Documento (link clicável + tipo) | Resumo
+- Controles: busca por título, filtro "somente com documento", ordenação por data
+- Formulário de adição com campo documento_id (select dos documentos do processo) e resumo
+- Sem textos longos, foco em leitura rápida
 
-- 1 migration SQL com 3 tabelas + 1 storage bucket + RLS policies
-- 3 novos hooks
-- ProcessoDetalhe.tsx reescrito com Tabs e componentes internos para cada aba
-- Campos editaveis usando estado local + useUpdateProcesso existente
+**Documentos** — Manter como está (upload, download, delete, tipo)
+
+**Triagem** — Adicionar campo motivo de inaptidão (obrigatório se inapto). Manter botões Apto/Reanálise/Descartar.
+
+**Negócios** — Só visível se triagem = apto. Manter criação/listagem de negócios vinculados.
+
+### 4. Regras de Negócio
+
+- Processo começa com triagem = pendente
+- Se triagem = apto: habilitar "Enviar para Negócios" no cabeçalho e na listagem
+- Se triagem = inapto/descartado: exigir motivo e observação no formulário de triagem
+- Ao criar negócio: vincular processo_id, puxar valor_estimado como valor_proposta
+
+### 5. Sidebar (CrmSidebar.tsx)
+
+Manter estrutura atual. Triagem já é acessada via Processos (filtro de triagem na listagem), não precisa de rota separada — mas manter `/triagem` como atalho que filtra processos com pipeline_status = triagem.
+
+### 6. Resumo Técnico
+
+- 1 migration SQL (alter processos + alter processo_partes + alter processo_andamentos)
+- Reescrever `Processos.tsx` com novas colunas, ações por linha, cards stats
+- Reescrever `TabAndamentos.tsx` de timeline para tabela simples com busca/filtro
+- Atualizar `TabDadosGerais.tsx` com novos campos (vara_comarca, classe_fase)
+- Atualizar `TabPartes.tsx` com tipos expandidos e campo OAB
+- Atualizar `TabTriagem.tsx` com motivo de inaptidão obrigatório
+- Atualizar `TabNegocios.tsx` para ser condicional (só se apto)
+- Atualizar `ProcessoDetalhe.tsx` com cabeçalho forte e botão "Enviar para Negócios"
+- Atualizar hooks `useProcessos.ts` para incluir novos campos nos filtros
 
