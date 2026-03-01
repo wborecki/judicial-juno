@@ -65,7 +65,7 @@ export default function ProcessoDetalhe() {
   }
 
   return (
-    <div className="space-y-3 max-w-7xl">
+    <div className="space-y-3 max-w-7xl mx-auto p-6 overflow-y-auto h-full">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
