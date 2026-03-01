@@ -14,6 +14,7 @@ import ModalDescartar from "@/components/processo/ModalDescartar";
 import TabPartes from "@/components/processo/TabPartes";
 import TabAndamentos from "@/components/processo/TabAndamentos";
 import TabDocumentos from "@/components/processo/TabDocumentos";
+import TabNotas from "@/components/processo/TabNotas";
 
 export default function ProcessoDetalhe() {
   const { id } = useParams();
@@ -125,9 +126,7 @@ export default function ProcessoDetalhe() {
         </TabsContent>
 
         <TabsContent value="notas" className="mt-4">
-          <div className="bg-card border border-border/40 rounded-xl p-4">
-            <p className="text-[10px] text-muted-foreground italic">Notas internas em breve.</p>
-          </div>
+          <TabNotas processoId={processo.id} />
         </TabsContent>
       </Tabs>
 
