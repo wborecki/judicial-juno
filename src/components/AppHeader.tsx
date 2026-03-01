@@ -100,8 +100,12 @@ export function AppHeader() {
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
+              <DropdownMenuItem onClick={() => navigate("/configuracoes/perfil")}>
                 <User className="w-4 h-4 mr-2" />
+                Meu Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
+                <Settings className="w-4 h-4 mr-2" />
                 Configurações
               </DropdownMenuItem>
               <DropdownMenuSeparator />

@@ -26,6 +26,7 @@ import ConfigPipelines from "./pages/ConfigPipelines";
 import Notificacoes from "./pages/Notificacoes";
 import ConfigRoteamento from "./pages/ConfigRoteamento";
 import Integracoes from "./pages/Integracoes";
+import MeuPerfil from "./pages/MeuPerfil";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -71,6 +72,7 @@ const App = () => (
                 <Route path="roteamento" element={<ConfigRoteamento />} />
                 <Route path="notificacoes" element={<Notificacoes />} />
                 <Route path="integracoes" element={<Integracoes />} />
+                <Route path="perfil" element={<MeuPerfil />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
