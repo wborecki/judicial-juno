@@ -258,10 +258,10 @@ export default function UsuariosPage() {
             </div>
             <div className="space-y-2">
               <Label>Equipe</Label>
-              <Select value={invEquipe} onValueChange={setInvEquipe}>
+              <Select value={invEquipe || "__none__"} onValueChange={(v) => setInvEquipe(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="__none__">Nenhuma</SelectItem>
                   {equipes.map((e) => (
                     <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
                   ))}
@@ -311,10 +311,10 @@ export default function UsuariosPage() {
             </div>
             <div className="space-y-2">
               <Label>Equipe</Label>
-              <Select value={editEquipe} onValueChange={setEditEquipe}>
+              <Select value={editEquipe || "__none__"} onValueChange={(v) => setEditEquipe(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="__none__">Nenhuma</SelectItem>
                   {equipes.map((e) => (
                     <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
                   ))}
