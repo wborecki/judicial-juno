@@ -55,7 +55,7 @@ export default function Analise() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden space-y-4">
+    <div className="flex flex-col h-full overflow-hidden space-y-4 p-6">
       <div className="shrink-0">
         <h1 className="text-2xl font-display font-bold flex items-center gap-2">
           <FileSearch className="w-5 h-5 text-muted-foreground" />
