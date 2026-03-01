@@ -17,14 +17,9 @@ interface NavItem {
 const analiseItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/processos", label: "Processos", icon: Scale },
-  { to: "/triagem", label: "Triagem", icon: Filter },
-  { to: "/distribuicao", label: "Distribuição", icon: ArrowRightLeft },
-  { to: "/analise", label: "Análise", icon: FileSearch },
-  { to: "/precificacao", label: "Precificação", icon: DollarSign },
 ];
 
 const comercialItems: NavItem[] = [
-  { to: "/comercial", label: "Comercial", icon: Phone },
   { to: "/negocios", label: "Negócios", icon: Briefcase },
 ];
 
