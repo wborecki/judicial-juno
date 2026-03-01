@@ -18,6 +18,7 @@ export type Processo = {
   triagem_observacoes: string | null;
   triagem_data: string | null;
   triagem_por: string | null;
+  triagem_motivo_inaptidao: string | null;
   pipeline_status: string;
   pessoa_id: string | null;
   equipe_id: string | null;
@@ -28,6 +29,8 @@ export type Processo = {
   precificacao_data: string | null;
   precificado_por: string | null;
   observacoes: string | null;
+  vara_comarca: string | null;
+  classe_fase: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -41,6 +44,9 @@ export type ProcessoFilters = {
   transito?: string;
   dateFrom?: string;
   dateTo?: string;
+  classeFase?: string;
+  valorMin?: number;
+  valorMax?: number;
 };
 
 export type PaginatedResult = {
@@ -77,6 +83,12 @@ export function useProcessosPaginated(
         query = query.eq("triagem_resultado", filters.triagem);
       if (filters.transito && filters.transito !== "all")
         query = query.eq("transito_julgado", filters.transito === "sim");
+      if (filters.classeFase && filters.classeFase !== "all")
+        query = query.eq("classe_fase", filters.classeFase);
+      if (filters.valorMin != null)
+        query = query.gte("valor_estimado", filters.valorMin);
+      if (filters.valorMax != null)
+        query = query.lte("valor_estimado", filters.valorMax);
       if (filters.dateFrom)
         query = query.gte("data_captacao", filters.dateFrom);
       if (filters.dateTo)
@@ -89,6 +101,23 @@ export function useProcessosPaginated(
       const { data, error, count } = await query;
       if (error) throw error;
       return { data: (data ?? []) as Processo[], count: count ?? 0 };
+    },
+  });
+}
+
+export function useProcessosStats() {
+  return useQuery({
+    queryKey: ["processos-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("processos")
+        .select("triagem_resultado");
+      if (error) throw error;
+      const total = data.length;
+      const pendente = data.filter(p => !p.triagem_resultado || p.triagem_resultado === "pendente").length;
+      const apto = data.filter(p => p.triagem_resultado === "apto").length;
+      const descartado = data.filter(p => p.triagem_resultado === "descartado").length;
+      return { total, pendente, apto, descartado };
     },
   });
 }
@@ -141,6 +170,7 @@ export function useUpdateProcesso() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["processos"] });
       queryClient.invalidateQueries({ queryKey: ["processos-paginated"] });
+      queryClient.invalidateQueries({ queryKey: ["processos-stats"] });
       queryClient.setQueryData(["processo", data.id], data);
     },
   });

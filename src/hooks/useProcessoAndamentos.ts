@@ -10,6 +10,8 @@ export interface ProcessoAndamento {
   tipo: string;
   criado_por: string | null;
   created_at: string;
+  documento_id: string | null;
+  resumo: string | null;
 }
 
 export function useProcessoAndamentos(processoId: string | undefined) {

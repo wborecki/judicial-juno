@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
@@ -25,14 +27,19 @@ interface Props {
 export default function TabTriagem({ processo }: Props) {
   const updateProcesso = useUpdateProcesso();
   const [triageObs, setTriageObs] = useState(processo.triagem_observacoes ?? "");
+  const [motivoInaptidao, setMotivoInaptidao] = useState(processo.triagem_motivo_inaptidao ?? "");
 
   useEffect(() => {
     setTriageObs(processo.triagem_observacoes ?? "");
+    setMotivoInaptidao(processo.triagem_motivo_inaptidao ?? "");
   }, [processo]);
 
   const triagem = processo.triagem_resultado ?? "pendente";
 
   const handleTriagem = async (resultado: string) => {
+    if (resultado === "descartado" && !motivoInaptidao.trim()) {
+      return toast.error("Motivo de inaptidão é obrigatório para descartar");
+    }
     try {
       await updateProcesso.mutateAsync({
         id: processo.id,
@@ -40,6 +47,7 @@ export default function TabTriagem({ processo }: Props) {
           triagem_resultado: resultado,
           triagem_observacoes: triageObs,
           triagem_data: new Date().toISOString(),
+          triagem_motivo_inaptidao: resultado === "descartado" ? motivoInaptidao : null,
         },
       });
       toast.success(`Processo marcado como ${TRIAGEM_LABELS[resultado]}`);
@@ -73,12 +81,25 @@ export default function TabTriagem({ processo }: Props) {
           </div>
         </div>
 
-        <Textarea
-          value={triageObs}
-          onChange={e => setTriageObs(e.target.value)}
-          placeholder="Observações da análise..."
-          className="resize-none h-16 text-xs"
-        />
+        <div className="space-y-1">
+          <Label className="text-xs">Observações da análise</Label>
+          <Textarea
+            value={triageObs}
+            onChange={e => setTriageObs(e.target.value)}
+            placeholder="Observações da análise..."
+            className="resize-none h-16 text-xs"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs">Motivo de inaptidão (obrigatório se descartar)</Label>
+          <Input
+            value={motivoInaptidao}
+            onChange={e => setMotivoInaptidao(e.target.value)}
+            placeholder="Ex: Processo sem trânsito em julgado, valor abaixo do mínimo..."
+            className="h-8 text-xs"
+          />
+        </div>
 
         <div className="flex items-center gap-2">
           <Button onClick={() => handleTriagem("apto")} size="sm" className="bg-success hover:bg-success/90 text-success-foreground text-xs gap-1.5" disabled={updateProcesso.isPending}>
