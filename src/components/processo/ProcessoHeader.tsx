@@ -137,7 +137,20 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
               {/* Badges row */}
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5">{processo.tribunal}</Badge>
-                <Badge variant="secondary" className="rounded-full text-[11px] px-2.5 py-0.5">{processo.natureza}</Badge>
+
+                {/* Natureza - editable */}
+                <EditableBadge
+                  value={processo.natureza || "—"}
+                  options={[
+                    { value: "Previdenciário", label: "Previdenciário" },
+                    { value: "Cível", label: "Cível" },
+                    { value: "Trabalhista", label: "Trabalhista" },
+                    { value: "Tributário", label: "Tributário" },
+                    { value: "Administrativo", label: "Administrativo" },
+                    { value: "Outro", label: "Outro" },
+                  ]}
+                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { natureza: v } }).then(() => toast.success("Natureza atualizada"))}
+                />
 
                 {/* Tipo Pagamento - editable */}
                 <EditableBadge
@@ -170,6 +183,17 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
                     { value: "false", label: "Trânsito: Não" },
                   ]}
                   onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { transito_julgado: v === "true" } }).then(() => toast.success("Trânsito atualizado"))}
+                />
+
+                {/* Natureza do Crédito - editable */}
+                <EditableBadge
+                  value={((processo as any).natureza_credito) || "Crédito: —"}
+                  className={((processo as any).natureza_credito) === "Alimentar" ? "bg-amber-500/10 text-amber-600" : ((processo as any).natureza_credito) === "Comum" ? "bg-blue-500/10 text-blue-600" : ""}
+                  options={[
+                    { value: "Alimentar", label: "Alimentar" },
+                    { value: "Comum", label: "Comum" },
+                  ]}
+                  onSave={(v) => updateProcesso.mutateAsync({ id: processo.id, updates: { natureza_credito: v } as any }).then(() => toast.success("Natureza do crédito atualizada"))}
                 />
               </div>
 
