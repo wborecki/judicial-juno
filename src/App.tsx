@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
+import ConfiguracoesLayout from "@/components/ConfiguracoesLayout";
 import Dashboard from "./pages/Dashboard";
 import Processos from "./pages/Processos";
 import Triagem from "./pages/Triagem";
@@ -18,7 +19,10 @@ import Pessoas from "./pages/Pessoas";
 import Equipes from "./pages/Equipes";
 import UsuariosPage from "./pages/Usuarios";
 import Chat from "./pages/Chat";
-import Configuracoes from "./pages/Configuracoes";
+import ConfiguracoesGeral from "./pages/ConfiguracoesGeral";
+import CamposNegocios from "./pages/CamposNegocios";
+import Notificacoes from "./pages/Notificacoes";
+import Integracoes from "./pages/Integracoes";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -45,18 +49,23 @@ const App = () => (
             >
               <Route path="/" element={<Dashboard />} />
               <Route path="/processos" element={<Processos />} />
+              <Route path="/processos/:id" element={<ProcessoDetalhe />} />
               <Route path="/triagem" element={<Triagem />} />
               <Route path="/distribuicao" element={<Distribuicao />} />
               <Route path="/analise" element={<Analise />} />
               <Route path="/precificacao" element={<Precificacao />} />
               <Route path="/comercial" element={<Comercial />} />
               <Route path="/negocios" element={<Negocios />} />
-              <Route path="/pessoas" element={<Pessoas />} />
-              <Route path="/equipes" element={<Equipes />} />
-              <Route path="/usuarios" element={<UsuariosPage />} />
               <Route path="/chat" element={<Chat />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-              <Route path="/processos/:id" element={<ProcessoDetalhe />} />
+              <Route path="/configuracoes" element={<ConfiguracoesLayout />}>
+                <Route index element={<ConfiguracoesGeral />} />
+                <Route path="pessoas" element={<Pessoas />} />
+                <Route path="equipes" element={<Equipes />} />
+                <Route path="usuarios" element={<UsuariosPage />} />
+                <Route path="campos-negocios" element={<CamposNegocios />} />
+                <Route path="notificacoes" element={<Notificacoes />} />
+                <Route path="integracoes" element={<Integracoes />} />
+              </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
