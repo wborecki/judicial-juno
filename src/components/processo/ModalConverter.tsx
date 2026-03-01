@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase } from "lucide-react";
+import { Briefcase, User, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useCreateNegocio } from "@/hooks/useNegocios";
+import { useProcessoPartes } from "@/hooks/useProcessoPartes";
 
 const TIPO_SERVICO_LABELS: Record<string, string> = {
   compra_credito: "Compra de Crédito Judicial",
@@ -35,10 +38,38 @@ interface Props {
 export default function ModalConverter({ processo, open, onOpenChange }: Props) {
   const createNegocio = useCreateNegocio();
   const updateProcesso = useUpdateProcesso();
+  const { data: partes = [] } = useProcessoPartes(processo.id);
+
   const [tipoServico, setTipoServico] = useState("compra_credito");
   const [observacoes, setObservacoes] = useState("");
+  const [selectedAutores, setSelectedAutores] = useState<Set<string>>(new Set());
+  const [isConverting, setIsConverting] = useState(false);
+
+  const autores = useMemo(() => partes.filter(p => p.tipo === "autor"), [partes]);
+  const reus = useMemo(() => partes.filter(p => p.tipo === "reu"), [partes]);
+
+  // If no structured autores, use legacy
+  const hasStructuredAutores = autores.length > 0;
+
+  const toggleAutor = (id: string) => {
+    setSelectedAutores(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedAutores.size === autores.length) {
+      setSelectedAutores(new Set());
+    } else {
+      setSelectedAutores(new Set(autores.map(a => a.id)));
+    }
+  };
 
   const handleConverter = async () => {
+    setIsConverting(true);
     try {
       // Mark as apto if not already
       if (processo.triagem_resultado !== "apto") {
@@ -51,42 +82,81 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
         });
       }
 
-      await createNegocio.mutateAsync({
-        processo_id: processo.id,
-        pessoa_id: processo.pessoa_id,
-        tipo_servico: tipoServico,
-        negocio_status: "em_andamento",
-        valor_proposta: processo.valor_estimado,
-        valor_fechamento: null,
-        data_abertura: new Date().toISOString(),
-        data_fechamento: null,
-        responsavel_id: null,
-        observacoes: observacoes.trim() || null,
-      });
+      if (hasStructuredAutores && selectedAutores.size > 0) {
+        // Create one negócio per selected autor
+        const selected = autores.filter(a => selectedAutores.has(a.id));
+        const reuNome = reus.map(r => r.nome).join(", ") || processo.parte_re;
 
-      toast.success("Negócio criado com sucesso!");
+        for (const autor of selected) {
+          await createNegocio.mutateAsync({
+            processo_id: processo.id,
+            pessoa_id: autor.pessoa_id ?? null,
+            tipo_servico: tipoServico,
+            negocio_status: "em_andamento",
+            valor_proposta: processo.valor_estimado,
+            valor_fechamento: null,
+            data_abertura: new Date().toISOString(),
+            data_fechamento: null,
+            responsavel_id: null,
+            observacoes: [
+              `Autor: ${autor.nome}`,
+              `Réu: ${reuNome}`,
+              observacoes.trim() || null,
+            ].filter(Boolean).join("\n"),
+          });
+        }
+
+        toast.success(
+          selected.length === 1
+            ? "1 negócio criado com sucesso!"
+            : `${selected.length} negócios criados com sucesso!`
+        );
+      } else {
+        // Legacy: single deal
+        await createNegocio.mutateAsync({
+          processo_id: processo.id,
+          pessoa_id: processo.pessoa_id,
+          tipo_servico: tipoServico,
+          negocio_status: "em_andamento",
+          valor_proposta: processo.valor_estimado,
+          valor_fechamento: null,
+          data_abertura: new Date().toISOString(),
+          data_fechamento: null,
+          responsavel_id: null,
+          observacoes: observacoes.trim() || null,
+        });
+        toast.success("Negócio criado com sucesso!");
+      }
+
       setObservacoes("");
+      setSelectedAutores(new Set());
       onOpenChange(false);
     } catch {
-      toast.error("Erro ao criar negócio");
+      toast.error("Erro ao criar negócio(s)");
+    } finally {
+      setIsConverting(false);
     }
   };
 
+  const canConvert = hasStructuredAutores ? selectedAutores.size > 0 : true;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-sm flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
             Converter em Negócio
           </DialogTitle>
           <DialogDescription className="text-xs">
-            O processo será marcado como Apto e um novo negócio será criado.
+            {hasStructuredAutores
+              ? "Selecione os autores para criar um negócio por autor. Cada negócio será vinculado ao(s) réu(s) do processo."
+              : "O processo será marcado como Apto e um novo negócio será criado."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Resumo do processo */}
+          {/* Resumo */}
           <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">CNJ</span>
@@ -100,12 +170,61 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
               <span className="text-muted-foreground">Valor Estimado</span>
               <span className="font-semibold text-primary">{formatCurrency(processo.valor_estimado)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Autor</span>
-              <span className="truncate max-w-[200px]">{processo.parte_autora}</span>
-            </div>
+            {reus.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Réu(s)</span>
+                <span className="truncate max-w-[250px]">{reus.map(r => r.nome).join(", ")}</span>
+              </div>
+            )}
           </div>
 
+          {/* Autores selection */}
+          {hasStructuredAutores ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" />
+                  Autores — selecione para criar negócios
+                </Label>
+                <Button variant="ghost" size="sm" onClick={selectAll} className="text-[10px] h-6 px-2">
+                  {selectedAutores.size === autores.length ? "Desmarcar todos" : "Selecionar todos"}
+                </Button>
+              </div>
+              <div className="border border-border/40 rounded-lg divide-y divide-border/30 max-h-48 overflow-y-auto">
+                {autores.map(autor => (
+                  <label
+                    key={autor.id}
+                    className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors"
+                  >
+                    <Checkbox
+                      checked={selectedAutores.has(autor.id)}
+                      onCheckedChange={() => toggleAutor(autor.id)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">{autor.nome}</p>
+                      {autor.cpf_cnpj && (
+                        <p className="text-[10px] text-muted-foreground font-mono">{autor.cpf_cnpj}</p>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {selectedAutores.size > 0 && (
+                <p className="text-[10px] text-muted-foreground">
+                  {selectedAutores.size} negócio(s) será(ão) criado(s)
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-muted/20 rounded-lg p-3 text-xs text-muted-foreground">
+              <div className="flex justify-between">
+                <span>Autor</span>
+                <span className="font-medium text-foreground truncate max-w-[250px]">{processo.parte_autora}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Tipo de serviço */}
           <div className="space-y-1.5">
             <Label className="text-xs">Tipo de Serviço</Label>
             <Select value={tipoServico} onValueChange={setTipoServico}>
@@ -118,6 +237,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
             </Select>
           </div>
 
+          {/* Observações */}
           <div className="space-y-1.5">
             <Label className="text-xs">Observações (opcional)</Label>
             <Textarea
@@ -134,11 +254,13 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
           <Button
             size="sm"
             onClick={handleConverter}
-            disabled={createNegocio.isPending || updateProcesso.isPending}
+            disabled={isConverting || !canConvert}
             className="text-xs gap-1.5 bg-success hover:bg-success/90 text-success-foreground"
           >
             <Briefcase className="w-3.5 h-3.5" />
-            Converter em Negócio
+            {hasStructuredAutores && selectedAutores.size > 1
+              ? `Criar ${selectedAutores.size} Negócios`
+              : "Converter em Negócio"}
           </Button>
         </DialogFooter>
       </DialogContent>
