@@ -138,22 +138,28 @@ export function useCreateConversa() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ nome, tipo, participantIds }: { nome?: string; tipo: string; participantIds: string[] }) => {
-      const { data: conversa, error } = await supabase
+      const conversaId = crypto.randomUUID();
+
+      const { error } = await supabase
         .from("chat_conversas")
-        .insert({ nome: nome ?? null, tipo })
-        .select()
-        .single();
+        .insert({ id: conversaId, nome: nome ?? null, tipo });
       if (error) throw error;
 
-      // Add participants
+      // Add participants (including current user)
       const participants = participantIds.map((uid) => ({
-        conversa_id: conversa.id,
+        conversa_id: conversaId,
         user_id: uid,
       }));
       const { error: pError } = await supabase.from("chat_participantes").insert(participants);
       if (pError) throw pError;
 
-      return conversa as ChatConversa;
+      return {
+        id: conversaId,
+        nome: nome ?? null,
+        tipo,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as ChatConversa;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
