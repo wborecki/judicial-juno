@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, MapPin } from "lucide-react";
+import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, MapPin, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useProcessoPartes, ProcessoParte } from "@/hooks/useProcessoPartes";
@@ -231,22 +231,50 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
 
           {/* Row 2: Processo details + Partes */}
           <div className="px-4 pb-3 border-t border-border/20 pt-3 space-y-2">
-            {/* Process details row */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+            {/* Process details rows */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
+              {processo.classe_fase && (
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Classe Judicial</span>
+                  <p className="font-medium flex items-center gap-1"><Scale className="w-3 h-3 text-muted-foreground" />{processo.classe_fase}</p>
+                </div>
+              )}
               {(processo as any).assunto && (
-                <span className="flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
-                  {(processo as any).assunto}
-                </span>
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Assunto</span>
+                  <p className="font-medium flex items-center gap-1"><FileText className="w-3 h-3 text-muted-foreground" />{(processo as any).assunto}</p>
+                </div>
+              )}
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor da Causa</span>
+                <p className="font-medium">{formatCurrency(processo.valor_estimado)}</p>
+              </div>
+              {(processo as any).orgao_julgador && (
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Órgão Julgador</span>
+                  <p className="font-medium flex items-center gap-1"><Gavel className="w-3 h-3 text-muted-foreground" />{(processo as any).orgao_julgador}</p>
+                </div>
               )}
               {processo.vara_comarca && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {processo.vara_comarca}
-                </span>
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Vara / Comarca</span>
+                  <p className="font-medium flex items-center gap-1"><MapPin className="w-3 h-3 text-muted-foreground" />{processo.vara_comarca}</p>
+                </div>
               )}
-              <span>Captação: {formatDate(processo.data_captacao)}</span>
-              {processo.data_distribuicao && <span>Distribuição: {formatDate(processo.data_distribuicao)}</span>}
+              <div className="flex gap-4">
+                {(processo as any).data_autuacao && (
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Autuação</span>
+                    <p className="font-medium">{formatDate((processo as any).data_autuacao)}</p>
+                  </div>
+                )}
+                {processo.data_distribuicao && (
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Distribuição</span>
+                    <p className="font-medium">{formatDate(processo.data_distribuicao)}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Partes with hierarchy: Autor + Adv Autor | Réu + Adv Réu */}

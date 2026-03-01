@@ -544,6 +544,7 @@ export type Database = {
           assunto: string | null
           classe_fase: string | null
           created_at: string
+          data_autuacao: string | null
           data_captacao: string
           data_distribuicao: string | null
           distribuido_em: string | null
@@ -554,6 +555,7 @@ export type Database = {
           natureza: string
           numero_processo: string
           observacoes: string | null
+          orgao_julgador: string | null
           parte_autora: string
           parte_re: string
           pessoa_id: string | null
@@ -579,6 +581,7 @@ export type Database = {
           assunto?: string | null
           classe_fase?: string | null
           created_at?: string
+          data_autuacao?: string | null
           data_captacao?: string
           data_distribuicao?: string | null
           distribuido_em?: string | null
@@ -589,6 +592,7 @@ export type Database = {
           natureza: string
           numero_processo: string
           observacoes?: string | null
+          orgao_julgador?: string | null
           parte_autora: string
           parte_re: string
           pessoa_id?: string | null
@@ -614,6 +618,7 @@ export type Database = {
           assunto?: string | null
           classe_fase?: string | null
           created_at?: string
+          data_autuacao?: string | null
           data_captacao?: string
           data_distribuicao?: string | null
           distribuido_em?: string | null
@@ -624,6 +629,7 @@ export type Database = {
           natureza?: string
           numero_processo?: string
           observacoes?: string | null
+          orgao_julgador?: string | null
           parte_autora?: string
           parte_re?: string
           pessoa_id?: string | null
