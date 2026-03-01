@@ -1,11 +1,13 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useNegocio, useUpdateNegocio } from "@/hooks/useNegocios";
 import { useDefaultPipeline } from "@/hooks/useNegocioPipelines";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon } from "lucide-react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon } from "lucide-react";
+// ArrowLeft removed — now using breadcrumbs
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import TabDadosGerais from "@/components/negocios/TabDadosGerais";
@@ -74,11 +76,23 @@ export default function NegocioDetalhe() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Back button */}
-      <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={() => navigate("/negocios")}>
-        <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Negócios
-      </Button>
+    <div className="space-y-3">
+      {/* Breadcrumbs */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link to="/">Dashboard</Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link to="/negocios">Negócios</Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{negocio.titulo || "Sem título"}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* Header */}
       <div className="bg-card border border-border/40 rounded-xl p-6 space-y-4">
