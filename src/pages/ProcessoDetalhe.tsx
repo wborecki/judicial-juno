@@ -1,68 +1,38 @@
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useProcesso } from "@/hooks/useProcessos";
-import { useCreateNegocio } from "@/hooks/useNegocios";
+import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
+import { useProcessoDocumentos } from "@/hooks/useProcessoDocumentos";
+import { useProcessoPartes } from "@/hooks/useProcessoPartes";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Users, Clock, CheckCircle, Briefcase, LayoutDashboard } from "lucide-react";
-import { toast } from "sonner";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ArrowLeft, FileText, Users, Clock, Database, Link2, StickyNote, Landmark } from "lucide-react";
+import ProcessoHeader from "@/components/processo/ProcessoHeader";
+import ProcessoResumo from "@/components/processo/ProcessoResumo";
+import PainelTriagem from "@/components/processo/PainelTriagem";
 import TabDadosGerais from "@/components/processo/TabDadosGerais";
 import TabPartes from "@/components/processo/TabPartes";
 import TabAndamentos from "@/components/processo/TabAndamentos";
 import TabDocumentos from "@/components/processo/TabDocumentos";
-import TabTriagem from "@/components/processo/TabTriagem";
-import TabNegocios from "@/components/processo/TabNegocios";
-
-const STATUS_LABELS: Record<number, string> = { 1: "Ativo", 2: "Suspenso", 3: "Arquivado" };
-const TRIAGEM_COLORS: Record<string, string> = {
-  pendente: "bg-warning/10 text-warning border-warning/20",
-  apto: "bg-success/10 text-success border-success/20",
-  descartado: "bg-destructive/10 text-destructive border-destructive/20",
-  "reanálise": "bg-info/10 text-info border-info/20",
-};
-const TRIAGEM_LABELS: Record<string, string> = {
-  pendente: "Pendente", apto: "Apto", descartado: "Descartado", "reanálise": "Reanálise",
-};
-
-const formatCurrency = (v?: number | null) =>
-  v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
 export default function ProcessoDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "dados";
   const { data: processo, isLoading } = useProcesso(id);
-  const createNegocio = useCreateNegocio();
-
-  const handleEnviarNegocios = async () => {
-    if (!processo) return;
-    try {
-      await createNegocio.mutateAsync({
-        processo_id: processo.id,
-        valor_proposta: processo.valor_estimado,
-        negocio_status: "em_andamento",
-        data_abertura: new Date().toISOString(),
-        pessoa_id: processo.pessoa_id,
-        responsavel_id: null,
-        tipo_servico: null,
-        observacoes: null,
-        valor_fechamento: null,
-        data_fechamento: null,
-      });
-      toast.success("Negócio criado com sucesso!");
-    } catch {
-      toast.error("Erro ao criar negócio");
-    }
-  };
+  const { data: andamentos = [] } = useProcessoAndamentos(id);
+  const { data: documentos = [] } = useProcessoDocumentos(id);
+  const { data: partes = [] } = useProcessoPartes(id);
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-5xl">
+      <div className="space-y-4 max-w-6xl">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-28 w-full" />
-        <Skeleton className="h-60 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+          <Skeleton className="h-96" />
+          <Skeleton className="h-96" />
+        </div>
       </div>
     );
   }
@@ -78,98 +48,159 @@ export default function ProcessoDetalhe() {
     );
   }
 
-  const triagem = processo.triagem_resultado ?? "pendente";
+  // Counts for accordion previews
+  const autores = partes.filter(p => p.tipo === "autor");
+  const reus = partes.filter(p => p.tipo === "reu");
+  const partesPreview = partes.length > 0
+    ? `${autores.length} autor(es), ${reus.length} réu(s)`
+    : "Partes legado";
+
+  const ultimoMov = andamentos[0];
+  const movPreview = andamentos.length > 0
+    ? `${andamentos.length} movimentações${ultimoMov ? `, última em ${new Date(ultimoMov.data_andamento).toLocaleDateString("pt-BR")}` : ""}`
+    : "Nenhuma";
+
+  const docsPreview = documentos.length > 0
+    ? `${documentos.length} documento(s)`
+    : "Nenhum";
 
   return (
-    <div className="space-y-4 max-w-5xl">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/processos")} className="text-xs gap-1.5 -ml-2">
-        <ArrowLeft className="w-3.5 h-3.5" />Voltar à listagem
-      </Button>
+    <div className="space-y-4 max-w-6xl">
+      {/* Header */}
+      <ProcessoHeader processo={processo} />
 
-      {/* Strong Header */}
-      <div className="glass-card rounded-xl p-4 space-y-2">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-mono text-lg font-bold">{processo.numero_processo}</h1>
-              <Badge variant="secondary" className={`text-[10px] ${TRIAGEM_COLORS[triagem]}`}>
-                {TRIAGEM_LABELS[triagem]}
-              </Badge>
-              <Badge variant="outline" className="text-[10px]">
-                {STATUS_LABELS[processo.status_processo] ?? "—"}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-              <span className="font-medium text-foreground">{processo.tribunal}</span>
-              {processo.vara_comarca && <span>• {processo.vara_comarca}</span>}
-              {processo.classe_fase && <span>• {processo.classe_fase}</span>}
-              <span>• {processo.transito_julgado ? "Trânsito em julgado" : "Sem trânsito"}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="text-right mr-2">
-              <p className="text-[10px] text-muted-foreground">Valor Estimado</p>
-              <p className="text-sm font-bold">{formatCurrency(processo.valor_estimado)}</p>
-            </div>
-            {triagem === "apto" && (
-              <Button
-                size="sm"
-                className="text-xs gap-1.5"
-                onClick={handleEnviarNegocios}
-                disabled={createNegocio.isPending}
-              >
-                <Briefcase className="w-3.5 h-3.5" />Criar Negócio
-              </Button>
-            )}
-          </div>
+      {/* Resumo executivo */}
+      <ProcessoResumo processo={processo} />
+
+      {/* 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
+        {/* Main content - Accordions */}
+        <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
+          <Accordion type="multiple" defaultValue={["dados", "partes"]} className="divide-y divide-border/40">
+            {/* A) Dados do Processo */}
+            <AccordionItem value="dados" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Database className="w-4 h-4 text-muted-foreground" />
+                  Dados do Processo
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabDadosGerais processo={processo} />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* B) Partes */}
+            <AccordionItem value="partes" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  Partes
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1">{partesPreview}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabPartes processoId={processo.id} parteAutoraLegacy={processo.parte_autora} parteReLegacy={processo.parte_re} />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* C) Movimentações */}
+            <AccordionItem value="andamentos" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  Movimentações
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1">{movPreview}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabAndamentos processoId={processo.id} />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* D) Documentos */}
+            <AccordionItem value="documentos" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  Documentos
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1">{docsPreview}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabDocumentos processoId={processo.id} />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* E) Financeiro/RPV */}
+            <AccordionItem value="financeiro" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Landmark className="w-4 h-4 text-muted-foreground" />
+                  Financeiro / RPV / Precatório
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <PlaceholderField label="Nº Requisitório" value="—" />
+                  <PlaceholderField label="Ente Devedor" value="—" />
+                  <PlaceholderField label="Data-Base" value="—" />
+                  <PlaceholderField label="Valor Bruto" value="—" />
+                  <PlaceholderField label="Deduções" value="—" />
+                  <PlaceholderField label="Valor Líquido" value="—" />
+                  <PlaceholderField label="LOA" value="—" />
+                  <PlaceholderField label="Status" value="—" />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-3 italic">Dados financeiros ainda não disponíveis no sistema.</p>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* F) Relacionados */}
+            <AccordionItem value="relacionados" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Link2 className="w-4 h-4 text-muted-foreground" />
+                  Processos Relacionados
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="space-y-2 text-xs">
+                  <PlaceholderField label="Processo Principal" value="—" />
+                  <PlaceholderField label="Cumprimentos" value="Nenhum" />
+                  <PlaceholderField label="Apensos" value="Nenhum" />
+                  <PlaceholderField label="Recursos" value="Nenhum" />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-3 italic">Vinculação de processos ainda não disponível.</p>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* G) Notas internas */}
+            <AccordionItem value="notas" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <StickyNote className="w-4 h-4 text-muted-foreground" />
+                  Notas Internas
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <p className="text-[10px] text-muted-foreground italic">Notas internas ainda não disponíveis. Em breve será possível adicionar notas com responsável e anexos.</p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
+
+        {/* Sidebar */}
+        <PainelTriagem processo={processo} />
       </div>
+    </div>
+  );
+}
 
-      <Tabs defaultValue={defaultTab} className="space-y-4">
-        <TabsList className="w-full justify-start flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="dados" className="text-xs gap-1.5">
-            <LayoutDashboard className="w-3.5 h-3.5" />Dados Gerais
-          </TabsTrigger>
-          <TabsTrigger value="partes" className="text-xs gap-1.5">
-            <Users className="w-3.5 h-3.5" />Partes
-          </TabsTrigger>
-          <TabsTrigger value="andamentos" className="text-xs gap-1.5">
-            <Clock className="w-3.5 h-3.5" />Movimentações
-          </TabsTrigger>
-          <TabsTrigger value="documentos" className="text-xs gap-1.5">
-            <FileText className="w-3.5 h-3.5" />Documentos
-          </TabsTrigger>
-          <TabsTrigger value="triagem" className="text-xs gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5" />Triagem
-          </TabsTrigger>
-          {triagem === "apto" && (
-            <TabsTrigger value="negocios" className="text-xs gap-1.5">
-              <Briefcase className="w-3.5 h-3.5" />Negócios
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        <TabsContent value="dados">
-          <TabDadosGerais processo={processo} />
-        </TabsContent>
-        <TabsContent value="partes">
-          <TabPartes processoId={processo.id} parteAutoraLegacy={processo.parte_autora} parteReLegacy={processo.parte_re} />
-        </TabsContent>
-        <TabsContent value="andamentos">
-          <TabAndamentos processoId={processo.id} />
-        </TabsContent>
-        <TabsContent value="documentos">
-          <TabDocumentos processoId={processo.id} />
-        </TabsContent>
-        <TabsContent value="triagem">
-          <TabTriagem processo={processo} />
-        </TabsContent>
-        {triagem === "apto" && (
-          <TabsContent value="negocios">
-            <TabNegocios processo={processo} />
-          </TabsContent>
-        )}
-      </Tabs>
+function PlaceholderField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground/60">{value}</p>
     </div>
   );
 }
