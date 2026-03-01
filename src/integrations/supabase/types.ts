@@ -17,23 +17,41 @@ export type Database = {
       chat_conversas: {
         Row: {
           created_at: string
+          deletado_em: string | null
+          deletado_por: string | null
+          fixado: boolean
+          fixado_em: string | null
           id: string
           nome: string | null
           tipo: string
+          ultima_mensagem: string | null
+          ultima_mensagem_em: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          deletado_em?: string | null
+          deletado_por?: string | null
+          fixado?: boolean
+          fixado_em?: string | null
           id?: string
           nome?: string | null
           tipo?: string
+          ultima_mensagem?: string | null
+          ultima_mensagem_em?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          deletado_em?: string | null
+          deletado_por?: string | null
+          fixado?: boolean
+          fixado_em?: string | null
           id?: string
           nome?: string | null
           tipo?: string
+          ultima_mensagem?: string | null
+          ultima_mensagem_em?: string | null
           updated_at?: string
         }
         Relationships: []

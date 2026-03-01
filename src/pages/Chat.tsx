@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   useConversas, useMensagens, useParticipantes,
   useSendMessage, useCreateConversa, useUploadChatFile,
+  useDeleteConversa, useToggleFixarConversa,
   ChatConversa, ChatMensagem
 } from "@/hooks/useChat";
 import { useProcessos } from "@/hooks/useProcessos";
@@ -15,14 +16,16 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   MessageSquare, Send, Paperclip, Search, Plus, Scale, Briefcase,
-  FileText, File, X, Users, User, UserPlus
+  FileText, File, X, Users, User, UserPlus, Pin, Trash2, MoreVertical, PinOff
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 export default function Chat() {
   const { user } = useAuth();
@@ -31,10 +34,19 @@ export default function Chat() {
   const [searchConversas, setSearchConversas] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
   const [showAddMembers, setShowAddMembers] = useState(false);
+  const deleteConversa = useDeleteConversa();
+  const toggleFixar = useToggleFixarConversa();
 
   useEffect(() => {
     if (!activeConversaId && conversas.length > 0) {
       setActiveConversaId(conversas[0].id);
+    }
+  }, [conversas, activeConversaId]);
+
+  // If active conversa was deleted, clear it
+  useEffect(() => {
+    if (activeConversaId && !conversas.find(c => c.id === activeConversaId)) {
+      setActiveConversaId(conversas[0]?.id ?? null);
     }
   }, [conversas, activeConversaId]);
 
@@ -45,6 +57,29 @@ export default function Chat() {
     const q = searchConversas.toLowerCase();
     return conversas.filter(c => c.nome?.toLowerCase().includes(q) || c.tipo.includes(q));
   }, [conversas, searchConversas]);
+
+  // Split pinned and unpinned
+  const pinnedConversas = filteredConversas.filter(c => c.fixado);
+  const unpinnedConversas = filteredConversas.filter(c => !c.fixado);
+
+  const handleDelete = async (c: ChatConversa) => {
+    try {
+      await deleteConversa.mutateAsync({ conversaId: c.id, userId: user?.id ?? "" });
+      toast.success("Conversa arquivada");
+      if (activeConversaId === c.id) setActiveConversaId(null);
+    } catch {
+      toast.error("Erro ao arquivar conversa");
+    }
+  };
+
+  const handleTogglePin = async (c: ChatConversa) => {
+    try {
+      await toggleFixar.mutateAsync({ conversaId: c.id, fixado: c.fixado });
+      toast.success(c.fixado ? "Conversa desafixada" : "Conversa fixada");
+    } catch {
+      toast.error("Erro ao fixar/desafixar");
+    }
+  };
 
   return (
     <div className="flex h-screen animate-fade-in">
@@ -71,8 +106,41 @@ export default function Chat() {
           {!loadingConversas && filteredConversas.length === 0 && (
             <div className="p-8 text-center text-xs text-muted-foreground">Nenhuma conversa encontrada.</div>
           )}
-          {filteredConversas.map(c => (
-            <ConversaItem key={c.id} conversa={c} isActive={c.id === activeConversaId} onClick={() => setActiveConversaId(c.id)} />
+
+          {/* Pinned section */}
+          {pinnedConversas.length > 0 && (
+            <>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-4 pt-3 pb-1 flex items-center gap-1">
+                <Pin className="w-3 h-3" /> Fixadas
+              </p>
+              {pinnedConversas.map(c => (
+                <ConversaItem
+                  key={c.id}
+                  conversa={c}
+                  isActive={c.id === activeConversaId}
+                  onClick={() => setActiveConversaId(c.id)}
+                  onDelete={() => handleDelete(c)}
+                  onTogglePin={() => handleTogglePin(c)}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Unpinned section */}
+          {pinnedConversas.length > 0 && unpinnedConversas.length > 0 && (
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-4 pt-3 pb-1">
+              Todas
+            </p>
+          )}
+          {unpinnedConversas.map(c => (
+            <ConversaItem
+              key={c.id}
+              conversa={c}
+              isActive={c.id === activeConversaId}
+              onClick={() => setActiveConversaId(c.id)}
+              onDelete={() => handleDelete(c)}
+              onTogglePin={() => handleTogglePin(c)}
+            />
           ))}
         </ScrollArea>
       </div>
@@ -96,50 +164,63 @@ export default function Chat() {
         )}
       </div>
 
-      {/* New Chat Sheet */}
-      <NewChatSheet
-        open={showNewChat}
-        onOpenChange={setShowNewChat}
-        userId={user?.id ?? ""}
-        onCreated={(id) => { setActiveConversaId(id); setShowNewChat(false); }}
-      />
+      <NewChatSheet open={showNewChat} onOpenChange={setShowNewChat} userId={user?.id ?? ""} onCreated={(id) => { setActiveConversaId(id); setShowNewChat(false); }} />
 
-      {/* Add Members Sheet */}
       {activeConversaId && (
-        <AddMembersSheet
-          open={showAddMembers}
-          onOpenChange={setShowAddMembers}
-          conversaId={activeConversaId}
-        />
+        <AddMembersSheet open={showAddMembers} onOpenChange={setShowAddMembers} conversaId={activeConversaId} />
       )}
     </div>
   );
 }
 
-function ConversaItem({ conversa, isActive, onClick }: { conversa: ChatConversa; isActive: boolean; onClick: () => void }) {
+function ConversaItem({ conversa, isActive, onClick, onDelete, onTogglePin }: {
+  conversa: ChatConversa; isActive: boolean; onClick: () => void; onDelete: () => void; onTogglePin: () => void;
+}) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "w-full text-left px-4 py-3 border-b border-border/30 transition-colors",
-        isActive ? "bg-accent/10" : "hover:bg-muted/30"
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <div className={cn(
-          "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-          conversa.tipo === "grupo" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent-foreground"
-        )}>
-          {conversa.tipo === "grupo" ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
-        </div>
-        <div className="flex-1 min-w-0">
+    <div className={cn(
+      "group relative w-full text-left px-4 py-3 border-b border-border/30 transition-colors flex items-center gap-3 cursor-pointer",
+      isActive ? "bg-accent/10" : "hover:bg-muted/30"
+    )} onClick={onClick}>
+      <div className={cn(
+        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+        conversa.tipo === "grupo" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent-foreground"
+      )}>
+        {conversa.tipo === "grupo" ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
           <p className="text-sm font-medium truncate">{conversa.nome ?? "Conversa"}</p>
+          {conversa.fixado && <Pin className="w-3 h-3 text-primary shrink-0" />}
+        </div>
+        {conversa.ultima_mensagem ? (
+          <p className="text-[10px] text-muted-foreground truncate">{conversa.ultima_mensagem}</p>
+        ) : (
           <p className="text-[10px] text-muted-foreground">
             {format(new Date(conversa.updated_at), "dd/MM HH:mm", { locale: ptBR })}
           </p>
-        </div>
+        )}
       </div>
-    </button>
+
+      {/* Context menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+          <button className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity shrink-0">
+            <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem onClick={e => { e.stopPropagation(); onTogglePin(); }}>
+            {conversa.fixado ? <PinOff className="w-3.5 h-3.5 mr-2" /> : <Pin className="w-3.5 h-3.5 mr-2" />}
+            {conversa.fixado ? "Desafixar" : "Fixar"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={e => { e.stopPropagation(); onDelete(); }}>
+            <Trash2 className="w-3.5 h-3.5 mr-2" />
+            Arquivar
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
@@ -200,12 +281,10 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers }: { conversa
   }, [processos, shareSearch]);
 
   const filteredNegocios = useMemo(() => negocios.slice(0, 5), [negocios]);
-
   const isGroup = conversa?.tipo === "grupo";
 
   return (
     <>
-      {/* Header */}
       <div className="h-14 border-b border-border flex items-center px-4 gap-3 shrink-0 justify-between">
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium">{conversa?.nome ?? "Conversa"}</p>
@@ -213,13 +292,11 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers }: { conversa
         </div>
         {isGroup && (
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={onAddMembers}>
-            <UserPlus className="w-3.5 h-3.5" />
-            Adicionar
+            <UserPlus className="w-3.5 h-3.5" />Adicionar
           </Button>
         )}
       </div>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {isLoading && <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-2/3" />)}</div>}
         {!isLoading && mensagens.length === 0 && (
@@ -228,7 +305,6 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers }: { conversa
         {mensagens.map(msg => <MessageBubble key={msg.id} msg={msg} isOwn={msg.sender_id === userId} />)}
       </div>
 
-      {/* Input */}
       <div className="border-t border-border p-3">
         <div className="flex items-end gap-2">
           <Popover open={showAttach} onOpenChange={setShowAttach}>
@@ -244,9 +320,7 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers }: { conversa
               </button>
             </PopoverContent>
           </Popover>
-
           <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
-
           <Input placeholder="Digite uma mensagem..." value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 text-sm" />
           <Button size="sm" className="h-9 w-9 p-0 shrink-0" onClick={handleSend} disabled={!text.trim() || sendMessage.isPending}>
             <Send className="w-4 h-4" />
@@ -254,12 +328,9 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers }: { conversa
         </div>
       </div>
 
-      {/* Share Sheet */}
       <Sheet open={showShareSheet} onOpenChange={setShowShareSheet}>
         <SheetContent side="right" className="w-[400px] sm:w-[440px]">
-          <SheetHeader>
-            <SheetTitle>Compartilhar</SheetTitle>
-          </SheetHeader>
+          <SheetHeader><SheetTitle>Compartilhar</SheetTitle></SheetHeader>
           <div className="mt-4 space-y-4">
             <Input placeholder="Buscar processo..." value={shareSearch} onChange={e => setShareSearch(e.target.value)} className="h-9 text-xs" />
             <ScrollArea className="h-[calc(100vh-200px)]">
@@ -333,7 +404,6 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMensagem; isOwn: boolean }) {
   );
 }
 
-/* ─── New Chat Sheet ─── */
 function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean; onOpenChange: (v: boolean) => void; userId: string; onCreated: (id: string) => void }) {
   const [search, setSearch] = useState("");
   const [nome, setNome] = useState("");
@@ -368,22 +438,21 @@ function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean
       setSelectedUsers([]);
       setNome("");
       setSearch("");
+      toast.success("Conversa criada!");
       onCreated(conversa.id);
-    } catch {}
+    } catch {
+      toast.error("Erro ao criar conversa");
+    }
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[400px] sm:w-[440px] flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Nova Conversa</SheetTitle>
-        </SheetHeader>
-
+        <SheetHeader><SheetTitle>Nova Conversa</SheetTitle></SheetHeader>
         <div className="mt-4 space-y-3 flex-1 flex flex-col min-h-0">
           {selectedUsers.length > 1 && (
             <Input placeholder="Nome do grupo..." value={nome} onChange={e => setNome(e.target.value)} className="h-9 text-xs" />
           )}
-
           {selectedUsers.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {selectedUsers.map(u => (
@@ -394,12 +463,10 @@ function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean
               ))}
             </div>
           )}
-
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input placeholder="Buscar pessoas..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9 text-xs" />
           </div>
-
           <ScrollArea className="flex-1">
             <div className="space-y-0.5">
               {usuarios.map(u => {
@@ -423,7 +490,6 @@ function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean
               {usuarios.length === 0 && <p className="text-center text-xs text-muted-foreground py-6">Nenhuma pessoa encontrada</p>}
             </div>
           </ScrollArea>
-
           <Button className="w-full" onClick={handleCreate} disabled={selectedUsers.length === 0 || createConversa.isPending}>
             {createConversa.isPending ? "Criando..." : selectedUsers.length > 1 ? `Criar Grupo (${selectedUsers.length})` : "Iniciar Conversa"}
           </Button>
@@ -433,7 +499,6 @@ function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean
   );
 }
 
-/* ─── Add Members Sheet ─── */
 function AddMembersSheet({ open, onOpenChange, conversaId }: { open: boolean; onOpenChange: (v: boolean) => void; conversaId: string }) {
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
@@ -454,39 +519,27 @@ function AddMembersSheet({ open, onOpenChange, conversaId }: { open: boolean; on
   const participantIds = participantes.map(p => p.user_id);
   const available = usuarios.filter(u => !participantIds.includes(u.id));
 
-  const handleAdd = async (userId: string) => {
+  const handleAdd = async (userId: string, nome: string) => {
     setAdding(true);
     try {
       await supabase.from("chat_participantes").insert({ conversa_id: conversaId, user_id: userId });
       queryClient.invalidateQueries({ queryKey: ["chat-participantes", conversaId] });
-    } catch {}
+      toast.success(`${nome} adicionado ao grupo`);
+    } catch {
+      toast.error("Erro ao adicionar membro");
+    }
     setAdding(false);
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[400px] sm:w-[440px] flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Adicionar Membros</SheetTitle>
-        </SheetHeader>
-
+        <SheetHeader><SheetTitle>Adicionar Membros</SheetTitle></SheetHeader>
         <div className="mt-4 space-y-3 flex-1 flex flex-col min-h-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input placeholder="Buscar pessoas..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9 text-xs" />
           </div>
-
-          {participantes.length > 0 && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Participantes atuais ({participantes.length})</p>
-              <div className="flex flex-wrap gap-1">
-                {participantes.map(p => (
-                  <Badge key={p.id} variant="outline" className="text-[10px]">{p.user_id.slice(0, 8)}…</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
           <ScrollArea className="flex-1">
             <div className="space-y-0.5">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Disponíveis</p>
@@ -499,7 +552,7 @@ function AddMembersSheet({ open, onOpenChange, conversaId }: { open: boolean; on
                     <p className="text-xs font-medium">{u.nome}</p>
                     <p className="text-[10px] text-muted-foreground">{u.email}</p>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleAdd(u.id)} disabled={adding}>
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => handleAdd(u.id, u.nome)} disabled={adding}>
                     <UserPlus className="w-3 h-3 mr-1" />Adicionar
                   </Button>
                 </div>

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 export type ChatConversa = {
@@ -9,6 +8,12 @@ export type ChatConversa = {
   tipo: string;
   created_at: string;
   updated_at: string;
+  deletado_em: string | null;
+  deletado_por: string | null;
+  fixado: boolean;
+  fixado_em: string | null;
+  ultima_mensagem: string | null;
+  ultima_mensagem_em: string | null;
 };
 
 export type ChatParticipante = {
@@ -37,6 +42,8 @@ export function useConversas() {
       const { data, error } = await supabase
         .from("chat_conversas")
         .select("*")
+        .is("deletado_em", null)
+        .order("fixado", { ascending: false })
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return data as ChatConversa[];
@@ -75,7 +82,6 @@ export function useMensagens(conversaId?: string) {
             ["chat-mensagens", conversaId],
             (old) => [...(old ?? []), payload.new as ChatMensagem]
           );
-          // Also update conversa list order
           queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
         }
       )
@@ -103,6 +109,7 @@ export function useMensagens(conversaId?: string) {
 }
 
 export function useSendMessage() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (msg: {
       conversa_id: string;
@@ -127,9 +134,16 @@ export function useSendMessage() {
         .select()
         .single();
       if (error) throw error;
-      // Update conversa timestamp
-      await supabase.from("chat_conversas").update({ updated_at: new Date().toISOString() }).eq("id", msg.conversa_id);
+      // Update conversa with last message preview
+      await supabase.from("chat_conversas").update({
+        updated_at: new Date().toISOString(),
+        ultima_mensagem: msg.conteudo?.slice(0, 100) ?? (msg.tipo === "arquivo" ? "📎 Arquivo" : null),
+        ultima_mensagem_em: new Date().toISOString(),
+      }).eq("id", msg.conversa_id);
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
     },
   });
 }
@@ -145,7 +159,6 @@ export function useCreateConversa() {
         .insert({ id: conversaId, nome: nome ?? null, tipo });
       if (error) throw error;
 
-      // Add participants (including current user)
       const participants = participantIds.map((uid) => ({
         conversa_id: conversaId,
         user_id: uid,
@@ -159,7 +172,48 @@ export function useCreateConversa() {
         tipo,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        deletado_em: null,
+        deletado_por: null,
+        fixado: false,
+        fixado_em: null,
+        ultima_mensagem: null,
+        ultima_mensagem_em: null,
       } as ChatConversa;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
+    },
+  });
+}
+
+export function useDeleteConversa() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversaId, userId }: { conversaId: string; userId: string }) => {
+      const { error } = await supabase
+        .from("chat_conversas")
+        .update({ deletado_em: new Date().toISOString(), deletado_por: userId })
+        .eq("id", conversaId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
+    },
+  });
+}
+
+export function useToggleFixarConversa() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversaId, fixado }: { conversaId: string; fixado: boolean }) => {
+      const { error } = await supabase
+        .from("chat_conversas")
+        .update({
+          fixado: !fixado,
+          fixado_em: !fixado ? new Date().toISOString() : null,
+        })
+        .eq("id", conversaId);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
