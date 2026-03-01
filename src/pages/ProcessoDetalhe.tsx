@@ -8,7 +8,7 @@ import { useNegocios } from "@/hooks/useNegocios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Users, Clock, StickyNote, Landmark, Briefcase, Save, Pencil } from "lucide-react";
+import { ArrowLeft, FileText, Users, Clock, StickyNote, Landmark, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
@@ -32,35 +32,13 @@ export default function ProcessoDetalhe() {
   const [discardOpen, setDiscardOpen] = useState(false);
   const updateProcesso = useUpdateProcesso();
 
-  // Financial editing state
-  const [finEditing, setFinEditing] = useState(false);
-  const [finValorCausa, setFinValorCausa] = useState<number | null>(null);
-  const [finValorPrecificado, setFinValorPrecificado] = useState<number | null>(null);
-  const [finTipoPagamento, setFinTipoPagamento] = useState<string>("");
-
-  const startFinEdit = () => {
-    if (!processo) return;
-    setFinValorCausa(processo.valor_estimado);
-    setFinValorPrecificado(processo.valor_precificado);
-    setFinTipoPagamento(processo.tipo_pagamento || "");
-    setFinEditing(true);
-  };
-
-  const saveFinanceiro = async () => {
+  const saveField = async (field: string, value: any) => {
     if (!processo) return;
     try {
-      await updateProcesso.mutateAsync({
-        id: processo.id,
-        updates: {
-          valor_estimado: finValorCausa,
-          valor_precificado: finValorPrecificado,
-          tipo_pagamento: finTipoPagamento,
-        },
-      });
-      toast.success("Dados financeiros atualizados");
-      setFinEditing(false);
+      await updateProcesso.mutateAsync({ id: processo.id, updates: { [field]: value } });
+      toast.success("Atualizado");
     } catch {
-      toast.error("Erro ao salvar dados financeiros");
+      toast.error("Erro ao salvar");
     }
   };
 
@@ -147,57 +125,27 @@ export default function ProcessoDetalhe() {
 
         <TabsContent value="financeiro" className="mt-4">
           <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-semibold text-foreground">Dados Financeiros</p>
-              {!finEditing ? (
-                <Button variant="ghost" size="sm" onClick={startFinEdit} className="text-xs gap-1.5 h-7 text-muted-foreground hover:text-foreground">
-                  <Pencil className="w-3.5 h-3.5" />Editar
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setFinEditing(false)} className="text-xs h-7">Cancelar</Button>
-                  <Button size="sm" onClick={saveFinanceiro} disabled={updateProcesso.isPending} className="text-xs gap-1.5 h-7">
-                    <Save className="w-3.5 h-3.5" />Salvar
-                  </Button>
-                </div>
-              )}
+            <p className="text-xs font-semibold text-foreground mb-1">Dados Financeiros</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
+              <InlineNumberField label="Valor da Causa (R$)" defaultValue={processo.valor_estimado} onSave={(v) => saveField("valor_estimado", v)} />
+              <InlineNumberField label="Valor Precificado (R$)" defaultValue={processo.valor_precificado} onSave={(v) => saveField("valor_precificado", v)} />
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Data Precificação</p>
+                <Input type="date" defaultValue={processo.precificacao_data ? processo.precificacao_data.slice(0, 10) : ""} className="h-8 text-xs" onBlur={(e) => saveField("precificacao_data", e.target.value || null)} />
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Tipo Pagamento</p>
+                <Select defaultValue={processo.tipo_pagamento || ""} onValueChange={(v) => saveField("tipo_pagamento", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="RPV">RPV</SelectItem>
+                    <SelectItem value="Precatório">Precatório</SelectItem>
+                    <SelectItem value="Alvará">Alvará</SelectItem>
+                    <SelectItem value="Depósito Judicial">Depósito Judicial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            {finEditing ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Valor da Causa (R$)</p>
-                  <Input type="number" value={finValorCausa ?? ""} onChange={e => setFinValorCausa(e.target.value ? Number(e.target.value) : null)} className="h-8 text-xs" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Valor Precificado (R$)</p>
-                  <Input type="number" value={finValorPrecificado ?? ""} onChange={e => setFinValorPrecificado(e.target.value ? Number(e.target.value) : null)} className="h-8 text-xs" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Data Precificação</p>
-                  <p className="text-xs font-medium text-muted-foreground/60">{processo.precificacao_data ? new Date(processo.precificacao_data).toLocaleDateString("pt-BR") : "—"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Tipo Pagamento</p>
-                  <Select value={finTipoPagamento} onValueChange={setFinTipoPagamento}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RPV">RPV</SelectItem>
-                      <SelectItem value="Precatório">Precatório</SelectItem>
-                      <SelectItem value="Alvará">Alvará</SelectItem>
-                      <SelectItem value="Depósito Judicial">Depósito Judicial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-3">
-                <PlaceholderField label="Valor da Causa" value={processo.valor_estimado ? processo.valor_estimado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"} />
-                <PlaceholderField label="Valor Precificado" value={processo.valor_precificado ? processo.valor_precificado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"} />
-                <PlaceholderField label="Data Precificação" value={processo.precificacao_data ? new Date(processo.precificacao_data).toLocaleDateString("pt-BR") : "—"} />
-                <PlaceholderField label="Tipo Pagamento" value={processo.tipo_pagamento || "—"} />
-              </div>
-            )}
 
             {negocios.length > 0 && (
               <div className="border-t border-border/20 pt-4 space-y-3">
@@ -257,6 +205,22 @@ function PlaceholderField({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
       <p className="text-xs font-medium text-muted-foreground/60">{value}</p>
+    </div>
+  );
+}
+
+function InlineNumberField({ label, defaultValue, onSave }: { label: string; defaultValue: number | null; onSave: (v: number | null) => void }) {
+  const [val, setVal] = useState(defaultValue ?? "");
+  return (
+    <div>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
+      <Input
+        type="number"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        onBlur={() => onSave(val === "" ? null : Number(val))}
+        className="h-8 text-xs"
+      />
     </div>
   );
 }
