@@ -8,7 +8,7 @@ import { useNegocios } from "@/hooks/useNegocios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Users, Clock, StickyNote, Landmark, Briefcase, History } from "lucide-react";
+import { ArrowLeft, FileText, Users, Clock, StickyNote, FileSearch, Briefcase, History } from "lucide-react";
 import { toast } from "sonner";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
@@ -18,8 +18,7 @@ import TabAndamentos from "@/components/processo/TabAndamentos";
 import TabDocumentos from "@/components/processo/TabDocumentos";
 import TabNotas from "@/components/processo/TabNotas";
 import TabHistorico from "@/components/processo/TabHistorico";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import TabAnalise from "@/components/processo/TabAnalise";
 
 export default function ProcessoDetalhe() {
   const { id } = useParams();
@@ -96,6 +95,9 @@ export default function ProcessoDetalhe() {
             <Users className="w-3.5 h-3.5" />Partes
             <span className="text-[10px] text-muted-foreground ml-0.5">({partes.length})</span>
           </TabsTrigger>
+          <TabsTrigger value="analise" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
+            <FileSearch className="w-3.5 h-3.5" />Análise
+          </TabsTrigger>
           <TabsTrigger value="andamentos" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
             <Clock className="w-3.5 h-3.5" />Movimentações
             <span className="text-[10px] text-muted-foreground ml-0.5">({andamentos.length})</span>
@@ -103,9 +105,6 @@ export default function ProcessoDetalhe() {
           <TabsTrigger value="documentos" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
             <FileText className="w-3.5 h-3.5" />Documentos
             <span className="text-[10px] text-muted-foreground ml-0.5">({documentos.length})</span>
-          </TabsTrigger>
-          <TabsTrigger value="financeiro" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
-            <Landmark className="w-3.5 h-3.5" />Financeiro
           </TabsTrigger>
           <TabsTrigger value="negocios" className="gap-1.5 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md">
             <Briefcase className="w-3.5 h-3.5" />Negócios
@@ -123,38 +122,16 @@ export default function ProcessoDetalhe() {
           <TabPartes processoId={processo.id} parteAutoraLegacy={processo.parte_autora} parteReLegacy={processo.parte_re} />
         </TabsContent>
 
+        <TabsContent value="analise" className="mt-4">
+          <TabAnalise processo={processo} onSaveField={saveField} />
+        </TabsContent>
+
         <TabsContent value="andamentos" className="mt-4">
           <TabAndamentos processoId={processo.id} />
         </TabsContent>
 
         <TabsContent value="documentos" className="mt-4">
           <TabDocumentos processoId={processo.id} />
-        </TabsContent>
-
-        <TabsContent value="financeiro" className="mt-4">
-          <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-            <p className="text-xs font-semibold text-foreground mb-1">Dados Financeiros</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
-              <InlineNumberField label="Valor da Causa (R$)" defaultValue={processo.valor_estimado} onSave={(v) => saveField("valor_estimado", v)} />
-              <InlineNumberField label="Valor Precificado (R$)" defaultValue={processo.valor_precificado} onSave={(v) => saveField("valor_precificado", v)} />
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Data Precificação</p>
-                <Input type="date" defaultValue={processo.precificacao_data ? processo.precificacao_data.slice(0, 10) : ""} className="h-8 text-xs" onBlur={(e) => saveField("precificacao_data", e.target.value || null)} />
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Tipo Pagamento</p>
-                <Select defaultValue={processo.tipo_pagamento || ""} onValueChange={(v) => saveField("tipo_pagamento", v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="RPV">RPV</SelectItem>
-                    <SelectItem value="Precatório">Precatório</SelectItem>
-                    <SelectItem value="Alvará">Alvará</SelectItem>
-                    <SelectItem value="Depósito Judicial">Depósito Judicial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
         </TabsContent>
 
         <TabsContent value="negocios" className="mt-4">
@@ -210,27 +187,3 @@ export default function ProcessoDetalhe() {
   );
 }
 
-function PlaceholderField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-      <p className="text-xs font-medium text-muted-foreground/60">{value}</p>
-    </div>
-  );
-}
-
-function InlineNumberField({ label, defaultValue, onSave }: { label: string; defaultValue: number | null; onSave: (v: number | null) => void }) {
-  const [val, setVal] = useState(defaultValue ?? "");
-  return (
-    <div>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
-      <Input
-        type="number"
-        value={val}
-        onChange={e => setVal(e.target.value)}
-        onBlur={() => onSave(val === "" ? null : Number(val))}
-        className="h-8 text-xs"
-      />
-    </div>
-  );
-}

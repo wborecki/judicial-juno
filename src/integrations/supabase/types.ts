@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      campos_analise: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          grupo: string
+          id: string
+          nome: string
+          obrigatorio: boolean
+          opcoes: Json | null
+          ordem: number
+          tipo: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          grupo?: string
+          id?: string
+          nome: string
+          obrigatorio?: boolean
+          opcoes?: Json | null
+          ordem?: number
+          tipo?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          grupo?: string
+          id?: string
+          nome?: string
+          obrigatorio?: boolean
+          opcoes?: Json | null
+          ordem?: number
+          tipo?: string
+        }
+        Relationships: []
+      }
       chat_conversas: {
         Row: {
           created_at: string
@@ -439,6 +475,48 @@ export type Database = {
           },
           {
             foreignKeyName: "processo_andamentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processo_campos_valores: {
+        Row: {
+          campo_id: string
+          created_at: string
+          id: string
+          processo_id: string
+          updated_at: string
+          valor: string | null
+        }
+        Insert: {
+          campo_id: string
+          created_at?: string
+          id?: string
+          processo_id: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Update: {
+          campo_id?: string
+          created_at?: string
+          id?: string
+          processo_id?: string
+          updated_at?: string
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_campos_valores_campo_id_fkey"
+            columns: ["campo_id"]
+            isOneToOne: false
+            referencedRelation: "campos_analise"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processo_campos_valores_processo_id_fkey"
             columns: ["processo_id"]
             isOneToOne: false
             referencedRelation: "processos"
