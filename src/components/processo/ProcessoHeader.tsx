@@ -24,7 +24,7 @@ import { useProcessoPartes, ProcessoParte } from "@/hooks/useProcessoPartes";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useNegocios } from "@/hooks/useNegocios";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, Clock, CalendarClock, Shield, TrendingUp, Briefcase } from "lucide-react";
+import { DollarSign, Clock, CalendarClock, Briefcase, FileText } from "lucide-react";
 import PessoaSheet from "@/components/PessoaSheet";
 
 const STATUS_LABELS: Record<number, string> = {
@@ -129,10 +129,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
 
   // Resumo data
   const ultimoMov = andamentos[0];
-  const risco = !processo.transito_julgado ? "Alto" : (processo.valor_estimado ?? 0) > 200000 ? "Médio" : "Baixo";
-  const riscoColor = risco === "Alto" ? "text-destructive" : risco === "Médio" ? "text-warning" : "text-success";
-  const negocioStatus = negocios.length === 0 ? "Não criado" : negocios.some(n => n.negocio_status === "ganho") ? "Fechado" : "Em andamento";
-  const negocioColor = negocioStatus === "Fechado" ? "text-success" : negocioStatus === "Em andamento" ? "text-primary" : "text-muted-foreground";
 
   return (
     <>
@@ -237,6 +233,12 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
           <div className="px-4 pb-3 border-t border-border/20 pt-3 space-y-2">
             {/* Process details row */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              {(processo as any).assunto && (
+                <span className="flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  {(processo as any).assunto}
+                </span>
+              )}
               {processo.vara_comarca && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
@@ -245,8 +247,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
               )}
               <span>Captação: {formatDate(processo.data_captacao)}</span>
               {processo.data_distribuicao && <span>Distribuição: {formatDate(processo.data_distribuicao)}</span>}
-              {processo.triagem_data && <span>Triagem: {formatDate(processo.triagem_data)}</span>}
-              {processo.precificacao_data && <span>Precificação: {formatDate(processo.precificacao_data)}</span>}
             </div>
 
             {/* Partes with hierarchy: Autor + Adv Autor | Réu + Adv Réu */}
@@ -323,13 +323,10 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
           </div>
 
           {/* Row 3: Summary mini-cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 border-t border-border/20">
+          <div className="grid grid-cols-3 border-t border-border/20">
             <SummaryCell icon={DollarSign} label="Valor Estimado" value={formatCurrency(processo.valor_estimado)} accent="text-primary" />
             <SummaryCell icon={Clock} label="Último Movimento" value={ultimoMov ? ultimoMov.titulo : "Nenhum"} sub={ultimoMov ? formatDate(ultimoMov.data_andamento) : undefined} />
             <SummaryCell icon={CalendarClock} label="Prazos" value="Nenhum" accent="text-muted-foreground" />
-            <SummaryCell icon={Shield} label="Triagem" value={TRIAGEM_LABELS[triagem]} sub={formatDate(processo.triagem_data)} />
-            <SummaryCell icon={TrendingUp} label="Risco" value={risco} accent={riscoColor} />
-            <SummaryCell icon={Briefcase} label="Negócio" value={negocioStatus} accent={negocioColor} sub={negocios.length > 0 ? `${negocios.length}` : undefined} />
           </div>
         </div>
       </div>
