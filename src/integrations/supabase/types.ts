@@ -1052,6 +1052,50 @@ export type Database = {
         }
         Relationships: []
       }
+      regras_roteamento: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          criterio_natureza: Json
+          criterio_tipo_pagamento: Json
+          criterio_tribunal: Json
+          equipe_id: string
+          id: string
+          nome: string
+          prioridade: number
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          criterio_natureza?: Json
+          criterio_tipo_pagamento?: Json
+          criterio_tribunal?: Json
+          equipe_id: string
+          id?: string
+          nome: string
+          prioridade?: number
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          criterio_natureza?: Json
+          criterio_tipo_pagamento?: Json
+          criterio_tribunal?: Json
+          equipe_id?: string
+          id?: string
+          nome?: string
+          prioridade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regras_roteamento_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           ativo: boolean
