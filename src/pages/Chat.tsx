@@ -426,17 +426,17 @@ function NewChatOverlay({ userId, onClose, onCreated }: { userId: string; onClos
   const [selectedUsers, setSelectedUsers] = useState<{ id: string; nome: string; email: string }[]>([]);
   const createConversa = useCreateConversa();
 
-  // Get profiles for user search
+  // Get usuarios for user search (these are system users with test data)
   const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles-search", search],
+    queryKey: ["usuarios-search", search],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("user_id, nome");
+      let query = supabase.from("usuarios").select("id, nome, email");
       if (search) {
         query = query.ilike("nome", `%${search}%`);
       }
       const { data, error } = await query.limit(20);
       if (error) throw error;
-      return (data ?? []).filter((p: any) => p.user_id !== userId);
+      return (data ?? []).map((u: any) => ({ user_id: u.id, nome: u.nome, email: u.email }));
     },
   });
 
