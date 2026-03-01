@@ -1,14 +1,22 @@
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProcessos } from "@/hooks/useProcessos";
+import { useProcessosPaginated, ProcessoFilters } from "@/hooks/useProcessos";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, X, Scale } from "lucide-react";
-import { TRIBUNAIS, PIPELINE_LABELS } from "@/lib/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Search, X, Scale, CalendarIcon, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { TRIBUNAIS } from "@/lib/types";
+import { format, subDays, startOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
+
+const PAGE_SIZE = 50;
 
 const NATUREZAS = ["Cível", "Trabalhista", "Federal", "Previdenciário", "Tributário"];
 const TIPOS_PAGAMENTO = ["RPV", "Precatório"];
@@ -19,20 +27,21 @@ const TRIAGEM_OPTIONS = [
   { value: "reanálise", label: "Reanálise" },
 ];
 
-const PIPELINE_COLORS: Record<string, string> = {
-  captado: "bg-muted text-muted-foreground",
-  triagem: "bg-warning/10 text-warning",
-  distribuido: "bg-info/10 text-info",
-  em_analise: "bg-accent/10 text-accent-foreground",
-  precificado: "bg-primary/10 text-primary",
-  comercial: "bg-info/10 text-info",
-};
-
 const TRIAGEM_COLORS: Record<string, string> = {
   pendente: "bg-warning/10 text-warning",
   apto: "bg-success/10 text-success",
   descartado: "bg-destructive/10 text-destructive",
   "reanálise": "bg-info/10 text-info",
+};
+
+const TRIBUNAL_URLS: Record<string, string> = {
+  TRF1: "https://processual.trf1.jus.br/consultaProcessual/processo.php?proc=",
+  TRF2: "https://eproc.trf2.jus.br/eproc/externo_controlador.php?acao=processo_consulta&txtValor=",
+  TRF3: "https://pje1g.trf3.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=",
+  TRF4: "https://eproc.trf4.jus.br/eproc2trf4/controlador.php?acao=consulta_processual_resultado_pesquisa&txtValor=",
+  TRF5: "https://pje.trf5.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=",
+  TRF6: "https://pje.trf6.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=",
+  TJSP: "https://esaj.tjsp.jus.br/cpopg/show.do?processo.numero=",
 };
 
 const formatCurrency = (v?: number | null) =>
@@ -43,55 +52,81 @@ const formatDate = (d?: string | null) => {
   return new Date(d).toLocaleDateString("pt-BR");
 };
 
-export default function Processos() {
-  const { data: processos, isLoading } = useProcessos();
-  const navigate = useNavigate();
+const getTribunalUrl = (tribunal: string, numero: string) => {
+  const base = TRIBUNAL_URLS[tribunal];
+  return base ? `${base}${numero}` : null;
+};
 
+const DATE_PRESETS = [
+  { label: "Hoje", days: 0 },
+  { label: "7 dias", days: 7 },
+  { label: "30 dias", days: 30 },
+  { label: "90 dias", days: 90 },
+];
+
+export default function Processos() {
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [searchDebounced, setSearchDebounced] = useState("");
   const [filterTribunal, setFilterTribunal] = useState("all");
   const [filterNatureza, setFilterNatureza] = useState("all");
   const [filterTipoPagamento, setFilterTipoPagamento] = useState("all");
-  const [filterPipeline, setFilterPipeline] = useState("all");
   const [filterTriagem, setFilterTriagem] = useState("all");
   const [filterTransito, setFilterTransito] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
-  const filtered = useMemo(() => {
-    if (!processos) return [];
-    return processos.filter((p) => {
-      if (search) {
-        const q = search.toLowerCase();
-        const match =
-          p.numero_processo.toLowerCase().includes(q) ||
-          p.parte_autora.toLowerCase().includes(q) ||
-          p.parte_re.toLowerCase().includes(q);
-        if (!match) return false;
-      }
-      if (filterTribunal !== "all" && p.tribunal !== filterTribunal) return false;
-      if (filterNatureza !== "all" && p.natureza !== filterNatureza) return false;
-      if (filterTipoPagamento !== "all" && p.tipo_pagamento !== filterTipoPagamento) return false;
-      if (filterPipeline !== "all" && p.pipeline_status !== filterPipeline) return false;
-      if (filterTriagem !== "all" && (p.triagem_resultado ?? "pendente") !== filterTriagem) return false;
-      if (filterTransito !== "all") {
-        const wantTrue = filterTransito === "sim";
-        if (p.transito_julgado !== wantTrue) return false;
-      }
-      return true;
-    });
-  }, [processos, search, filterTribunal, filterNatureza, filterTipoPagamento, filterPipeline, filterTriagem, filterTransito]);
+  // Debounce search
+  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout>>();
+  const handleSearch = (val: string) => {
+    setSearch(val);
+    if (debounceTimer) clearTimeout(debounceTimer);
+    setDebounceTimer(
+      setTimeout(() => {
+        setSearchDebounced(val);
+        setPage(0);
+      }, 400)
+    );
+  };
 
-  const hasFilters = filterTribunal !== "all" || filterNatureza !== "all" || filterTipoPagamento !== "all" || filterPipeline !== "all" || filterTriagem !== "all" || filterTransito !== "all" || search !== "";
+  const filters: ProcessoFilters = useMemo(() => ({
+    search: searchDebounced || undefined,
+    tribunal: filterTribunal,
+    natureza: filterNatureza,
+    tipoPagamento: filterTipoPagamento,
+    triagem: filterTriagem,
+    transito: filterTransito,
+    dateFrom: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+    dateTo: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+  }), [searchDebounced, filterTribunal, filterNatureza, filterTipoPagamento, filterTriagem, filterTransito, dateRange]);
+
+  const { data, isLoading } = useProcessosPaginated(page, PAGE_SIZE, filters);
+  const processos = data?.data ?? [];
+  const totalCount = data?.count ?? 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const hasFilters = filterTribunal !== "all" || filterNatureza !== "all" || filterTipoPagamento !== "all" || filterTriagem !== "all" || filterTransito !== "all" || search !== "" || !!dateRange;
 
   const clearFilters = () => {
     setSearch("");
+    setSearchDebounced("");
     setFilterTribunal("all");
     setFilterNatureza("all");
     setFilterTipoPagamento("all");
-    setFilterPipeline("all");
     setFilterTriagem("all");
     setFilterTransito("all");
+    setDateRange(undefined);
+    setPage(0);
   };
 
-  if (isLoading) {
+  const handlePreset = (days: number) => {
+    const to = new Date();
+    const from = days === 0 ? startOfDay(to) : subDays(to, days);
+    setDateRange({ from, to });
+    setPage(0);
+  };
+
+  if (isLoading && page === 0) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -102,75 +137,108 @@ export default function Processos() {
   }
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Scale className="w-5 h-5 text-primary" />
-          Processos
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} processo{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}
-          {processos && filtered.length !== processos.length && ` de ${processos.length} total`}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <Scale className="w-5 h-5 text-primary" />
+            Processos
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {totalCount.toLocaleString("pt-BR")} processo{totalCount !== 1 ? "s" : ""}
+            {hasFilters && " (filtrado)"}
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="glass-card rounded-xl p-4 space-y-3">
-        <div className="flex items-center gap-3">
+      <div className="glass-card rounded-xl p-3 space-y-2">
+        <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Buscar por número, parte autora ou parte ré..."
+              placeholder="Buscar nº processo, parte autora, parte ré..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-8 h-8 text-xs"
             />
           </div>
+
+          {/* Date Range */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5 min-w-[180px] justify-start", dateRange && "text-foreground")}>
+                <CalendarIcon className="w-3.5 h-3.5" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    `${format(dateRange.from, "dd/MM/yy")} — ${format(dateRange.to, "dd/MM/yy")}`
+                  ) : format(dateRange.from, "dd/MM/yyyy")
+                ) : "Período captação"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <div className="flex gap-1 p-2 border-b border-border">
+                {DATE_PRESETS.map(p => (
+                  <Button key={p.label} variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handlePreset(p.days)}>
+                    {p.label}
+                  </Button>
+                ))}
+                {dateRange && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive" onClick={() => { setDateRange(undefined); setPage(0); }}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(r) => { setDateRange(r); setPage(0); }}
+                numberOfMonths={2}
+                locale={ptBR}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
           {hasFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs gap-1">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
               <X className="w-3 h-3" /> Limpar
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-          <Select value={filterTribunal} onValueChange={setFilterTribunal}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tribunal" /></SelectTrigger>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <Select value={filterTribunal} onValueChange={(v) => { setFilterTribunal(v); setPage(0); }}>
+            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Tribunal" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos Tribunais</SelectItem>
               {TRIBUNAIS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filterNatureza} onValueChange={setFilterNatureza}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Natureza" /></SelectTrigger>
+          <Select value={filterNatureza} onValueChange={(v) => { setFilterNatureza(v); setPage(0); }}>
+            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Natureza" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas Naturezas</SelectItem>
               {NATUREZAS.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filterTipoPagamento} onValueChange={setFilterTipoPagamento}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo Pgto" /></SelectTrigger>
+          <Select value={filterTipoPagamento} onValueChange={(v) => { setFilterTipoPagamento(v); setPage(0); }}>
+            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Tipo Pgto" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos Tipos</SelectItem>
               {TIPOS_PAGAMENTO.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filterPipeline} onValueChange={setFilterPipeline}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Pipeline" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Status</SelectItem>
-              {Object.entries(PIPELINE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterTriagem} onValueChange={setFilterTriagem}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Triagem" /></SelectTrigger>
+          <Select value={filterTriagem} onValueChange={(v) => { setFilterTriagem(v); setPage(0); }}>
+            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Triagem" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas Triagens</SelectItem>
               {TRIAGEM_OPTIONS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filterTransito} onValueChange={setFilterTransito}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Trânsito" /></SelectTrigger>
+          <Select value={filterTransito} onValueChange={(v) => { setFilterTransito(v); setPage(0); }}>
+            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Trânsito" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Trânsito: Todos</SelectItem>
               <SelectItem value="sim">Sim</SelectItem>
@@ -185,60 +253,91 @@ export default function Processos() {
         <Table>
           <TableHeader>
             <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Número</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tribunal</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Natureza</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parte Autora</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo Pgto</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pipeline</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Triagem</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Valor Est.</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Captação</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Número</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Parte Autora</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Natureza</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Pgto</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Triagem</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
+              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Captação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 && (
+            {processos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-12 text-muted-foreground text-sm">
                   Nenhum processo encontrado.
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map((p) => {
+            {processos.map((p) => {
               const triagem = p.triagem_resultado ?? "pendente";
+              const tribunalUrl = getTribunalUrl(p.tribunal, p.numero_processo);
               return (
                 <TableRow
                   key={p.id}
-                  className="cursor-pointer border-border/30 hover:bg-accent/5 transition-colors"
+                  className="cursor-pointer border-border/20 hover:bg-accent/5 transition-colors h-9"
                   onClick={() => navigate(`/processos/${p.id}`)}
                 >
-                  <TableCell className="font-mono text-xs">{p.numero_processo}</TableCell>
-                  <TableCell>
-                    <span className="text-xs font-medium bg-primary/5 text-primary px-2 py-1 rounded">
-                      {p.tribunal}
-                    </span>
+                  <TableCell className="py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[11px] font-medium">{p.numero_processo}</span>
+                      {tribunalUrl && (
+                        <a
+                          href={tribunalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          title="Consultar no tribunal"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-xs">{p.natureza}</TableCell>
-                  <TableCell className="text-sm max-w-[200px] truncate">{p.parte_autora}</TableCell>
-                  <TableCell className="text-xs">{p.tipo_pagamento}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className={`text-[10px] ${PIPELINE_COLORS[p.pipeline_status] ?? ""}`}>
-                      {PIPELINE_LABELS[p.pipeline_status] ?? p.pipeline_status}
-                    </Badge>
+                  <TableCell className="py-1.5">
+                    <span className="text-[10px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className={`text-[10px] ${TRIAGEM_COLORS[triagem] ?? ""}`}>
+                  <TableCell className="text-[11px] py-1.5 max-w-[200px] truncate">{p.parte_autora}</TableCell>
+                  <TableCell className="text-[10px] py-1.5">{p.natureza}</TableCell>
+                  <TableCell className="text-[10px] py-1.5">{p.tipo_pagamento}</TableCell>
+                  <TableCell className="text-[10px] py-1.5">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
+                  <TableCell className="py-1.5">
+                    <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
                       {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-right">{formatCurrency(p.valor_estimado)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{formatDate(p.data_captacao)}</TableCell>
+                  <TableCell className="text-[11px] font-medium text-right py-1.5">{formatCurrency(p.valor_estimado)}</TableCell>
+                  <TableCell className="text-[10px] text-muted-foreground py-1.5">{formatDate(p.data_captacao)}</TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-muted-foreground">
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount.toLocaleString("pt-BR")}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </Button>
+            <span className="text-xs text-muted-foreground px-2">
+              {page + 1} / {totalPages}
+            </span>
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

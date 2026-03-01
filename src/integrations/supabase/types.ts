@@ -118,7 +118,7 @@ export type Database = {
           negocio_status: string
           observacoes: string | null
           pessoa_id: string | null
-          processo_id: string
+          processo_id: string | null
           responsavel_id: string | null
           tipo_servico: string | null
           updated_at: string
@@ -133,7 +133,7 @@ export type Database = {
           negocio_status?: string
           observacoes?: string | null
           pessoa_id?: string | null
-          processo_id: string
+          processo_id?: string | null
           responsavel_id?: string | null
           tipo_servico?: string | null
           updated_at?: string
@@ -148,7 +148,7 @@ export type Database = {
           negocio_status?: string
           observacoes?: string | null
           pessoa_id?: string | null
-          processo_id?: string
+          processo_id?: string | null
           responsavel_id?: string | null
           tipo_servico?: string | null
           updated_at?: string

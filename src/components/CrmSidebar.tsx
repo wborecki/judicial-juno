@@ -14,13 +14,16 @@ interface NavItem {
   badge?: number;
 }
 
-const pipelineItems: NavItem[] = [
+const analiseItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/processos", label: "Processos", icon: Scale },
   { to: "/triagem", label: "Triagem", icon: Filter },
   { to: "/distribuicao", label: "Distribuição", icon: ArrowRightLeft },
   { to: "/analise", label: "Análise", icon: FileSearch },
   { to: "/precificacao", label: "Precificação", icon: DollarSign },
+];
+
+const comercialItems: NavItem[] = [
   { to: "/comercial", label: "Comercial", icon: Phone },
   { to: "/negocios", label: "Negócios", icon: Briefcase },
 ];
@@ -91,7 +94,8 @@ export function CrmSidebar() {
       </div>
 
       <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-        <SidebarSection title="Pipeline" items={pipelineItems} />
+        <SidebarSection title="Processos" items={analiseItems} />
+        <SidebarSection title="Comercial" items={comercialItems} />
         <SidebarSection title="Cadastros" items={cadastroItems} />
         <SidebarSection title="Sistema" items={sistemaItems} />
       </nav>
