@@ -23,8 +23,8 @@ function initials(name?: string | null) {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  alta: "text-red-500",
-  media: "text-amber-500",
+  alta: "text-destructive",
+  media: "text-accent-foreground",
   baixa: "text-muted-foreground/40",
 };
 
@@ -81,8 +81,8 @@ export default function NegocioKanban({ negocios, etapas }: Props) {
             onDragLeave={() => setDragOverEtapa(null)}
             onDrop={(e) => handleDrop(e, etapa.id)}
           >
-            {/* Color bar */}
-            <div className="h-1 w-full" style={{ backgroundColor: etapa.cor }} />
+            {/* Color bar — primary */}
+            <div className="h-1 w-full bg-primary" />
 
             {/* Column header */}
             <div className="px-3 py-2 border-b bg-background/60">
@@ -90,7 +90,7 @@ export default function NegocioKanban({ negocios, etapas }: Props) {
                 {etapa.nome}
               </p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                {formatCurrency(totalValue) || "R$ 0"} · {items.length}{" "}
+                {formatCurrency(totalValue) || "R$ 0,00"} · {items.length}{" "}
                 {items.length === 1 ? "negócio" : "negócios"}
               </p>
             </div>
