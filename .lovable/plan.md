@@ -1,41 +1,52 @@
 
 
-## Tela de Processos Completa + Fluxo Processo → Negócio
+## Reestruturar Processos para Analistas + Negócios com Etapas
 
 ### Contexto
-Hoje não existe uma página dedicada para listar **todos os processos** do sistema com filtros avançados. A página de Triagem lista apenas processos em `pipeline_status = "triagem"`. Precisamos de uma tela central de Processos com listagem completa, filtros, e ao clicar abrir o detalhe com todas as informações (partes, documentos, etc). O fluxo é: **Processos → quando apto → vira Negócio → segue no CRM**.
+Analistas precisam processar ~1000 processos/dia. A tela atual tem abas demais e pipeline steps que pertencem a negócios, não a processos. Processos são dados judiciais puros. Negócios têm etapas comerciais e podem existir sem processo.
 
-### O que será construído
+### 1. Listagem `/processos` — Otimizada para volume
 
-**1. Nova página `/processos` — Listagem completa**
-- Busca **todos** os processos (sem filtro de pipeline_status)
-- Sem big numbers/stats cards
-- Filtros: por tribunal, natureza, tipo pagamento, pipeline_status, triagem_resultado, trânsito em julgado
-- Busca por texto (número, parte autora, parte ré)
-- Tabela com colunas: Número, Tribunal, Natureza, Parte Autora, Tipo Pagamento, Status Pipeline, Triagem, Valor Estimado, Data Captação
-- Clique na linha → navega para `/processos/:id`
+**Filtro de data completo** (DateRange picker):
+- Período de captação (data_captacao) com presets: Hoje, 7d, 30d, 90d, custom range
+- Usar Popover + Calendar (mode="range") com date-fns
 
-**2. Atualizar `/processos/:id` — Detalhe completo**
-- Reorganizar abas: **Dados Gerais | Partes | Documentos | Triagem | Análise | Precificação | Comercial**
-- Aba **Partes**: mostra parte autora/ré com dados da pessoa vinculada (se houver), contatos
-- Aba **Documentos**: placeholder para futuro upload de documentos do processo
-- Manter edição inline existente
-- Quando processo está "apto" e avança, o botão "Criar Negócio" já existe na aba Comercial
+**Paginação server-side** via Supabase `.range()` para suportar milhões de registros — exibir 50 por página com controles prev/next e contagem total
 
-**3. Atualizar sidebar**
-- Adicionar "Processos" no menu (entre Dashboard e Pipeline/Triagem), com ícone `Scale` ou `Gavel`
-- Reorganizar: Dashboard → **Processos** → Pipeline (Triagem, Distribuição, Análise, Precificação, Comercial, Negócios)
+**Tabela densa** com linhas compactas, link direto para consulta pública do tribunal (formato URL por tribunal), informações-chave visíveis sem clicar
 
-**4. Atualizar rotas**
-- Adicionar rota `/processos` apontando para a nova página
-- Manter `/processos/:id` para detalhe
+**Remover conceito de "pipeline" da listagem** — substituir por status simples do processo (triagem_resultado) já que pipeline pertence a negócios
 
-### Detalhes Técnicos
+### 2. Detalhe `/processos/:id` — One Page para Análise
 
-- Nova página `src/pages/Processos.tsx` usando `useProcessos()` sem parâmetro (busca tudo)
-- Filtros com `Select` components e estado local, aplicados via `useMemo`
-- Reutilizar `ProcessStatusBadge`, `TriageBadge` e badges de pipeline existentes
-- Atualizar `CrmSidebar.tsx` para incluir o item "Processos" no menu
-- Atualizar `App.tsx` para adicionar a rota
-- Atualizar `ProcessoDetalhe.tsx` para incluir abas "Partes" e "Documentos" (placeholder)
+**Layout single-page** sem abas — tudo visível de uma vez, inspirado na experiência dos tribunais:
+- **Cabeçalho**: número do processo (link para tribunal), tribunal, natureza, tipo pagamento, valor estimado, trânsito
+- **Seção Partes**: autora e ré lado a lado
+- **Seção Análise/Triagem**: botões de ação rápida (Apto/Descartar/Reanálise), observações inline
+- **Seção Negócios vinculados**: lista de negócios existentes + botão criar (crédito advogado, crédito autores, etc.)
+- **Timeline** compacta no rodapé
+
+Remover as abas separadas (Dados, Partes, Documentos, Triagem, Análise, Precificação, Comercial) — consolidar em seções visuais na mesma página
+
+### 3. Modelo de Negócios — Etapas + Independente de Processo
+
+**Migration**: tornar `processo_id` nullable na tabela `negocios` (negócio pode existir sem processo)
+
+**Página `/negocios`**: adicionar filtros, busca, e ao clicar abrir detalhe do negócio com suas etapas (em_andamento → proposta → negociação → ganho/perdido)
+
+### 4. Ajustes no Sidebar
+
+Reorganizar: separar "Processos" (análise técnica) de "Negócios" (CRM comercial) visualmente
+
+### 5. Remover pipeline_status de processos
+
+O campo `pipeline_status` na tabela processos será mantido por compatibilidade mas não será mais exibido na listagem — a progressão comercial agora vive em `negocios.negocio_status`
+
+### Arquivos afetados
+- `src/pages/Processos.tsx` — reescrever com date range filter, paginação server-side, layout denso
+- `src/pages/ProcessoDetalhe.tsx` — reescrever como one-page sem abas
+- `src/pages/Negocios.tsx` — adicionar filtros e detalhe
+- `src/hooks/useProcessos.ts` — adicionar suporte a paginação e filtro de data server-side
+- `src/hooks/useNegocios.ts` — atualizar para processo_id nullable
+- Migration SQL — ALTER TABLE negocios ALTER COLUMN processo_id DROP NOT NULL
 
