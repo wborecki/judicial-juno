@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,13 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -72,14 +64,15 @@ type DetailField = {
   editable?: {
     options: { value: string; label: string }[];
     onSave: (v: string) => Promise<any>;
+    inline?: boolean;
+    currentNumericValue?: number | null;
+    onSaveNumeric?: (v: number | null) => Promise<void>;
   };
 };
 
 export default function ProcessoHeader({ processo, onConvert, onDiscard, onReanalyse }: Props) {
   const updateProcesso = useUpdateProcesso();
   const [copied, setCopied] = useState(false);
-  const [editValorOpen, setEditValorOpen] = useState(false);
-  const [valorEdit, setValorEdit] = useState(processo.valor_estimado ?? 0);
 
   const [pessoaSheetOpen, setPessoaSheetOpen] = useState(false);
   const [pessoaSheetData, setPessoaSheetData] = useState<{ pessoaId?: string | null; nome?: string; cpfCnpj?: string | null }>({});
@@ -94,16 +87,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSaveValor = async () => {
-    try {
-      await updateProcesso.mutateAsync({ id: processo.id, updates: { valor_estimado: valorEdit } });
-      toast.success("Valor atualizado");
-      setEditValorOpen(false);
-    } catch {
-      toast.error("Erro ao atualizar valor");
-    }
-  };
-
   const tribunalUrl = TRIBUNAL_URLS[processo.tribunal]
     ? `${TRIBUNAL_URLS[processo.tribunal]}${processo.numero_processo}`
     : null;
@@ -112,7 +95,19 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
   const detailFields: DetailField[] = [
     { label: "Classe Judicial", value: processo.classe_fase || "—" },
     { label: "Assunto", value: p.assunto || "—" },
-    { label: "Valor da Causa", value: fmt(processo.valor_estimado) },
+    {
+      label: "Valor da Causa", value: fmt(processo.valor_estimado),
+      editable: {
+        options: [],
+        onSave: async () => {},
+        inline: true,
+        currentNumericValue: processo.valor_estimado,
+        onSaveNumeric: async (v: number | null) => {
+          await updateProcesso.mutateAsync({ id: processo.id, updates: { valor_estimado: v } });
+          toast.success("Valor atualizado");
+        },
+      },
+    },
     {
       label: "Natureza", value: processo.natureza || "—",
       editable: {
@@ -222,11 +217,14 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
               <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg"><MoreHorizontal className="w-4 h-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => { setValorEdit(processo.valor_estimado ?? 0); setEditValorOpen(true); }}>
-                <Pencil className="w-3.5 h-3.5 mr-2" />Editar Valor da Causa
+              <DropdownMenuItem onClick={() => toast.info("Gerar relatório em breve")}>
+                <ExternalLink className="w-3.5 h-3.5 mr-2" />Gerar Relatório
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Sincronização não implementada")}>
-                <RefreshCw className="w-3.5 h-3.5 mr-2" />Sincronizar Dados
+              <DropdownMenuItem onClick={() => toast.info("Duplicar processo em breve")}>
+                <Copy className="w-3.5 h-3.5 mr-2" />Duplicar Processo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Arquivar processo em breve")}>
+                <RefreshCw className="w-3.5 h-3.5 mr-2" />Arquivar Processo
               </DropdownMenuItem>
               {tribunalUrl && (
                 <>
@@ -260,20 +258,6 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
 
       </div>
 
-      {/* Edit valor dialog */}
-      <Dialog open={editValorOpen} onOpenChange={setEditValorOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle className="text-sm">Editar Valor da Causa</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            <Label className="text-xs">Valor (R$)</Label>
-            <Input type="number" value={valorEdit} onChange={e => setValorEdit(Number(e.target.value))} className="h-9 text-sm" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setEditValorOpen(false)} className="text-xs">Cancelar</Button>
-            <Button size="sm" onClick={handleSaveValor} disabled={updateProcesso.isPending} className="text-xs">Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <PessoaSheet
         open={pessoaSheetOpen}
@@ -290,12 +274,58 @@ function EditableField({
   value,
   options,
   onSave,
+  inline,
+  currentNumericValue,
+  onSaveNumeric,
 }: {
   value: string;
   options: { value: string; label: string }[];
   onSave: (value: string) => Promise<any>;
+  inline?: boolean;
+  currentNumericValue?: number | null;
+  onSaveNumeric?: (v: number | null) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [localVal, setLocalVal] = useState(String(currentNumericValue ?? ""));
+
+  if (inline && onSaveNumeric) {
+    return (
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setLocalVal(String(currentNumericValue ?? "")); }}>
+        <PopoverTrigger asChild>
+          <button className="group flex items-center gap-1 text-xs font-medium text-foreground leading-snug hover:text-primary transition-colors cursor-pointer">
+            {value}
+            <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2 min-w-[180px]" align="start">
+          <Input
+            type="number"
+            value={localVal}
+            onChange={(e) => setLocalVal(e.target.value)}
+            className="h-8 text-xs mb-2"
+            step="0.01"
+            autoFocus
+            onKeyDown={async (e) => {
+              if (e.key === "Enter") {
+                await onSaveNumeric(localVal === "" ? null : Number(localVal));
+                setOpen(false);
+              }
+            }}
+          />
+          <Button
+            size="sm"
+            className="w-full h-7 text-xs"
+            onClick={async () => {
+              await onSaveNumeric(localVal === "" ? null : Number(localVal));
+              setOpen(false);
+            }}
+          >
+            Salvar
+          </Button>
+        </PopoverContent>
+      </Popover>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
