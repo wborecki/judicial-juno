@@ -1,43 +1,33 @@
 
 
-## Plano: Layout single-column estilo Pipedrive
+## Plan: Improve Partes UI + Add More Parties
 
-### O que muda
+### 1. Insert additional parties into the database
 
-O layout atual com 2 colunas lado a lado vai ser substituído por uma **coluna única full-width** com tudo empilhado verticalmente, igual ao Pipedrive:
+Add to process `10000001-0000-4000-b000-000000000004`:
+- **More authors**: "Maria Aparecida Souza" (co-author, wife/family member)
+- **Outros**: "Dr. Paulo Henrique Lima" (perito judicial), "Ana Clara Rodrigues" (assistente técnico/auditor)
 
-```text
-┌─────────────────────────────────────────────────────┐
-│  ← Voltar                                           │
-├─────────────────────────────────────────────────────┤
-│  CNJ 1061202-29.2024.4.01.3500  [copiar] [ext]     │
-│  [TRF-1] [Precatório] [S3] [Apto]                  │
-│  Valor da Causa: R$ 112.983,59  [Converter] [⋮]    │
-├─────────────────────────────────────────────────────┤
-│  Classe Judicial      Assunto         Órgão Julg.   │
-│  Vara / Comarca       Área            Foro          │
-│  Juiz                 Competência     Autuação      │
-│  Distribuição         Observações                   │
-╞═════════════════════════════════════════════════════╡
-│ [Partes] [Movimentações] [Documentos] [Financeiro] │
-│ [Relacionados] [Anotações]                          │
-├─────────────────────────────────────────────────────┤
-│  Conteúdo da aba selecionada (full width)           │
-└─────────────────────────────────────────────────────┘
-```
+SQL migration to insert these records.
 
-### Mudanças
+### 2. Redesign TabPartes UI
 
-**1. ProcessoDetalhe.tsx**
-- Remover o `grid-cols-2`. Tudo em `space-y-4 max-w-7xl`, uma coluna vertical
-- `ProcessoHeader` no topo (full width)
-- Abaixo: substituir os Accordions por **Tabs horizontais** (Shadcn Tabs) com ícones:
-  - Partes, Movimentações, Documentos, Financeiro, Relacionados, Anotações
-- Cada tab renderiza conteúdo full-width
+Redesign following the reference image style:
+- **3-column grid**: Autor | Reu | Outros — always shown even if empty
+- **White cards** with subtle border (bg-card/bg-white instead of bg-muted/30)
+- **Hierarchical layout**: Main parties listed first with bold names, then a separator line with "ADVOGADO(S)" label and indented lawyer entries below
+- CPF/CNPJ in monospace font below each name
+- OAB info inline with CPF for lawyers
+- Badge count in the header showing total per polo
+- Clean header with icon + uppercase label matching the reference screenshot style
 
-**2. ProcessoHeader.tsx**
-- Grid de campos detalhados passa de 2 para **3 colunas** (mais espaço horizontal agora)
-- Tudo mais fica igual (CNJ, badges, valor, botões)
+### Technical details
 
-**3. Sem mudanças no banco** — apenas reorganização visual
+**Database**: Single INSERT statement adding 2-3 new `processo_partes` rows with tipos: `autor`, `perito`, `assistente_tecnico` (mapped to "outros" group).
+
+**TabPartes.tsx changes**:
+- Card styling: `bg-card border border-border/60 rounded-xl p-5 shadow-sm` (white cards)
+- Always render all 3 columns, showing "Nenhum cadastrado" for empty ones
+- Improved PersonRow with better spacing and visual hierarchy
+- Handle new tipos (`perito`, `assistente_tecnico`, etc.) in the "outros" group via default switch case (already works)
 
