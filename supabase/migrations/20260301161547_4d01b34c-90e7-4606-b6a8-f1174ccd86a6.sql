@@ -1,0 +1,5 @@
+ALTER TABLE public.processos ADD COLUMN IF NOT EXISTS area TEXT;
+ALTER TABLE public.processos ADD COLUMN IF NOT EXISTS foro TEXT;
+ALTER TABLE public.processos ADD COLUMN IF NOT EXISTS juiz TEXT;
+ALTER TABLE public.processos ADD COLUMN IF NOT EXISTS competencia TEXT;
+ALTER TABLE public.processos ADD COLUMN IF NOT EXISTS jurisdicao TEXT;

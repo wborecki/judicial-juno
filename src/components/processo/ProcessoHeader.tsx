@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, MapPin, Scale } from "lucide-react";
+import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, ArrowLeft, User, Users, Gavel, MapPin, Scale, Building, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useProcessoPartes, ProcessoParte } from "@/hooks/useProcessoPartes";
@@ -234,47 +234,36 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard }: Props
             {/* Process details rows */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">
               {processo.classe_fase && (
-                <div>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Classe Judicial</span>
-                  <p className="font-medium flex items-center gap-1"><Scale className="w-3 h-3 text-muted-foreground" />{processo.classe_fase}</p>
-                </div>
+                <DetailField label="Classe Judicial" icon={Scale} value={processo.classe_fase} />
               )}
               {(processo as any).assunto && (
-                <div>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Assunto</span>
-                  <p className="font-medium flex items-center gap-1"><FileText className="w-3 h-3 text-muted-foreground" />{(processo as any).assunto}</p>
-                </div>
+                <DetailField label="Assunto" icon={FileText} value={(processo as any).assunto} />
               )}
-              <div>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor da Causa</span>
-                <p className="font-medium">{formatCurrency(processo.valor_estimado)}</p>
-              </div>
+              <DetailField label="Valor da Causa" value={formatCurrency(processo.valor_estimado)} />
               {(processo as any).orgao_julgador && (
-                <div>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Órgão Julgador</span>
-                  <p className="font-medium flex items-center gap-1"><Gavel className="w-3 h-3 text-muted-foreground" />{(processo as any).orgao_julgador}</p>
-                </div>
+                <DetailField label="Órgão Julgador" icon={Landmark} value={(processo as any).orgao_julgador} />
               )}
               {processo.vara_comarca && (
-                <div>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Vara / Comarca</span>
-                  <p className="font-medium flex items-center gap-1"><MapPin className="w-3 h-3 text-muted-foreground" />{processo.vara_comarca}</p>
-                </div>
+                <DetailField label="Vara / Comarca" icon={MapPin} value={processo.vara_comarca} />
               )}
-              <div className="flex gap-4">
-                {(processo as any).data_autuacao && (
-                  <div>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Autuação</span>
-                    <p className="font-medium">{formatDate((processo as any).data_autuacao)}</p>
-                  </div>
-                )}
-                {processo.data_distribuicao && (
-                  <div>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Distribuição</span>
-                    <p className="font-medium">{formatDate(processo.data_distribuicao)}</p>
-                  </div>
-                )}
-              </div>
+              {(processo as any).area && (
+                <DetailField label="Área" value={(processo as any).area} />
+              )}
+              {(processo as any).foro && (
+                <DetailField label="Foro" icon={Building} value={(processo as any).foro} />
+              )}
+              {(processo as any).juiz && (
+                <DetailField label="Juiz" icon={Gavel} value={(processo as any).juiz} />
+              )}
+              {(processo as any).competencia && (
+                <DetailField label="Competência" value={(processo as any).competencia} />
+              )}
+              {(processo as any).data_autuacao && (
+                <DetailField label="Autuação" value={formatDate((processo as any).data_autuacao)} />
+              )}
+              {processo.data_distribuicao && (
+                <DetailField label="Distribuição" value={formatDate(processo.data_distribuicao)} />
+              )}
             </div>
 
             {/* Partes with hierarchy: Autor + Adv Autor | Réu + Adv Réu */}
@@ -403,6 +392,22 @@ function SummaryCell({ icon: Icon, label, value, sub, accent = "text-foreground"
       </div>
       <p className={`text-[11px] font-semibold truncate ${accent}`}>{value}</p>
       {sub && <p className="text-[9px] text-muted-foreground">{sub}</p>}
+    </div>
+  );
+}
+
+function DetailField({ label, value, icon: Icon }: {
+  label: string;
+  value: string;
+  icon?: React.ElementType;
+}) {
+  return (
+    <div>
+      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
+      <p className="font-medium flex items-center gap-1">
+        {Icon && <Icon className="w-3 h-3 text-muted-foreground shrink-0" />}
+        {value}
+      </p>
     </div>
   );
 }
