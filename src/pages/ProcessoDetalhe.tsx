@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useProcesso, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useProcessoDocumentos } from "@/hooks/useProcessoDocumentos";
@@ -8,7 +8,8 @@ import { useNegocios } from "@/hooks/useNegocios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, FileText, Users, Clock, StickyNote, FileSearch, Briefcase, History } from "lucide-react";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { FileText, Users, Clock, StickyNote, FileSearch, Briefcase, History, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
 import ModalConverter from "@/components/processo/ModalConverter";
@@ -64,10 +65,22 @@ export default function ProcessoDetalhe() {
   }
 
   return (
-    <div className="space-y-4 max-w-7xl">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-xs gap-1.5 -ml-2 text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-3.5 h-3.5" />Voltar
-      </Button>
+    <div className="space-y-3 max-w-7xl">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link to="/">Dashboard</Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild><Link to="/processos">Processos</Link></BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="font-mono text-xs">{processo.numero_processo}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <ProcessoHeader
         processo={processo}
