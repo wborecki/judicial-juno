@@ -7,11 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Plus, GripVertical, Trash2, Pencil, Star } from "lucide-react";
 import { toast } from "sonner";
-
-const DEFAULT_COLORS = ["#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#ec4899", "#06b6d4", "#f97316"];
 
 function genId() {
   return Math.random().toString(36).slice(2, 10);
@@ -23,19 +21,18 @@ export default function ConfigPipelines() {
   const updatePipeline = useUpdatePipeline();
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [formNome, setFormNome] = useState("");
   const [formPadrao, setFormPadrao] = useState(false);
   const [formEtapas, setFormEtapas] = useState<PipelineEtapa[]>([]);
   const [newEtapaNome, setNewEtapaNome] = useState("");
-  const [newEtapaCor, setNewEtapaCor] = useState(DEFAULT_COLORS[0]);
 
   function openCreate() {
     setEditingId(null);
     setFormNome("");
     setFormPadrao(false);
     setFormEtapas([]);
-    setDialogOpen(true);
+    setSheetOpen(true);
   }
 
   function openEdit(p: typeof pipelines[0]) {
@@ -43,14 +40,17 @@ export default function ConfigPipelines() {
     setFormNome(p.nome);
     setFormPadrao(p.padrao);
     setFormEtapas([...p.etapas]);
-    setDialogOpen(true);
+    setSheetOpen(true);
   }
 
   function addEtapa() {
     if (!newEtapaNome.trim()) return;
-    setFormEtapas((prev) => [...prev, { id: genId(), nome: newEtapaNome.trim(), cor: newEtapaCor }]);
+    const colors = ["#3b82f6", "#f59e0b", "#8b5cf6", "#10b981", "#ef4444", "#ec4899", "#06b6d4", "#f97316"];
+    setFormEtapas((prev) => [
+      ...prev,
+      { id: genId(), nome: newEtapaNome.trim(), cor: colors[prev.length % colors.length] },
+    ]);
     setNewEtapaNome("");
-    setNewEtapaCor(DEFAULT_COLORS[(formEtapas.length + 1) % DEFAULT_COLORS.length]);
   }
 
   function removeEtapa(id: string) {
@@ -68,14 +68,8 @@ export default function ConfigPipelines() {
   }
 
   async function handleSave() {
-    if (!formNome.trim()) {
-      toast.error("Informe o nome do pipeline");
-      return;
-    }
-    if (formEtapas.length < 2) {
-      toast.error("Adicione pelo menos 2 etapas");
-      return;
-    }
+    if (!formNome.trim()) { toast.error("Informe o nome do pipeline"); return; }
+    if (formEtapas.length < 2) { toast.error("Adicione pelo menos 2 etapas"); return; }
     try {
       if (editingId) {
         await updatePipeline.mutateAsync({ id: editingId, updates: { nome: formNome, etapas: formEtapas, padrao: formPadrao } });
@@ -84,7 +78,7 @@ export default function ConfigPipelines() {
         await createPipeline.mutateAsync({ nome: formNome, etapas: formEtapas, padrao: formPadrao });
         toast.success("Pipeline criado");
       }
-      setDialogOpen(false);
+      setSheetOpen(false);
     } catch {
       toast.error("Erro ao salvar pipeline");
     }
@@ -155,14 +149,14 @@ export default function ConfigPipelines() {
         </div>
       )}
 
-      {/* Create / Edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Pipeline" : "Novo Pipeline"}</DialogTitle>
-          </DialogHeader>
+      {/* Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="flex flex-col">
+          <SheetHeader>
+            <SheetTitle>{editingId ? "Editar Pipeline" : "Novo Pipeline"}</SheetTitle>
+          </SheetHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto space-y-5 py-4">
             <div className="space-y-1.5">
               <Label>Nome do Pipeline</Label>
               <Input value={formNome} onChange={(e) => setFormNome(e.target.value)} placeholder="Ex: Pipeline Comercial" />
@@ -183,7 +177,7 @@ export default function ConfigPipelines() {
               {formEtapas.map((etapa, idx) => (
                 <div key={etapa.id} className="flex items-center gap-2 group">
                   <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                  <div className="w-4 h-4 rounded-full border shrink-0" style={{ backgroundColor: etapa.cor }} />
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: etapa.cor }} />
                   <span className="text-sm flex-1">{etapa.nome}</span>
                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveEtapa(idx, -1)} disabled={idx === 0}>
@@ -199,14 +193,8 @@ export default function ConfigPipelines() {
                 </div>
               ))}
 
-              {/* Add new stage */}
+              {/* Add stage */}
               <div className="flex items-center gap-2 mt-2">
-                <input
-                  type="color"
-                  value={newEtapaCor}
-                  onChange={(e) => setNewEtapaCor(e.target.value)}
-                  className="w-7 h-7 rounded border cursor-pointer p-0.5"
-                />
                 <Input
                   placeholder="Nome da etapa..."
                   value={newEtapaNome}
@@ -214,21 +202,21 @@ export default function ConfigPipelines() {
                   className="flex-1 h-8 text-sm"
                   onKeyDown={(e) => e.key === "Enter" && addEtapa()}
                 />
-                <Button variant="outline" size="sm" className="h-8" onClick={addEtapa}>
+                <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={addEtapa}>
                   <Plus className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+          <SheetFooter className="gap-2 pt-2 border-t">
+            <Button variant="outline" onClick={() => setSheetOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createPipeline.isPending || updatePipeline.isPending}>
-              {editingId ? "Salvar" : "Criar Pipeline"}
+              Salvar
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
