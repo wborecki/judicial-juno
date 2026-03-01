@@ -1,82 +1,41 @@
 
 
-## Reestruturação do Modelo de Dados — Separar Negócios de Processos + Criar Contatos
+## Tela de Processos Completa + Fluxo Processo → Negócio
 
-### Problema Atual
-Hoje, a tabela `processos` acumula campos de negócio (`negocio_status`, `valor_proposta`, `valor_fechamento`, `data_fechamento`, `tipo_servico`). Isso mistura conceitos: um processo judicial é diferente de um negócio/oportunidade comercial. Além disso, não existe a entidade "contatos" (telefone, email de contato ligados a uma pessoa).
+### Contexto
+Hoje não existe uma página dedicada para listar **todos os processos** do sistema com filtros avançados. A página de Triagem lista apenas processos em `pipeline_status = "triagem"`. Precisamos de uma tela central de Processos com listagem completa, filtros, e ao clicar abrir o detalhe com todas as informações (partes, documentos, etc). O fluxo é: **Processos → quando apto → vira Negócio → segue no CRM**.
 
-### Novo Modelo de Dados
+### O que será construído
 
-```text
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   processos  │────→│   negocios   │────→│   pessoas    │
-│              │ 1:N │              │     │              │
-│ dados do     │     │ tipo_servico │     │ nome, cpf    │
-│ processo     │     │ status       │     │ tipo         │
-│ judicial     │     │ valor_prop.  │     └──────┬───────┘
-│ triagem      │     │ valor_fech.  │            │ 1:N
-│ pipeline     │     │ data_fech.   │     ┌──────┴───────┐
-│ análise      │     │ observacoes  │     │   contatos   │
-└──────────────┘     └──────────────┘     │              │
-                                          │ tipo (tel,   │
-┌──────────────┐     ┌──────────────┐     │  email, etc) │
-│   equipes    │────→│equipe_membros│     │ valor        │
-└──────────────┘     └──────┬───────┘     │ principal    │
-                            │             └──────────────┘
-                     ┌──────┴───────┐
-                     │   usuarios   │
-                     └──────────────┘
-```
+**1. Nova página `/processos` — Listagem completa**
+- Busca **todos** os processos (sem filtro de pipeline_status)
+- Sem big numbers/stats cards
+- Filtros: por tribunal, natureza, tipo pagamento, pipeline_status, triagem_resultado, trânsito em julgado
+- Busca por texto (número, parte autora, parte ré)
+- Tabela com colunas: Número, Tribunal, Natureza, Parte Autora, Tipo Pagamento, Status Pipeline, Triagem, Valor Estimado, Data Captação
+- Clique na linha → navega para `/processos/:id`
 
-### Etapa 1 — Migration: Criar tabela `negocios`
+**2. Atualizar `/processos/:id` — Detalhe completo**
+- Reorganizar abas: **Dados Gerais | Partes | Documentos | Triagem | Análise | Precificação | Comercial**
+- Aba **Partes**: mostra parte autora/ré com dados da pessoa vinculada (se houver), contatos
+- Aba **Documentos**: placeholder para futuro upload de documentos do processo
+- Manter edição inline existente
+- Quando processo está "apto" e avança, o botão "Criar Negócio" já existe na aba Comercial
 
-Nova tabela `negocios` com:
-- `id`, `processo_id` (FK → processos), `pessoa_id` (FK → pessoas)
-- `tipo_servico`, `negocio_status` (em_andamento, ganho, perdido)
-- `valor_proposta`, `valor_fechamento`, `data_abertura`, `data_fechamento`
-- `responsavel_id` (FK → usuarios), `observacoes`
-- `created_at`, `updated_at`
-- RLS permissiva (fase dev)
+**3. Atualizar sidebar**
+- Adicionar "Processos" no menu (entre Dashboard e Pipeline/Triagem), com ícone `Scale` ou `Gavel`
+- Reorganizar: Dashboard → **Processos** → Pipeline (Triagem, Distribuição, Análise, Precificação, Comercial, Negócios)
 
-Migrar dados existentes: INSERT INTO `negocios` SELECT dos campos de negócio que já estão em `processos` (onde `negocio_status IS NOT NULL`).
-
-Remover colunas de negócio da tabela `processos`: `negocio_status`, `valor_proposta`, `valor_fechamento`, `data_fechamento`, `tipo_servico`.
-
-### Etapa 2 — Migration: Criar tabela `contatos`
-
-Nova tabela `contatos`:
-- `id`, `pessoa_id` (FK → pessoas)
-- `tipo` (telefone, email, whatsapp, outro)
-- `valor` (o número/email em si)
-- `principal` (boolean, default false)
-- `observacoes`
-- `created_at`
-- RLS permissiva (fase dev)
-
-### Etapa 3 — Hooks e tipos
-
-- Criar `useNegocios.ts` com queries para listar, buscar por ID, criar e atualizar negócios
-- Criar `useContatos.ts` com queries para listar contatos de uma pessoa
-- Atualizar `useProcessos.ts` removendo campos de negócio do tipo `Processo`
-- Atualizar `src/lib/types.ts` com as novas interfaces
-
-### Etapa 4 — Atualizar páginas
-
-- **Negocios.tsx**: Buscar da tabela `negocios` (join com processos e pessoas) em vez de filtrar processos
-- **ProcessoDetalhe.tsx**: Aba "Comercial" agora lista/cria negócios vinculados ao processo. Botão "Criar Negócio" quando processo está apto
-- **Dashboard.tsx**: Ajustar KPIs para consultar `negocios` separadamente
-- **Pessoas.tsx**: Adicionar coluna/seção de contatos
-- **CrmSidebar.tsx**: Adicionar "Contatos" ao menu de Cadastros (opcional, pode ficar dentro de Pessoas)
-
-### Etapa 5 — Seed data
-
-- Inserir negócios de exemplo nas diferentes fases
-- Inserir contatos vinculados às pessoas existentes
+**4. Atualizar rotas**
+- Adicionar rota `/processos` apontando para a nova página
+- Manter `/processos/:id` para detalhe
 
 ### Detalhes Técnicos
 
-- A migration será feita em uma única SQL com: CREATE TABLE negocios, INSERT INTO negocios (migração), ALTER TABLE processos DROP COLUMN (5 colunas), CREATE TABLE contatos
-- O `pipeline_status` do processo continua existindo (captado → triagem → distribuido → em_analise → precificado → comercial), mas "ganho"/"perdido" passam a ser status do negócio, não do processo
-- Um processo pode ter múltiplos negócios (ex: compra de crédito + compensação tributária)
-- Contatos ficam dentro da página de detalhe da Pessoa, sem rota separada
+- Nova página `src/pages/Processos.tsx` usando `useProcessos()` sem parâmetro (busca tudo)
+- Filtros com `Select` components e estado local, aplicados via `useMemo`
+- Reutilizar `ProcessStatusBadge`, `TriageBadge` e badges de pipeline existentes
+- Atualizar `CrmSidebar.tsx` para incluir o item "Processos" no menu
+- Atualizar `App.tsx` para adicionar a rota
+- Atualizar `ProcessoDetalhe.tsx` para incluir abas "Partes" e "Documentos" (placeholder)
 
