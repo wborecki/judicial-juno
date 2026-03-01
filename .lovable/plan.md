@@ -1,89 +1,87 @@
 
 
-## Plano: Redesign Processos > Triagem > Negócios
+## Plano: Redesign ProcessoDetalhe — Layout 2 Colunas com Painel Lateral
 
-### 1. Schema — Migration SQL
+Transformar a tela de detalhe do processo de um layout de abas para um layout operacional de 2 colunas: conteúdo principal com blocos accordion + painel lateral fixo de Triagem/Conversão.
 
-Novas colunas na tabela `processos`:
-- `vara_comarca` text nullable
-- `classe_fase` text nullable (ex: "Cumprimento de Sentença")
-- `triagem_motivo_inaptidao` text nullable (obrigatório quando inapto)
+---
 
-Nova coluna em `processo_partes`:
-- `advogado_oab` text nullable (para registrar OAB de advogados)
-- Expandir `tipo` para aceitar: autor, reu, exequente, executado, advogado, terceiro
+### 1. Estrutura do Layout
 
-Nova coluna em `processo_andamentos`:
-- `documento_id` uuid nullable FK processo_documentos (link opcional ao documento)
-- `resumo` text nullable (resumo curto de 1 linha)
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  Header fixo: CNJ (copiar) + Badges + Status + Ações           │
+├─────────────────────────────────────────────────────────────────┤
+│  Resumo executivo: 6 mini-cards em grid                        │
+├──────────────────────────────────────┬──────────────────────────┤
+│  Conteúdo principal (accordion)      │  Painel lateral fixo     │
+│                                      │                          │
+│  A) Dados do Processo                │  Triagem                 │
+│  B) Partes                           │  - Status + Score        │
+│  C) Movimentações (tabela simples)   │  - Observações           │
+│  D) Documentos                       │  - Motivo (se inapto)    │
+│  E) Financeiro/RPV                   │  - Botões Apto/Inapto    │
+│  F) Relacionados                     │                          │
+│  G) Notas internas                   │  Conversão               │
+│                                      │  - Criar Negócio         │
+│                                      │  - Negócios existentes   │
+└──────────────────────────────────────┴──────────────────────────┘
+```
 
-### 2. Tela: Lista de Processos (Processos.tsx) — Redesign
+Layout: `grid grid-cols-1 lg:grid-cols-[1fr_320px]` — coluna principal + painel lateral sticky.
 
-Colunas da tabela:
-- Nº CNJ (com link externo tribunal)
-- Tribunal
-- Vara/Comarca
-- Classe/Fase
-- Triagem (badge: Pendente/Apto/Inapto)
-- Status Processo (Ativo/Arquivado/Suspenso)
-- Trânsito em Julgado (Sim/Não)
-- Valor Estimado
-- Data Captação
+---
 
-Cards no topo: Total | Pendentes | Aptos | Descartados
+### 2. Arquivos a Criar/Modificar
 
-Ações por linha (dropdown ou botões inline):
-- Ver detalhes → navega para /processos/:id
-- Triagem → navega para /processos/:id com tab triagem
-- Enviar para Negócios (só se triagem = apto) → cria negócio direto
+**`src/pages/ProcessoDetalhe.tsx`** — Reescrever completamente:
+- Remover Tabs, usar layout 2 colunas
+- Header fixo com CNJ (botão copiar), badges inline (Tribunal, Área, Tipo RPV/Precatório, Classe/Fase, Trânsito), status triagem, ações (Editar Valor, Criar Negócio condicional, menu dropdown)
+- Grid de 6 mini-cards resumo executivo
+- Coluna principal com accordions
+- Coluna lateral com componente de triagem + conversão
 
-Filtros existentes mantidos + novos:
-- Classe/Fase
-- Faixa de valor (min/max)
-- Texto livre busca também CPF/CNPJ de partes
+**`src/components/processo/ProcessoHeader.tsx`** — Novo componente:
+- CNJ com botão copiar (clipboard API)
+- Badges: Tribunal, Natureza, Tipo Pagamento, Classe/Fase, Trânsito (Sim/Não com cor)
+- Badge de triagem colorido
+- Ações: botão Editar Valor (abre modal inline), Criar Negócio (só se apto), dropdown com mais ações
 
-### 3. Tela: Detalhe do Processo (ProcessoDetalhe.tsx) — Redesign
+**`src/components/processo/ProcessoResumo.tsx`** — Novo componente (6 cards):
+- Valor estimado (destaque)
+- Último movimento (data + título, fetch do andamento mais recente)
+- Prazos (placeholder "Nenhum" por enquanto — campo não existe no schema)
+- Triagem (status + data)
+- Risco (placeholder Baixo/Médio/Alto — campo não existe, usar lógica básica por valor/trânsito)
+- Negócio (não criado / em andamento / fechado — fetch de negocios)
 
-**Cabeçalho forte** com: CNJ, tribunal, vara/comarca, classe/fase, status, triagem badge, valor estimado, botão "Editar" e botão "Enviar para Negócios" (condicional).
+**`src/components/processo/PainelTriagem.tsx`** — Novo componente (painel lateral):
+- Status atual da triagem com badge colorido
+- Observações (textarea)
+- Motivo inaptidão (input, obrigatório se inapto)
+- Botões: Marcar Apto / Marcar Inapto / Reanálise
+- Seção Conversão: botão "Criar Negócio" (só se apto), lista de negócios existentes com status
 
-Abas mantidas com melhorias:
+**Componentes accordion existentes reutilizados** (refatorados para accordion):
+- `TabDadosGerais.tsx` → Accordion "Dados do Processo" (remover card wrapper, adaptar para AccordionContent)
+- `TabPartes.tsx` → Accordion "Partes" (preview no header: "3 autores, 2 réus")
+- `TabAndamentos.tsx` → Accordion "Movimentações" (preview: "10 movimentações, última em 02/09/2024")
+- `TabDocumentos.tsx` → Accordion "Documentos" (preview: "5 documentos")
 
-**Dados Gerais** — Adicionar campos vara/comarca, classe/fase na edição inline. Adicionar links externos, informações de distribuição/autuação.
+**Novos blocos accordion (placeholder/mock por enquanto):**
+- Financeiro/RPV/Precatório — card estático com campos: número requisitório, ente devedor, data-base, valor, deduções, valor líquido, LOA, status. Dados não existem no schema, será placeholder.
+- Relacionados — card estático listando "Processo principal", "Cumprimentos", "Apensos". Placeholder.
+- Notas internas — textarea simples para adicionar notas. Placeholder sem persistência (tabela não existe).
 
-**Partes** — Expandir tipos (exequente, executado, advogado, terceiro). Mostrar OAB quando for advogado. Manter add/remove.
+---
 
-**Movimentações** (simplificada) — Substituir timeline por tabela simples:
-- Colunas: Data/Hora | Título | Documento (link clicável + tipo) | Resumo
-- Controles: busca por título, filtro "somente com documento", ordenação por data
-- Formulário de adição com campo documento_id (select dos documentos do processo) e resumo
-- Sem textos longos, foco em leitura rápida
+### 3. Resumo Técnico
 
-**Documentos** — Manter como está (upload, download, delete, tipo)
-
-**Triagem** — Adicionar campo motivo de inaptidão (obrigatório se inapto). Manter botões Apto/Reanálise/Descartar.
-
-**Negócios** — Só visível se triagem = apto. Manter criação/listagem de negócios vinculados.
-
-### 4. Regras de Negócio
-
-- Processo começa com triagem = pendente
-- Se triagem = apto: habilitar "Enviar para Negócios" no cabeçalho e na listagem
-- Se triagem = inapto/descartado: exigir motivo e observação no formulário de triagem
-- Ao criar negócio: vincular processo_id, puxar valor_estimado como valor_proposta
-
-### 5. Sidebar (CrmSidebar.tsx)
-
-Manter estrutura atual. Triagem já é acessada via Processos (filtro de triagem na listagem), não precisa de rota separada — mas manter `/triagem` como atalho que filtra processos com pipeline_status = triagem.
-
-### 6. Resumo Técnico
-
-- 1 migration SQL (alter processos + alter processo_partes + alter processo_andamentos)
-- Reescrever `Processos.tsx` com novas colunas, ações por linha, cards stats
-- Reescrever `TabAndamentos.tsx` de timeline para tabela simples com busca/filtro
-- Atualizar `TabDadosGerais.tsx` com novos campos (vara_comarca, classe_fase)
-- Atualizar `TabPartes.tsx` com tipos expandidos e campo OAB
-- Atualizar `TabTriagem.tsx` com motivo de inaptidão obrigatório
-- Atualizar `TabNegocios.tsx` para ser condicional (só se apto)
-- Atualizar `ProcessoDetalhe.tsx` com cabeçalho forte e botão "Enviar para Negócios"
-- Atualizar hooks `useProcessos.ts` para incluir novos campos nos filtros
+- Sem alteração no banco de dados (nenhuma migration)
+- Sem novos hooks (reutilizar useProcesso, useProcessoAndamentos, useProcessoDocumentos, useProcessoPartes, useNegocios, useUpdateProcesso)
+- 3 novos componentes: ProcessoHeader, ProcessoResumo, PainelTriagem
+- ProcessoDetalhe.tsx reescrito com layout 2 colunas + accordion
+- Componentes existentes (TabDadosGerais, TabPartes, TabAndamentos, TabDocumentos) adaptados para funcionar dentro de AccordionContent (remover Card wrapper externo)
+- TabTriagem e TabNegocios removidos como abas — funcionalidade movida para PainelTriagem
+- Blocos Financeiro, Relacionados e Notas como placeholders estáticos
 
