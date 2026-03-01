@@ -167,19 +167,6 @@ export default function Processos() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <Scale className="w-5 h-5 text-primary" />
-            Processos
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {totalCount.toLocaleString("pt-BR")} processo{totalCount !== 1 ? "s" : ""}
-            {hasFilters && " (filtrado)"}
-          </p>
-        </div>
-      </div>
 
       {/* Filters */}
       <div className="glass-card rounded-xl p-3 space-y-2">
