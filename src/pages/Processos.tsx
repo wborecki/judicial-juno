@@ -137,7 +137,7 @@ export default function Processos() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -13,7 +13,7 @@ export function ProcessTable({ processos, onSelect }: ProcessTableProps) {
     v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
 
   return (
-    <div className="glass-card rounded-xl overflow-hidden animate-fade-in" style={{ animationDelay: "200ms" }}>
+    <div className="glass-card rounded-xl overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="border-border/50 hover:bg-transparent">
@@ -38,8 +38,7 @@ export function ProcessTable({ processos, onSelect }: ProcessTableProps) {
           {processos.map((p, i) => (
             <TableRow
               key={p.id}
-              className="cursor-pointer border-border/30 hover:bg-accent/5 transition-colors animate-fade-in"
-              style={{ animationDelay: `${300 + i * 50}ms` }}
+              className="cursor-pointer border-border/30 hover:bg-accent/5 transition-colors"
               onClick={() => onSelect(p)}
             >
               <TableCell className="font-mono text-xs">{p.numeroProcesso}</TableCell>

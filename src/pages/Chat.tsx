@@ -87,7 +87,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex h-screen animate-fade-in">
+    <div className="flex h-screen">
       {/* Left panel */}
       <div className="w-80 border-r border-border flex flex-col bg-muted/10 shrink-0">
         <div className="p-4 border-b border-border space-y-3">

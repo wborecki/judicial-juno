@@ -143,7 +143,7 @@ export default function ProcessoDetalhe() {
     : null;
 
   return (
-    <div className="space-y-4 animate-fade-in max-w-4xl">
+    <div className="space-y-4 max-w-4xl">
       {/* Navigation */}
       <Button variant="ghost" size="sm" onClick={() => navigate("/processos")} className="text-xs gap-1.5 -ml-2">
         <ArrowLeft className="w-3.5 h-3.5" />Voltar à listagem

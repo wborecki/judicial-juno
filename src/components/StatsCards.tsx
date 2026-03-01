@@ -19,8 +19,7 @@ export function StatsCards({ counts, total }: StatsCardsProps) {
       {cards.map((card, i) => (
         <div
           key={card.label}
-          className="glass-card rounded-xl p-4 animate-fade-in"
-          style={{ animationDelay: `${i * 80}ms` }}
+          className="glass-card rounded-xl p-4"
         >
           <div className="flex items-center justify-between mb-3">
             <card.icon className={`w-5 h-5 ${card.color}`} />

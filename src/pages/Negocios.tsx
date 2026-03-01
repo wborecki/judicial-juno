@@ -69,7 +69,7 @@ export default function Negocios() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
           <Briefcase className="w-5 h-5 text-primary" />
