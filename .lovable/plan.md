@@ -1,58 +1,50 @@
 
 
-## Plano: Aba "Análise" com campos dinâmicos configuráveis
+## Plano: Header global com pesquisa, notificações e perfil do usuário
 
 ### Resumo
-Renomear a aba "Financeiro" para "Análise", posicioná-la como segunda aba, manter os dados financeiros existentes, e criar um sistema de **campos personalizados configuráveis** em Configurações. Os campos criados lá aparecerão automaticamente na aba Análise do processo para preenchimento pelo analista.
+Criar um componente `AppHeader` fixo no topo da área de conteúdo, contendo: barra de pesquisa global, ícone de notificações (com link para `/configuracoes/notificacoes`), botão de configurações e avatar/menu do usuário com opção de sair. Remover a seção de usuário do rodapé da sidebar.
 
-### 1. Banco de dados — nova tabela `campos_analise` e `processo_campos_valores`
+### 1. Novo componente `AppHeader.tsx`
 
-**`campos_analise`** — define os campos configuráveis:
-- `id`, `nome` (text), `tipo` (text: `texto`, `numero`, `data`, `select`, `checkbox`, `moeda`), `grupo` (text — para agrupar em blocos como "Financeiro", "Jurídico", etc.), `opcoes` (jsonb — para campos select), `obrigatorio` (boolean), `ordem` (int), `ativo` (boolean), `created_at`
+Layout horizontal com altura fixa (~56px), border-bottom, contendo:
+- **Esquerda**: Barra de pesquisa com ícone `Search` — busca global por processos, negócios, pessoas (navegação por resultados)
+- **Direita**: 
+  - Ícone `Bell` (notificações) — link para `/configuracoes/notificacoes`
+  - Ícone `Settings` — link para `/configuracoes`
+  - Avatar do usuário (iniciais) com `DropdownMenu`: nome, email, link "Configurações", separador, "Sair"
 
-**`processo_campos_valores`** — armazena os valores preenchidos:
-- `id`, `processo_id` (uuid FK), `campo_id` (uuid FK → campos_analise), `valor` (text), `created_at`, `updated_at`
+### 2. Atualizar `AppLayout.tsx`
 
-### 2. Configurações → renomear "Campos de Negócios" para "Campos de Análise"
+Adicionar `AppHeader` acima do `<Outlet />`, dentro da `<main>`:
 
-Refatorar `CamposNegocios.tsx` → `CamposAnalise.tsx`:
-- CRUD completo para campos: nome, tipo, grupo, opções (para select), obrigatório, ordem
-- Agrupar campos por grupo com drag visual simples (ordem numérica)
-- Tipos suportados: Texto, Número, Moeda (R$), Data, Select (opções customizadas), Checkbox
+```text
+┌──────────┬──────────────────────────────┐
+│          │  [Search...]   🔔  ⚙  [AV] │  ← AppHeader
+│ Sidebar  ├──────────────────────────────┤
+│          │                              │
+│          │       <Outlet />             │
+│          │                              │
+└──────────┴──────────────────────────────┘
+```
 
-Atualizar `ConfiguracoesLayout.tsx` e `App.tsx` para refletir o novo nome/rota.
+### 3. Atualizar `CrmSidebar.tsx`
 
-### 3. ProcessoDetalhe — aba "Análise" como segunda aba
+Remover toda a seção de usuário do rodapé (linhas 112-146) — agora fica no header.
 
-No `ProcessoDetalhe.tsx`:
-- Renomear tab `financeiro` → `analise`, ícone `FileSearch`, label "Análise"
-- Mover para ser a **segunda aba** (após Partes)
-- Extrair conteúdo para novo componente `TabAnalise.tsx`
+### 4. Pesquisa global (CommandDialog)
 
-**`TabAnalise.tsx`**:
-- Bloco fixo "Dados Financeiros" (manter os 4 campos existentes: valor causa, valor precificado, data precificação, tipo pagamento)
-- Abaixo, renderizar dinamicamente os campos de `campos_analise` agrupados por `grupo`
-- Cada grupo aparece como um bloco card separado (mesmo estilo do financeiro)
-- Valores lidos/salvos de `processo_campos_valores`
-- Renderização por tipo: Input text, Input number, Input date, Select, Checkbox, Input moeda
-
-### 4. Hooks
-
-- `useCamposAnalise()` — listar campos ativos ordenados
-- `useCreateCampoAnalise()`, `useUpdateCampoAnalise()`, `useDeleteCampoAnalise()`
-- `useProcessoCamposValores(processoId)` — buscar valores do processo
-- `useSaveProcessoCampoValor()` — upsert valor
+Usar o componente `CommandDialog` (cmdk) já disponível no projeto para a busca:
+- Ao clicar na barra de pesquisa ou pressionar `Ctrl+K`, abre um modal de comando
+- Grupos: Processos, Negócios, Pessoas, Páginas
+- Selecionar um resultado navega para a página correspondente
+- Busca local nas rotas + dados carregados (sem backend adicional por agora)
 
 ### Arquivos impactados
 
 | Arquivo | Ação |
 |---|---|
-| Migration SQL | Criar `campos_analise` e `processo_campos_valores` |
-| `src/hooks/useCamposAnalise.ts` | Novo — CRUD campos |
-| `src/hooks/useProcessoCamposValores.ts` | Novo — valores do processo |
-| `src/components/processo/TabAnalise.tsx` | Novo — aba Análise |
-| `src/pages/CamposAnalise.tsx` | Refatorar de CamposNegocios |
-| `src/pages/ProcessoDetalhe.tsx` | Renomear tab, reordenar, usar TabAnalise |
-| `src/components/ConfiguracoesLayout.tsx` | Renomear nav item |
-| `src/App.tsx` | Atualizar import/rota |
+| `src/components/AppHeader.tsx` | Novo — header com search, notificações, settings, avatar |
+| `src/components/AppLayout.tsx` | Adicionar AppHeader no layout |
+| `src/components/CrmSidebar.tsx` | Remover seção de usuário do rodapé |
 
