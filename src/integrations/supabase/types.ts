@@ -17,11 +17,13 @@ export type Database = {
       chat_conversas: {
         Row: {
           created_at: string
+          criado_por: string | null
           deletado_em: string | null
           deletado_por: string | null
           fixado: boolean
           fixado_em: string | null
           id: string
+          institucional: boolean
           nome: string | null
           tipo: string
           ultima_mensagem: string | null
@@ -30,11 +32,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          criado_por?: string | null
           deletado_em?: string | null
           deletado_por?: string | null
           fixado?: boolean
           fixado_em?: string | null
           id?: string
+          institucional?: boolean
           nome?: string | null
           tipo?: string
           ultima_mensagem?: string | null
@@ -43,11 +47,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          criado_por?: string | null
           deletado_em?: string | null
           deletado_por?: string | null
           fixado?: boolean
           fixado_em?: string | null
           id?: string
+          institucional?: boolean
           nome?: string | null
           tipo?: string
           ultima_mensagem?: string | null
@@ -122,6 +128,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "chat_participantes_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_remetentes: {
+        Row: {
+          added_at: string
+          conversa_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          conversa_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          conversa_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_remetentes_conversa_id_fkey"
             columns: ["conversa_id"]
             isOneToOne: false
             referencedRelation: "chat_conversas"
