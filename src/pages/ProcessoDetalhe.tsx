@@ -60,109 +60,119 @@ export default function ProcessoDetalhe() {
   const docsPreview = documentos.length > 0 ? `${documentos.length} documento(s)` : "Nenhum";
 
   return (
-    <div className="space-y-4 max-w-6xl">
-      {/* Unified header card */}
-      <ProcessoHeader
-        processo={processo}
-        onConvert={() => setConvertOpen(true)}
-        onDiscard={() => setDiscardOpen(true)}
-      />
+    <div className="space-y-4 max-w-7xl">
+      {/* Back button - full width above grid */}
+      <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-xs gap-1.5 -ml-2 text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="w-3.5 h-3.5" />Voltar
+      </Button>
 
-      {/* Accordions - full width, no sidebar */}
-      <div className="bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
-        <Accordion type="multiple" defaultValue={["partes"]} className="divide-y divide-border/40">
+      {/* 2-column grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        {/* Left column: basic data */}
+        <div className="lg:sticky lg:top-4">
+          <ProcessoHeader
+            processo={processo}
+            onConvert={() => setConvertOpen(true)}
+            onDiscard={() => setDiscardOpen(true)}
+          />
+        </div>
 
-          <AccordionItem value="partes" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                Partes
-                <span className="text-[10px] text-muted-foreground font-normal ml-1">{partesPreview}</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <TabPartes processoId={processo.id} parteAutoraLegacy={processo.parte_autora} parteReLegacy={processo.parte_re} />
-            </AccordionContent>
-          </AccordionItem>
+        {/* Right column: accordions */}
+        <div className="lg:sticky lg:top-4 bg-card border border-border/40 rounded-xl shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] overflow-hidden">
+          <Accordion type="multiple" defaultValue={["partes"]} className="divide-y divide-border/40">
 
-          <AccordionItem value="andamentos" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                Movimentações
-                <span className="text-[10px] text-muted-foreground font-normal ml-1">{movPreview}</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <TabAndamentos processoId={processo.id} />
-            </AccordionContent>
-          </AccordionItem>
+            <AccordionItem value="partes" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  Partes
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1">{partesPreview}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabPartes processoId={processo.id} parteAutoraLegacy={processo.parte_autora} parteReLegacy={processo.parte_re} />
+              </AccordionContent>
+            </AccordionItem>
 
-          <AccordionItem value="documentos" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                Documentos
-                <span className="text-[10px] text-muted-foreground font-normal ml-1">{docsPreview}</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <TabDocumentos processoId={processo.id} />
-            </AccordionContent>
-          </AccordionItem>
+            <AccordionItem value="andamentos" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  Movimentações
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1">{movPreview}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabAndamentos processoId={processo.id} />
+              </AccordionContent>
+            </AccordionItem>
 
-          <AccordionItem value="financeiro" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Landmark className="w-4 h-4 text-muted-foreground" />
-                Financeiro / RPV / Precatório
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <PlaceholderField label="Nº Requisitório" value="—" />
-                <PlaceholderField label="Ente Devedor" value="—" />
-                <PlaceholderField label="Data-Base" value="—" />
-                <PlaceholderField label="Valor Bruto" value="—" />
-                <PlaceholderField label="Deduções" value="—" />
-                <PlaceholderField label="Valor Líquido" value="—" />
-                <PlaceholderField label="LOA" value="—" />
-                <PlaceholderField label="Status" value="—" />
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-3 italic">Dados financeiros ainda não disponíveis.</p>
-            </AccordionContent>
-          </AccordionItem>
+            <AccordionItem value="documentos" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  Documentos
+                  <span className="text-[10px] text-muted-foreground font-normal ml-1">{docsPreview}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <TabDocumentos processoId={processo.id} />
+              </AccordionContent>
+            </AccordionItem>
 
-          <AccordionItem value="relacionados" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Link2 className="w-4 h-4 text-muted-foreground" />
-                Processos Relacionados
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <PlaceholderField label="Processo Principal" value="—" />
-                <PlaceholderField label="Cumprimentos" value="Nenhum" />
-                <PlaceholderField label="Apensos" value="Nenhum" />
-                <PlaceholderField label="Recursos" value="Nenhum" />
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-3 italic">Vinculação de processos ainda não disponível.</p>
-            </AccordionContent>
-          </AccordionItem>
+            <AccordionItem value="financeiro" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Landmark className="w-4 h-4 text-muted-foreground" />
+                  Financeiro / RPV / Precatório
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <PlaceholderField label="Nº Requisitório" value="—" />
+                  <PlaceholderField label="Ente Devedor" value="—" />
+                  <PlaceholderField label="Data-Base" value="—" />
+                  <PlaceholderField label="Valor Bruto" value="—" />
+                  <PlaceholderField label="Deduções" value="—" />
+                  <PlaceholderField label="Valor Líquido" value="—" />
+                  <PlaceholderField label="LOA" value="—" />
+                  <PlaceholderField label="Status" value="—" />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-3 italic">Dados financeiros ainda não disponíveis.</p>
+              </AccordionContent>
+            </AccordionItem>
 
-          <AccordionItem value="notas" className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <StickyNote className="w-4 h-4 text-muted-foreground" />
-                Notas Internas
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <p className="text-[10px] text-muted-foreground italic">Notas internas em breve.</p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            <AccordionItem value="relacionados" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Link2 className="w-4 h-4 text-muted-foreground" />
+                  Processos Relacionados
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <PlaceholderField label="Processo Principal" value="—" />
+                  <PlaceholderField label="Cumprimentos" value="Nenhum" />
+                  <PlaceholderField label="Apensos" value="Nenhum" />
+                  <PlaceholderField label="Recursos" value="Nenhum" />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-3 italic">Vinculação de processos ainda não disponível.</p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="notas" className="border-0">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <StickyNote className="w-4 h-4 text-muted-foreground" />
+                  Notas Internas
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <p className="text-[10px] text-muted-foreground italic">Notas internas em breve.</p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
       </div>
 
       {/* Modals */}
