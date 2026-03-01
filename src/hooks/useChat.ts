@@ -14,6 +14,8 @@ export type ChatConversa = {
   fixado_em: string | null;
   ultima_mensagem: string | null;
   ultima_mensagem_em: string | null;
+  criado_por: string | null;
+  institucional: boolean;
 };
 
 export type ChatParticipante = {
@@ -33,6 +35,13 @@ export type ChatMensagem = {
   arquivo_url: string | null;
   arquivo_nome: string | null;
   created_at: string;
+};
+
+export type ChatRemetente = {
+  id: string;
+  conversa_id: string;
+  user_id: string;
+  added_at: string;
 };
 
 export function useConversas() {
@@ -62,6 +71,22 @@ export function useParticipantes(conversaId?: string) {
         .eq("conversa_id", conversaId);
       if (error) throw error;
       return data as ChatParticipante[];
+    },
+    enabled: !!conversaId,
+  });
+}
+
+export function useRemetentes(conversaId?: string) {
+  return useQuery({
+    queryKey: ["chat-remetentes", conversaId],
+    queryFn: async () => {
+      if (!conversaId) return [];
+      const { data, error } = await supabase
+        .from("chat_remetentes")
+        .select("*")
+        .eq("conversa_id", conversaId);
+      if (error) throw error;
+      return data as ChatRemetente[];
     },
     enabled: !!conversaId,
   });
@@ -134,7 +159,6 @@ export function useSendMessage() {
         .select()
         .single();
       if (error) throw error;
-      // Update conversa with last message preview
       await supabase.from("chat_conversas").update({
         updated_at: new Date().toISOString(),
         ultima_mensagem: msg.conteudo?.slice(0, 100) ?? (msg.tipo === "arquivo" ? "📎 Arquivo" : null),
@@ -151,12 +175,14 @@ export function useSendMessage() {
 export function useCreateConversa() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ nome, tipo, participantIds }: { nome?: string; tipo: string; participantIds: string[] }) => {
+    mutationFn: async ({ nome, tipo, participantIds, criadoPor, institucional, remetenteIds }: {
+      nome?: string; tipo: string; participantIds: string[]; criadoPor?: string; institucional?: boolean; remetenteIds?: string[];
+    }) => {
       const conversaId = crypto.randomUUID();
 
       const { error } = await supabase
         .from("chat_conversas")
-        .insert({ id: conversaId, nome: nome ?? null, tipo });
+        .insert({ id: conversaId, nome: nome ?? null, tipo, criado_por: criadoPor ?? null, institucional: institucional ?? false });
       if (error) throw error;
 
       const participants = participantIds.map((uid) => ({
@@ -165,6 +191,15 @@ export function useCreateConversa() {
       }));
       const { error: pError } = await supabase.from("chat_participantes").insert(participants);
       if (pError) throw pError;
+
+      // Add designated senders for institutional groups
+      if (institucional && remetenteIds && remetenteIds.length > 0) {
+        const remetentes = remetenteIds.map((uid) => ({
+          conversa_id: conversaId,
+          user_id: uid,
+        }));
+        await supabase.from("chat_remetentes").insert(remetentes);
+      }
 
       return {
         id: conversaId,
@@ -178,7 +213,25 @@ export function useCreateConversa() {
         fixado_em: null,
         ultima_mensagem: null,
         ultima_mensagem_em: null,
+        criado_por: criadoPor ?? null,
+        institucional: institucional ?? false,
       } as ChatConversa;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
+    },
+  });
+}
+
+export function useRenameConversa() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversaId, nome }: { conversaId: string; nome: string }) => {
+      const { error } = await supabase
+        .from("chat_conversas")
+        .update({ nome })
+        .eq("id", conversaId);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
@@ -230,6 +283,32 @@ export function useUploadChatFile() {
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("chat-files").getPublicUrl(path);
       return { url: urlData.publicUrl, name: file.name };
+    },
+  });
+}
+
+export function useAddRemetente() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversaId, userId }: { conversaId: string; userId: string }) => {
+      const { error } = await supabase.from("chat_remetentes").insert({ conversa_id: conversaId, user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["chat-remetentes", vars.conversaId] });
+    },
+  });
+}
+
+export function useRemoveRemetente() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversaId, userId }: { conversaId: string; userId: string }) => {
+      const { error } = await supabase.from("chat_remetentes").delete().eq("conversa_id", conversaId).eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["chat-remetentes", vars.conversaId] });
     },
   });
 }
