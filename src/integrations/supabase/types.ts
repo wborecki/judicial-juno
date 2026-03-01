@@ -541,8 +541,10 @@ export type Database = {
       processos: {
         Row: {
           analista_id: string | null
+          area: string | null
           assunto: string | null
           classe_fase: string | null
+          competencia: string | null
           created_at: string
           data_autuacao: string | null
           data_captacao: string
@@ -550,7 +552,10 @@ export type Database = {
           distribuido_em: string | null
           distribuido_por: string | null
           equipe_id: string | null
+          foro: string | null
           id: string
+          juiz: string | null
+          jurisdicao: string | null
           motivo_descarte_id: string | null
           natureza: string
           numero_processo: string
@@ -578,8 +583,10 @@ export type Database = {
         }
         Insert: {
           analista_id?: string | null
+          area?: string | null
           assunto?: string | null
           classe_fase?: string | null
+          competencia?: string | null
           created_at?: string
           data_autuacao?: string | null
           data_captacao?: string
@@ -587,7 +594,10 @@ export type Database = {
           distribuido_em?: string | null
           distribuido_por?: string | null
           equipe_id?: string | null
+          foro?: string | null
           id?: string
+          juiz?: string | null
+          jurisdicao?: string | null
           motivo_descarte_id?: string | null
           natureza: string
           numero_processo: string
@@ -615,8 +625,10 @@ export type Database = {
         }
         Update: {
           analista_id?: string | null
+          area?: string | null
           assunto?: string | null
           classe_fase?: string | null
+          competencia?: string | null
           created_at?: string
           data_autuacao?: string | null
           data_captacao?: string
@@ -624,7 +636,10 @@ export type Database = {
           distribuido_em?: string | null
           distribuido_por?: string | null
           equipe_id?: string | null
+          foro?: string | null
           id?: string
+          juiz?: string | null
+          jurisdicao?: string | null
           motivo_descarte_id?: string | null
           natureza?: string
           numero_processo?: string
