@@ -10,17 +10,19 @@ export interface CampoAnalise {
   obrigatorio: boolean;
   ordem: number;
   ativo: boolean;
+  entidade: string;
   created_at: string;
 }
 
-export function useCamposAnalise() {
+export function useCamposAnalise(entidade: string = "processo") {
   return useQuery({
-    queryKey: ["campos_analise"],
+    queryKey: ["campos_analise", entidade],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campos_analise")
         .select("*")
         .eq("ativo", true)
+        .eq("entidade", entidade)
         .order("grupo")
         .order("ordem");
       if (error) throw error;
@@ -29,13 +31,14 @@ export function useCamposAnalise() {
   });
 }
 
-export function useAllCamposAnalise() {
+export function useAllCamposAnalise(entidade: string = "processo") {
   return useQuery({
-    queryKey: ["campos_analise", "all"],
+    queryKey: ["campos_analise", "all", entidade],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campos_analise")
         .select("*")
+        .eq("entidade", entidade)
         .order("grupo")
         .order("ordem");
       if (error) throw error;
@@ -47,7 +50,7 @@ export function useAllCamposAnalise() {
 export function useCreateCampoAnalise() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (campo: Omit<CampoAnalise, "id" | "created_at">) => {
+    mutationFn: async (campo: Omit<CampoAnalise, "id" | "created_at"> & { entidade?: string }) => {
       const { data, error } = await supabase
         .from("campos_analise")
         .insert(campo as any)
