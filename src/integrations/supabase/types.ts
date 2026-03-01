@@ -584,6 +584,7 @@ export type Database = {
         Args: { _conversa_id: string; _user_id: string }
         Returns: boolean
       }
+      sync_grupo_institucional: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

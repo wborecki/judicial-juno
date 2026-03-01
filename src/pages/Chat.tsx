@@ -341,16 +341,12 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers, onRename, on
         <div className="flex items-center gap-1">
           {isGroup && (
             <>
-              {(isCreator || !isInstitucional) && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={onAddMembers}>
-                  <UserPlus className="w-3.5 h-3.5" />Adicionar
-                </Button>
-              )}
-              {isCreator && isInstitucional && (
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onGroupSettings}>
-                  <Settings2 className="w-3.5 h-3.5" />
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={onAddMembers}>
+                <UserPlus className="w-3.5 h-3.5" />Adicionar
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onGroupSettings} title="Configurar grupo">
+                <Settings2 className="w-3.5 h-3.5" />
+              </Button>
             </>
           )}
         </div>
@@ -616,11 +612,13 @@ function NewChatSheet({ open, onOpenChange, userId, onCreated }: { open: boolean
 }
 
 function GroupSettingsSheet({ open, onOpenChange, conversa, userId }: { open: boolean; onOpenChange: (v: boolean) => void; conversa?: ChatConversa; userId: string }) {
+  const queryClient = useQueryClient();
   const { data: participantes = [] } = useParticipantes(conversa?.id);
   const { data: remetentes = [] } = useRemetentes(conversa?.id);
   const addRemetente = useAddRemetente();
   const removeRemetente = useRemoveRemetente();
   const [search, setSearch] = useState("");
+  const [removing, setRemoving] = useState(false);
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ["usuarios-group-settings", search],
@@ -637,8 +635,9 @@ function GroupSettingsSheet({ open, onOpenChange, conversa, userId }: { open: bo
   const participantIds = participantes.map(p => p.user_id);
   const remetenteIds = remetentes.map(r => r.user_id);
   const participantUsers = usuarios.filter(u => participantIds.includes(u.id));
+  const isInstitucional = conversa?.institucional ?? false;
 
-  const handleToggle = async (uid: string, nome: string) => {
+  const handleToggleRemetente = async (uid: string, nome: string) => {
     if (!conversa) return;
     const isRem = remetenteIds.includes(uid);
     try {
@@ -654,17 +653,38 @@ function GroupSettingsSheet({ open, onOpenChange, conversa, userId }: { open: bo
     }
   };
 
-  if (!conversa?.institucional) return null;
+  const handleRemoveMember = async (uid: string, nome: string) => {
+    if (!conversa) return;
+    setRemoving(true);
+    try {
+      // Remove from participantes
+      await supabase.from("chat_participantes").delete().eq("conversa_id", conversa.id).eq("user_id", uid);
+      // Also remove from remetentes if applicable
+      if (remetenteIds.includes(uid)) {
+        await supabase.from("chat_remetentes").delete().eq("conversa_id", conversa.id).eq("user_id", uid);
+        queryClient.invalidateQueries({ queryKey: ["chat-remetentes", conversa.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["chat-participantes", conversa.id] });
+      toast.success(`${nome} removido do grupo`);
+    } catch {
+      toast.error("Erro ao remover membro");
+    }
+    setRemoving(false);
+  };
+
+  if (!conversa) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[400px] sm:w-[440px] flex flex-col">
-        <SheetHeader><SheetTitle className="flex items-center gap-2"><Settings2 className="w-4 h-4" />Configurações do Canal</SheetTitle></SheetHeader>
+        <SheetHeader><SheetTitle className="flex items-center gap-2"><Settings2 className="w-4 h-4" />Configurações do Grupo</SheetTitle></SheetHeader>
         <div className="mt-4 space-y-4 flex-1 flex flex-col min-h-0">
-          <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-700 flex items-start gap-2">
-            <Megaphone className="w-4 h-4 shrink-0 mt-0.5" />
-            <p>Apenas o criador e remetentes autorizados podem enviar mensagens neste canal institucional.</p>
-          </div>
+          {isInstitucional && (
+            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-700 flex items-start gap-2">
+              <Megaphone className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>Canal institucional — apenas o criador e remetentes autorizados podem enviar mensagens.</p>
+            </div>
+          )}
 
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -673,10 +693,13 @@ function GroupSettingsSheet({ open, onOpenChange, conversa, userId }: { open: bo
 
           <ScrollArea className="flex-1">
             <div className="space-y-1">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Membros do grupo</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                Membros ({participantUsers.length})
+              </p>
               {participantUsers.map(u => {
                 const isCreator = u.id === conversa.criado_por;
                 const isRem = remetenteIds.includes(u.id);
+                const isSelf = u.id === userId;
                 return (
                   <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
@@ -686,17 +709,25 @@ function GroupSettingsSheet({ open, onOpenChange, conversa, userId }: { open: bo
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs font-medium">{u.nome}</p>
                         {isCreator && <Badge variant="outline" className="text-[8px] px-1 py-0 h-4">Criador</Badge>}
-                        {isRem && <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 border-amber-500/30 text-amber-600">Remetente</Badge>}
+                        {isRem && isInstitucional && <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 border-amber-500/30 text-amber-600">Remetente</Badge>}
                       </div>
                       <p className="text-[10px] text-muted-foreground">{u.email}</p>
                     </div>
-                    {!isCreator && (
-                      <Button size="sm" variant={isRem ? "default" : "outline"} className="h-7 text-[10px] gap-1"
-                        onClick={() => handleToggle(u.id, u.nome)} disabled={addRemetente.isPending || removeRemetente.isPending}>
-                        <ShieldCheck className="w-3 h-3" />
-                        {isRem ? "Remetente" : "Autorizar"}
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isInstitucional && !isCreator && (
+                        <Button size="sm" variant={isRem ? "default" : "outline"} className="h-7 text-[10px] gap-1"
+                          onClick={() => handleToggleRemetente(u.id, u.nome)} disabled={addRemetente.isPending || removeRemetente.isPending}>
+                          <ShieldCheck className="w-3 h-3" />
+                          {isRem ? "Remetente" : "Autorizar"}
+                        </Button>
+                      )}
+                      {!isCreator && !isSelf && (
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          onClick={() => handleRemoveMember(u.id, u.nome)} disabled={removing}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
