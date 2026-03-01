@@ -7,7 +7,7 @@ const settingsNav = [
   { label: "Pessoas", to: "/configuracoes/pessoas", icon: Users },
   { label: "Equipes", to: "/configuracoes/equipes", icon: Building2 },
   { label: "Usuários", to: "/configuracoes/usuarios", icon: UserCog },
-  { label: "Campos de Análise", to: "/configuracoes/campos-analise", icon: Briefcase },
+  { label: "Campos Personalizados", to: "/configuracoes/campos-analise", icon: Briefcase },
   { label: "Notificações", to: "/configuracoes/notificacoes", icon: Bell },
   { label: "Integrações", to: "/configuracoes/integracoes", icon: Plug },
 ];
