@@ -1,10 +1,11 @@
 import {
   LayoutDashboard, Filter, ArrowRightLeft, FileSearch, DollarSign,
-  Phone, Briefcase, Users, Building2, UserCog, MessageSquare, Settings
+  Phone, Briefcase, Users, Building2, UserCog, MessageSquare, Settings, LogOut
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { MegaTecLogo } from "./MegaTecLogo";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavItem {
   to: string;
@@ -76,6 +77,12 @@ function SidebarSection({ title, items }: { title: string; items: NavItem[] }) {
 }
 
 export function CrmSidebar() {
+  const { user, signOut } = useAuth();
+  const initials = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : user?.email?.slice(0, 2).toUpperCase() ?? "??";
+  const displayName = user?.user_metadata?.full_name || user?.email || "Usuário";
+
   return (
     <aside className="w-64 min-h-screen bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0">
       <div className="p-6 border-b border-sidebar-border">
@@ -92,12 +99,19 @@ export function CrmSidebar() {
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-semibold text-xs">
-            AD
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">Admin</p>
-            <p className="text-[10px] text-sidebar-foreground/50">Administrador</p>
+            <p className="text-xs font-medium truncate">{displayName}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email}</p>
           </div>
+          <button
+            onClick={signOut}
+            className="p-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+            title="Sair"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>

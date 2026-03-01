@@ -3,10 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Triagem from "./pages/Triagem";
-
 import Distribuicao from "./pages/Distribuicao";
 import Analise from "./pages/Analise";
 import Precificacao from "./pages/Precificacao";
@@ -18,6 +19,8 @@ import UsuariosPage from "./pages/Usuarios";
 import Chat from "./pages/Chat";
 import Configuracoes from "./pages/Configuracoes";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,25 +31,34 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/triagem" element={<Triagem />} />
-            
-            <Route path="/distribuicao" element={<Distribuicao />} />
-            <Route path="/analise" element={<Analise />} />
-            <Route path="/precificacao" element={<Precificacao />} />
-            <Route path="/comercial" element={<Comercial />} />
-            <Route path="/negocios" element={<Negocios />} />
-            <Route path="/pessoas" element={<Pessoas />} />
-            <Route path="/equipes" element={<Equipes />} />
-            <Route path="/usuarios" element={<UsuariosPage />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
-            <Route path="/processos/:id" element={<ProcessoDetalhe />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/triagem" element={<Triagem />} />
+              <Route path="/distribuicao" element={<Distribuicao />} />
+              <Route path="/analise" element={<Analise />} />
+              <Route path="/precificacao" element={<Precificacao />} />
+              <Route path="/comercial" element={<Comercial />} />
+              <Route path="/negocios" element={<Negocios />} />
+              <Route path="/pessoas" element={<Pessoas />} />
+              <Route path="/equipes" element={<Equipes />} />
+              <Route path="/usuarios" element={<UsuariosPage />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/processos/:id" element={<ProcessoDetalhe />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
