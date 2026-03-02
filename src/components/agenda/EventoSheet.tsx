@@ -233,10 +233,10 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
 
             <div>
               <Label>Responsável</Label>
-              <Select value={form.responsavel_id} onValueChange={(v) => set("responsavel_id", v)}>
+              <Select value={form.responsavel_id || "__none__"} onValueChange={(v) => set("responsavel_id", v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {(usuarios ?? []).filter((u) => u.ativo).map((u) => (
                     <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
                   ))}
@@ -246,10 +246,10 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
 
             <div>
               <Label>Processo</Label>
-              <Select value={form.processo_id} onValueChange={(v) => set("processo_id", v)}>
+              <Select value={form.processo_id || "__none__"} onValueChange={(v) => set("processo_id", v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {(processos ?? []).slice(0, 50).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.numero_processo}</SelectItem>
                   ))}
@@ -259,10 +259,10 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
 
             <div>
               <Label>Negócio</Label>
-              <Select value={form.negocio_id} onValueChange={(v) => set("negocio_id", v)}>
+              <Select value={form.negocio_id || "__none__"} onValueChange={(v) => set("negocio_id", v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {(negocios ?? []).slice(0, 50).map((n) => (
                     <SelectItem key={n.id} value={n.id}>{n.titulo || n.id.slice(0, 8)}</SelectItem>
                   ))}
@@ -272,10 +272,10 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
 
             <div>
               <Label>Pessoa</Label>
-              <Select value={form.pessoa_id} onValueChange={(v) => set("pessoa_id", v)}>
+              <Select value={form.pessoa_id || "__none__"} onValueChange={(v) => set("pessoa_id", v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {(pessoas ?? []).slice(0, 50).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                   ))}
