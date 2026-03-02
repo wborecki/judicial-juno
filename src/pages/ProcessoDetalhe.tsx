@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useProcesso, useUpdateProcesso } from "@/hooks/useProcessos";
 import { useProcessoAndamentos } from "@/hooks/useProcessoAndamentos";
 import { useProcessoDocumentos } from "@/hooks/useProcessoDocumentos";
@@ -25,6 +25,8 @@ import TabAnalise from "@/components/processo/TabAnalise";
 export default function ProcessoDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromState = location.state as { from?: string; fromLabel?: string; fromPath?: string } | null;
   const { data: processo, isLoading } = useProcesso(id);
   const { data: andamentos = [] } = useProcessoAndamentos(id);
   const { data: documentos = [] } = useProcessoDocumentos(id);
@@ -75,10 +77,21 @@ export default function ProcessoDetalhe() {
             <BreadcrumbLink asChild><Link to="/">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild><Link to="/processos">Processos</Link></BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          {fromState?.fromPath && fromState?.fromLabel ? (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild><Link to={fromState.fromPath}>{fromState.fromLabel}</Link></BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          ) : (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild><Link to="/processos">Processos</Link></BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           <BreadcrumbItem>
             <BreadcrumbPage className="font-mono text-xs">{processo.numero_processo}</BreadcrumbPage>
           </BreadcrumbItem>

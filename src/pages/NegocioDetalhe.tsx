@@ -116,7 +116,7 @@ export default function NegocioDetalhe() {
                     <span>·</span>
                     <button
                       className="flex items-center gap-1 hover:text-primary transition-colors"
-                      onClick={() => navigate(`/processos/${negocio.processo_id}`)}
+                      onClick={() => navigate(`/processos/${negocio.processo_id}`, { state: { fromPath: `/negocios/${negocio.id}`, fromLabel: negocio.titulo || "Negócio" } })}
                     >
                       <LinkIcon className="w-3 h-3" />
                       <span className="font-mono">{negocio.processos.numero_processo}</span>
