@@ -273,17 +273,17 @@ export default function Processos() {
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Nº CNJ</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vara/Comarca</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Classe/Fase</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Triagem</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Status</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Captação</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-24">Analista</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Nº CNJ</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vara/Comarca</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classe/Fase</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Triagem</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Status</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Captação</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-24">Analista</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
             </TableRow>
           </TableHeader>
         </Table>
@@ -303,12 +303,12 @@ export default function Processos() {
                 return (
                   <TableRow
                     key={p.id}
-                    className="cursor-pointer border-border/20 hover:bg-accent/5 transition-colors h-9"
+                    className="cursor-pointer hover:bg-accent/5 transition-colors h-10"
                     onClick={() => navigate(`/processos/${p.id}`)}
                   >
-                    <TableCell className="py-1.5 w-[180px]">
+                    <TableCell className="w-[180px]">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[11px] font-medium">{p.numero_processo}</span>
+                        <span className="font-mono text-xs font-medium">{p.numero_processo}</span>
                         {tribunalUrl && (
                           <a
                             href={tribunalUrl}
@@ -323,35 +323,35 @@ export default function Processos() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="py-1.5 w-16">
-                      <span className="text-[10px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
+                    <TableCell className="w-16">
+                      <span className="text-[11px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
                     </TableCell>
-                    <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
-                    <TableCell className="text-[11px] py-1.5 max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
-                    <TableCell className="py-1.5 w-20">
-                      <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
+                    <TableCell className="text-xs max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
+                    <TableCell className="text-xs max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
+                    <TableCell className="w-20">
+                      <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
                         {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[10px] py-1.5 w-16">{STATUS_LABELS[p.status_processo] ?? "—"}</TableCell>
-                    <TableCell className="text-[10px] py-1.5 w-16">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
-                    <TableCell className="text-[11px] font-medium text-right py-1.5 w-24">{formatCurrency(p.valor_estimado)}</TableCell>
-                    <TableCell className="text-[10px] text-muted-foreground py-1.5 w-20">{formatDate(p.data_captacao)}</TableCell>
-                    <TableCell className="py-1.5 w-24">
+                    <TableCell className="text-xs w-16">{STATUS_LABELS[p.status_processo] ?? "—"}</TableCell>
+                    <TableCell className="text-xs w-16">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
+                    <TableCell className="text-xs font-medium text-right w-24">{formatCurrency(p.valor_estimado)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground w-20">{formatDate(p.data_captacao)}</TableCell>
+                    <TableCell className="w-24">
                       {(() => {
                         const analista = getUsuario(p.analista_id);
-                        if (!analista) return <span className="text-[10px] text-muted-foreground">—</span>;
+                        if (!analista) return <span className="text-xs text-muted-foreground">—</span>;
                         return (
                           <div className="flex items-center gap-1">
                             <Avatar className="w-5 h-5">
-                              <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
+                              <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-[10px] truncate max-w-[60px]">{analista.nome.split(" ")[0]}</span>
+                            <span className="text-xs truncate max-w-[60px]">{analista.nome.split(" ")[0]}</span>
                           </div>
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="py-1.5 w-10" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-6 w-6">

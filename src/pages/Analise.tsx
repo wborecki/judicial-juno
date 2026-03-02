@@ -85,15 +85,15 @@ export default function Analise() {
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nº CNJ</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Natureza</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Valor Est.</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Equipe</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Analista</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Distribuído em</TableHead>
-              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Trocar Analista</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Nº CNJ</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Natureza</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Valor Est.</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Equipe</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Analista</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Distribuído em</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Trocar Analista</TableHead>
             </TableRow>
           </TableHeader>
         </Table>
@@ -111,27 +111,27 @@ export default function Analise() {
                 const analistaOptions = (usuarios ?? []).filter(u => u.ativo && equipeMembrosIds.includes(u.id));
 
                 return (
-                  <TableRow key={p.id} className="h-9 border-border/20 hover:bg-accent/5 cursor-pointer" onClick={() => navigate(`/processos/${p.id}`)}>
-                    <TableCell className="font-mono text-[11px] font-medium">{p.numero_processo}</TableCell>
-                    <TableCell className="w-16"><Badge variant="secondary" className="text-[10px]">{p.tribunal}</Badge></TableCell>
-                    <TableCell className="text-[11px]">{p.natureza}</TableCell>
-                    <TableCell className="text-[11px] font-medium text-right">{formatCurrency(p.valor_estimado)}</TableCell>
-                    <TableCell><Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${badge.className}`}>{badge.label}</Badge></TableCell>
-                    <TableCell className="text-[11px]">{equipe?.nome ?? "—"}</TableCell>
+                  <TableRow key={p.id} className="h-10 hover:bg-accent/5 cursor-pointer" onClick={() => navigate(`/processos/${p.id}`)}>
+                    <TableCell className="font-mono text-xs font-medium">{p.numero_processo}</TableCell>
+                    <TableCell className="w-16"><Badge variant="secondary" className="text-[11px]">{p.tribunal}</Badge></TableCell>
+                    <TableCell className="text-xs">{p.natureza}</TableCell>
+                    <TableCell className="text-xs font-medium text-right">{formatCurrency(p.valor_estimado)}</TableCell>
+                    <TableCell><Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${badge.className}`}>{badge.label}</Badge></TableCell>
+                    <TableCell className="text-xs">{equipe?.nome ?? "—"}</TableCell>
                     <TableCell>
                       {analista ? (
                         <div className="flex items-center gap-1.5">
                           <Avatar className="w-5 h-5">
-                            <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-[11px]">{analista.nome}</span>
+                          <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs">{analista.nome}</span>
                         </div>
                       ) : "—"}
                     </TableCell>
-                    <TableCell className="text-[10px] text-muted-foreground">{formatDate(p.distribuido_em)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{formatDate(p.distribuido_em)}</TableCell>
                     <TableCell className="w-[180px]" onClick={e => e.stopPropagation()}>
                       <Select value={p.analista_id ?? ""} onValueChange={(v) => handleTrocarAnalista(p.id, v)}>
-                        <SelectTrigger className="h-7 text-[10px] w-full"><SelectValue placeholder="Trocar" /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-xs w-full"><SelectValue placeholder="Trocar" /></SelectTrigger>
                         <SelectContent>
                           {analistaOptions.map(u => (
                             <SelectItem key={u.id} value={u.id} className="text-xs">{u.nome}</SelectItem>
