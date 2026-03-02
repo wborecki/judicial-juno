@@ -100,6 +100,20 @@ export default function ProcessoDetalhe() {
             toast.error("Erro ao atualizar status");
           }
         }}
+        onRemoveReanalyse={async () => {
+          try {
+            await updateProcesso.mutateAsync({
+              id: processo.id,
+              updates: {
+                triagem_resultado: "pendente",
+                triagem_data: null,
+              },
+            });
+            toast.success("Acompanhamento removido");
+          } catch {
+            toast.error("Erro ao atualizar status");
+          }
+        }}
       />
 
       <Tabs defaultValue="partes" className="w-full">

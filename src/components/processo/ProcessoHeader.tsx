@@ -60,6 +60,7 @@ interface Props {
   onConvert: () => void;
   onDiscard: () => void;
   onReanalyse: () => void;
+  onRemoveReanalyse: () => void;
 }
 
 type DetailField = {
@@ -74,7 +75,7 @@ type DetailField = {
   };
 };
 
-export default function ProcessoHeader({ processo, onConvert, onDiscard, onReanalyse }: Props) {
+export default function ProcessoHeader({ processo, onConvert, onDiscard, onReanalyse, onRemoveReanalyse }: Props) {
   const updateProcesso = useUpdateProcesso();
   const [copied, setCopied] = useState(false);
 
@@ -198,9 +199,13 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
               <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg bg-success hover:bg-success/90 text-success-foreground shrink-0">
                 <Briefcase className="w-3.5 h-3.5" />Criar Negócio
               </Button>
-              {triagem !== "reanálise" && (
+              {triagem !== "reanálise" ? (
                 <Button size="sm" variant="outline" onClick={onReanalyse} className="text-xs gap-1.5 h-7 rounded-lg border-info/40 text-info hover:bg-info/10 shrink-0">
                   <Eye className="w-3.5 h-3.5" />Acompanhar
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={onRemoveReanalyse} className="text-xs gap-1.5 h-7 rounded-lg border-warning/40 text-warning hover:bg-warning/10 shrink-0">
+                  <Eye className="w-3.5 h-3.5" />Remover Acompanhamento
                 </Button>
               )}
               <Button size="sm" variant="outline" onClick={onDiscard} className="text-xs gap-1.5 h-7 rounded-lg border-destructive/40 text-destructive hover:bg-destructive/10 shrink-0">
