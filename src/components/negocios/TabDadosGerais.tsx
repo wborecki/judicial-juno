@@ -79,7 +79,7 @@ export default function TabDadosGerais({ negocio }: Props) {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Processo Vinculado</p>
             {negocio.processo_id && negocio.processos?.numero_processo ? (
               <button
-                onClick={() => navigate(`/processos/${negocio.processo_id}`)}
+                onClick={() => navigate(`/processos/${negocio.processo_id}`, { state: { fromPath: `/negocios/${negocio.id}`, fromLabel: negocio.titulo || "Negócio" } })}
                 className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline h-8"
               >
                 <LinkIcon className="w-3.5 h-3.5" />
