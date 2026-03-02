@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FileText, Users, Clock, StickyNote, FileSearch, Briefcase, History, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import ProcessoHeader from "@/components/processo/ProcessoHeader";
@@ -31,6 +32,8 @@ export default function ProcessoDetalhe() {
   const { data: negocios = [] } = useNegocios(id);
   const [convertOpen, setConvertOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [confirmAcompanhar, setConfirmAcompanhar] = useState(false);
+  const [confirmRemoverAcomp, setConfirmRemoverAcomp] = useState(false);
   const updateProcesso = useUpdateProcesso();
 
   const saveField = async (field: string, value: any) => {
@@ -86,34 +89,8 @@ export default function ProcessoDetalhe() {
         processo={processo}
         onConvert={() => setConvertOpen(true)}
         onDiscard={() => setDiscardOpen(true)}
-        onReanalyse={async () => {
-          try {
-            await updateProcesso.mutateAsync({
-              id: processo.id,
-              updates: {
-                triagem_resultado: "reanálise",
-                triagem_data: new Date().toISOString(),
-              },
-            });
-            toast.success("Processo em acompanhamento para reanálise futura");
-          } catch {
-            toast.error("Erro ao atualizar status");
-          }
-        }}
-        onRemoveReanalyse={async () => {
-          try {
-            await updateProcesso.mutateAsync({
-              id: processo.id,
-              updates: {
-                triagem_resultado: "pendente",
-                triagem_data: null,
-              },
-            });
-            toast.success("Acompanhamento removido");
-          } catch {
-            toast.error("Erro ao atualizar status");
-          }
-        }}
+        onReanalyse={() => setConfirmAcompanhar(true)}
+        onRemoveReanalyse={() => setConfirmRemoverAcomp(true)}
       />
 
       <Tabs defaultValue="partes" className="w-full">
@@ -210,6 +187,56 @@ export default function ProcessoDetalhe() {
 
       <ModalConverter processo={processo} open={convertOpen} onOpenChange={setConvertOpen} />
       <ModalDescartar processo={processo} open={discardOpen} onOpenChange={setDiscardOpen} />
+
+      <AlertDialog open={confirmAcompanhar} onOpenChange={setConfirmAcompanhar}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Colocar em acompanhamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O processo <span className="font-mono font-semibold">{processo.numero_processo}</span> será marcado para acompanhamento e reanálise futura.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              try {
+                await updateProcesso.mutateAsync({
+                  id: processo.id,
+                  updates: { triagem_resultado: "reanálise", triagem_data: new Date().toISOString() },
+                });
+                toast.success("Processo em acompanhamento");
+              } catch {
+                toast.error("Erro ao atualizar status");
+              }
+            }}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmRemoverAcomp} onOpenChange={setConfirmRemoverAcomp}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover acompanhamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O processo <span className="font-mono font-semibold">{processo.numero_processo}</span> voltará ao status "Pendente".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              try {
+                await updateProcesso.mutateAsync({
+                  id: processo.id,
+                  updates: { triagem_resultado: "pendente", triagem_data: null },
+                });
+                toast.success("Acompanhamento removido");
+              } catch {
+                toast.error("Erro ao atualizar status");
+              }
+            }}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
