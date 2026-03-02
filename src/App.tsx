@@ -12,6 +12,7 @@ import Processos from "./pages/Processos";
 import Triagem from "./pages/Triagem";
 import Distribuicao from "./pages/Distribuicao";
 import Analise from "./pages/Analise";
+import Agenda from "./pages/Agenda";
 import Precificacao from "./pages/Precificacao";
 import Comercial from "./pages/Comercial";
 import Negocios from "./pages/Negocios";
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/negocios" element={<Negocios />} />
               <Route path="/negocios/:id" element={<NegocioDetalhe />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/agenda" element={<Agenda />} />
               <Route path="/configuracoes" element={<ConfiguracoesLayout />}>
                 <Route index element={<ConfiguracoesGeral />} />
                 <Route path="pessoas" element={<Pessoas />} />
