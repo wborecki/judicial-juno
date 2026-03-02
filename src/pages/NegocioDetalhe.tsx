@@ -76,7 +76,7 @@ export default function NegocioDetalhe() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-w-7xl mx-auto p-6 overflow-y-auto h-full">
       {/* Breadcrumbs */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -131,7 +131,7 @@ export default function NegocioDetalhe() {
             {negocio.negocio_status === "em_andamento" && (
               <>
                 <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={handleMarkGanho}>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Ganho
+                  <CheckCircle2 className="w-3.5 h-3.5 text-success" /> Ganho
                 </Button>
                 <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={handleMarkPerdido}>
                   <XCircle className="w-3.5 h-3.5 text-destructive" /> Perdido
@@ -158,10 +158,10 @@ export default function NegocioDetalhe() {
             variant="secondary"
             className={
               negocio.negocio_status === "ganho"
-                ? "bg-emerald-500/10 text-emerald-600"
+                ? "bg-success/10 text-success"
                 : negocio.negocio_status === "perdido"
                 ? "bg-destructive/10 text-destructive"
-                : "bg-blue-500/10 text-blue-600"
+                : "bg-primary/10 text-primary"
             }
           >
             {negocio.negocio_status === "em_andamento" ? "Em andamento" : negocio.negocio_status === "ganho" ? "Ganho" : "Perdido"}
