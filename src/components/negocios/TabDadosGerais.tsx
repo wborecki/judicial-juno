@@ -4,6 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useUsuarios } from "@/hooks/useEquipes";
+import { usePessoas } from "@/hooks/usePessoas";
+import { useNavigate } from "react-router-dom";
+import { Link as LinkIcon, User, Briefcase } from "lucide-react";
 
 const TIPO_SERVICO_OPTIONS = [
   { value: "compra_credito", label: "Compra de Crédito Judicial" },
@@ -18,6 +22,10 @@ interface Props {
 
 export default function TabDadosGerais({ negocio }: Props) {
   const updateNegocio = useUpdateNegocio();
+  const { data: usuarios = [] } = useUsuarios();
+  const { data: pessoas = [] } = usePessoas();
+  const navigate = useNavigate();
+  const activeUsers = usuarios.filter(u => u.ativo);
 
   const saveField = async (field: string, value: any) => {
     try {
@@ -29,9 +37,65 @@ export default function TabDadosGerais({ negocio }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Responsável + Vínculos */}
+      <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
+        <p className="text-xs font-semibold text-foreground mb-1">Responsável & Vínculos</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Responsável</p>
+            <Select
+              value={negocio.responsavel_id || "__none__"}
+              onValueChange={(v) => saveField("responsavel_id", v === "__none__" ? null : v)}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Não atribuído" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Não atribuído</SelectItem>
+                {activeUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Pessoa Vinculada</p>
+            <Select
+              value={negocio.pessoa_id || "__none__"}
+              onValueChange={(v) => saveField("pessoa_id", v === "__none__" ? null : v)}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Nenhuma" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nenhuma</SelectItem>
+                {pessoas.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.nome} — {p.cpf_cnpj}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Processo Vinculado</p>
+            {negocio.processo_id && negocio.processos?.numero_processo ? (
+              <button
+                onClick={() => navigate(`/processos/${negocio.processo_id}`)}
+                className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline h-8"
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                <span className="font-mono">{negocio.processos.numero_processo}</span>
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground h-8 flex items-center">Nenhum processo vinculado</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Informações do Negócio */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
         <p className="text-xs font-semibold text-foreground mb-1">Informações do Negócio</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <InlineField label="Título" defaultValue={negocio.titulo ?? ""} onSave={(v) => saveField("titulo", v || null)} />
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Tipo de Serviço</p>
@@ -58,9 +122,10 @@ export default function TabDadosGerais({ negocio }: Props) {
         </div>
       </div>
 
+      {/* Valores */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
         <p className="text-xs font-semibold text-foreground mb-1">Valores</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <InlineNumberField label="Valor Proposta (R$)" defaultValue={negocio.valor_proposta} onSave={(v) => saveField("valor_proposta", v)} />
           <InlineNumberField label="Valor Fechamento (R$)" defaultValue={negocio.valor_fechamento} onSave={(v) => saveField("valor_fechamento", v)} />
           <div>
@@ -70,6 +135,7 @@ export default function TabDadosGerais({ negocio }: Props) {
         </div>
       </div>
 
+      {/* Observações */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
         <p className="text-xs font-semibold text-foreground mb-1">Observações</p>
         <ObservacoesField defaultValue={negocio.observacoes ?? ""} onSave={(v) => saveField("observacoes", v || null)} />
