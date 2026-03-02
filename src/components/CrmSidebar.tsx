@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft
+  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft, CalendarDays
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const comercialItems: NavItem[] = [
 ];
 
 const sistemaItems: NavItem[] = [
+  { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
