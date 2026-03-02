@@ -1,42 +1,34 @@
 
-## Problema
 
-Existem **duas barras de rolagem sobrepostas** porque a cadeia de containers cria scroll duplicado:
+## Plano: Melhorar nitidez e legibilidade das tabelas
 
-```text
-AppLayout
- └─ <main overflow-y-auto>          ← scroll 1
-     └─ ConfiguracoesLayout
-         └─ <div overflow-y-auto>   ← scroll 2 (conteúdo)
-```
+### Problemas identificados
+- Fontes muito pequenas (`text-[9px]`, `text-[10px]`, `text-[11px]`) prejudicam leitura
+- Linhas muito comprimidas (`h-9`, `py-1.5`) criam sensação de "apertado"
+- Falta contraste visual entre linhas (sem zebra-striping)
+- Header da tabela pouco destacado do conteúdo
+- Bordas entre linhas muito sutis (`border-border/20`)
 
-O `main` rola o conteúdo inteiro, e dentro dele o `ConfiguracoesLayout` também rola. O mesmo padrão se repete na página de Chat e em Processos, que gerenciam seu próprio scroll interno.
+### Alteracoes
 
-## Solução
+**1. Componente base `table.tsx`** -- ajustes globais que beneficiam todas as tabelas:
+- `TableHead`: subir de `h-12 px-4` para `h-10 px-3` com `bg-muted/30` e `text-xs` base
+- `TableCell`: de `p-4` para `px-3 py-2.5`
+- `TableRow`: adicionar zebra-striping com `even:bg-muted/20` e bordas mais visíveis `border-border/40`
 
-Aplicar uma regra simples: **páginas que gerenciam seu próprio layout (configurações, chat, processos, análise) devem receber `overflow-hidden` no `main`, delegando o scroll para o filho.** Páginas simples continuam usando o scroll do `main`.
+**2. Página `Processos.tsx`** -- elevar tamanhos de fonte inline:
+- Headers: de `text-[10px]` para `text-[11px]`
+- Cells de conteúdo: de `text-[10px]`/`text-[11px]` para `text-xs` (12px)
+- Badges: de `text-[9px]` para `text-[10px]`
+- Número CNJ (mono): de `text-[11px]` para `text-xs`
+- Altura da linha: de `h-9` para `h-10`
 
-### Alterações
+**3. Página `Analise.tsx`** -- mesma padronização:
+- Headers e cells seguem o mesmo aumento de `text-[10px]` para `text-[11px]` e cells para `text-xs`
 
-1. **`AppLayout.tsx`** — Quando a rota é full-width (`/configuracoes`, `/chat`), usar `overflow-hidden` no `main` em vez de `overflow-y-auto`, para que o filho controle o scroll:
-   ```tsx
-   <main className={cn("flex-1", isFullWidth ? "overflow-hidden" : "overflow-y-auto")}>
-   ```
+**4. CSS global `index.css`** -- adicionar utilitário de antialiasing:
+- Adicionar `-webkit-font-smoothing: antialiased` e `text-rendering: optimizeLegibility` ao body para melhorar renderização de fontes pequenas
 
-2. **`ConfiguracoesLayout.tsx`** — Trocar `min-h-screen` por `h-full` no container raiz (ele já está dentro de um flex que define a altura). A sidebar interna e o conteúdo mantêm `overflow-y-auto` individual:
-   ```tsx
-   <div className="flex h-full">
-   ```
+### Resultado esperado
+Tabelas com texto mais legível, espaçamento confortável, contraste entre linhas alternadas e renderização de fonte mais nítida em todos os navegadores.
 
-3. **`Processos.tsx`** — Já usa `h-full overflow-hidden` no container, mas precisa que o `main` pai não adicione scroll. Será coberto pela mudança no `AppLayout` adicionando `/processos` à lista de rotas full-width.
-
-4. **`AppLayout.tsx`** — Expandir a lógica de `isFullWidth` para incluir as rotas que gerenciam scroll próprio:
-   ```tsx
-   const isFullWidth = 
-     location.pathname.startsWith("/configuracoes") || 
-     location.pathname === "/chat" ||
-     location.pathname === "/processos" ||
-     location.pathname.startsWith("/processos/");
-   ```
-
-5. **Revisão das demais páginas** — Verificar `Analise.tsx`, `Negocios.tsx`, `Distribuicao.tsx` e outras listagens para garantir que sigam o mesmo padrão sem scroll duplo.
