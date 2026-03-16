@@ -180,7 +180,7 @@ export default function Agenda() {
         <div className="flex-1 min-h-0 overflow-auto">
           {view === "mensal" && <MonthView currentDate={currentDate} eventos={filtered} onDayClick={openNew} onEventClick={openEdit} />}
           {view === "semanal" && <WeekView currentDate={currentDate} eventos={filtered} onSlotClick={openNew} onEventClick={openEdit} />}
-          {view === "lista" && <ListView eventos={filtered} onEventClick={openEdit} getUsuarioNome={getUsuarioNome} />}
+          {view === "lista" && <ListView eventos={filtered} onEventClick={openEdit} getUsuarioNome={getUsuarioNome} tipoIconMap={tipoIconMap} />}
         </div>
       )}
 
