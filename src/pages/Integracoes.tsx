@@ -3,7 +3,8 @@ import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plug, Calendar, RefreshCw, ExternalLink, Unplug } from "lucide-react";
+import { Plug, Calendar, RefreshCw, ExternalLink, Unplug, FileSignature, CheckCircle2, XCircle } from "lucide-react";
+import { useCallClickSign } from "@/hooks/useDocumentoEnvios";
 import { useGoogleToken, useGoogleCalendarAuth, useGoogleCalendarSync, useDisconnectGoogle, useToggleGoogleSync } from "@/hooks/useGoogleCalendar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
