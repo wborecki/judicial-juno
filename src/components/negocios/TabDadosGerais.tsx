@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useUsuarios } from "@/hooks/useEquipes";
 import { usePessoas } from "@/hooks/usePessoas";
 import { useNavigate } from "react-router-dom";
-import { Link as LinkIcon, User, Briefcase } from "lucide-react";
+import { Link as LinkIcon, User, Briefcase, DollarSign, MessageSquare } from "lucide-react";
 
 const TIPO_SERVICO_OPTIONS = [
   { value: "compra_credito", label: "Compra de Crédito Judicial" },
