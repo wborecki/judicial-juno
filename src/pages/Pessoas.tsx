@@ -10,8 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PessoaSheet from "@/components/PessoaSheet";
 
 const tipoLabels: Record<string, string> = {
-  autor: "Autor",
-  reu: "Réu",
+  autor: "Credor",
+  reu: "Devedor",
+  credor: "Credor",
+  devedor: "Devedor",
+  cedente: "Cedente",
+  cessionario: "Cessionário",
   advogado: "Advogado",
   terceiro: "Terceiro",
 };
