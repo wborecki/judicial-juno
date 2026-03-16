@@ -336,6 +336,69 @@ export type Database = {
           },
         ]
       }
+      contratos_cessao: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_url: string | null
+          created_at: string
+          data_assinatura: string | null
+          data_homologacao: string | null
+          data_registro: string | null
+          id: string
+          negocio_id: string
+          observacoes: string | null
+          processo_id: string | null
+          status: string
+          updated_at: string
+          valor_cessao: number | null
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_url?: string | null
+          created_at?: string
+          data_assinatura?: string | null
+          data_homologacao?: string | null
+          data_registro?: string | null
+          id?: string
+          negocio_id: string
+          observacoes?: string | null
+          processo_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_cessao?: number | null
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_url?: string | null
+          created_at?: string
+          data_assinatura?: string | null
+          data_homologacao?: string | null
+          data_registro?: string | null
+          id?: string
+          negocio_id?: string
+          observacoes?: string | null
+          processo_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_cessao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_cessao_negocio_id_fkey"
+            columns: ["negocio_id"]
+            isOneToOne: false
+            referencedRelation: "negocios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_cessao_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipe_membros: {
         Row: {
           equipe_id: string
@@ -562,6 +625,7 @@ export type Database = {
           created_at: string
           data_abertura: string
           data_fechamento: string | null
+          desagio_percentual: number | null
           id: string
           motivo_perda: string | null
           negocio_status: string
@@ -569,12 +633,16 @@ export type Database = {
           ordem_kanban: number
           pessoa_id: string | null
           pipeline_etapa: string
+          prazo_estimado_recebimento: number | null
           prioridade: string
           processo_id: string | null
           responsavel_id: string | null
+          score_risco: string | null
+          status_carteira: string | null
           tipo_servico: string | null
           titulo: string | null
           updated_at: string
+          valor_face: number | null
           valor_fechamento: number | null
           valor_proposta: number | null
         }
@@ -582,6 +650,7 @@ export type Database = {
           created_at?: string
           data_abertura?: string
           data_fechamento?: string | null
+          desagio_percentual?: number | null
           id?: string
           motivo_perda?: string | null
           negocio_status?: string
@@ -589,12 +658,16 @@ export type Database = {
           ordem_kanban?: number
           pessoa_id?: string | null
           pipeline_etapa?: string
+          prazo_estimado_recebimento?: number | null
           prioridade?: string
           processo_id?: string | null
           responsavel_id?: string | null
+          score_risco?: string | null
+          status_carteira?: string | null
           tipo_servico?: string | null
           titulo?: string | null
           updated_at?: string
+          valor_face?: number | null
           valor_fechamento?: number | null
           valor_proposta?: number | null
         }
@@ -602,6 +675,7 @@ export type Database = {
           created_at?: string
           data_abertura?: string
           data_fechamento?: string | null
+          desagio_percentual?: number | null
           id?: string
           motivo_perda?: string | null
           negocio_status?: string
@@ -609,12 +683,16 @@ export type Database = {
           ordem_kanban?: number
           pessoa_id?: string | null
           pipeline_etapa?: string
+          prazo_estimado_recebimento?: number | null
           prioridade?: string
           processo_id?: string | null
           responsavel_id?: string | null
+          score_risco?: string | null
+          status_carteira?: string | null
           tipo_servico?: string | null
           titulo?: string | null
           updated_at?: string
+          valor_face?: number | null
           valor_fechamento?: number | null
           valor_proposta?: number | null
         }
