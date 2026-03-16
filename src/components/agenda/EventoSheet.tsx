@@ -49,6 +49,10 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
   const { data: processos } = useProcessos();
   const { data: negocios } = useNegocios();
   const { data: pessoas } = usePessoas();
+  const { data: tiposAtividade = [] } = useTiposAtividade("agenda");
+  const tipoOptions = tiposAtividade.length > 0
+    ? tiposAtividade.map(t => ({ value: t.slug, label: t.nome }))
+    : FALLBACK_TIPO_OPTIONS;
 
   const [form, setForm] = useState({
     titulo: "",
