@@ -1,40 +1,34 @@
 
 
-## Plano: Tabela bonita e consistente em todo o sistema
+## Plano: Melhorar nitidez e legibilidade das tabelas
 
-### Problema
+### Problemas identificados
+- Fontes muito pequenas (`text-[9px]`, `text-[10px]`, `text-[11px]`) prejudicam leitura
+- Linhas muito comprimidas (`h-9`, `py-1.5`) criam sensação de "apertado"
+- Falta contraste visual entre linhas (sem zebra-striping)
+- Header da tabela pouco destacado do conteúdo
+- Bordas entre linhas muito sutis (`border-border/20`)
 
-1. O componente `Table` adiciona `border border-border rounded-lg bg-background` no wrapper
-2. Várias páginas (Processos, Carteira, Análise, etc.) também envolvem a tabela em `glass-card rounded-xl overflow-hidden` — gerando **bordas duplas**
-3. A página de Processos usa **duas `<Table>` separadas** (header sticky + body scroll), cada uma criando seu próprio wrapper com borda — ficando visualmente quebrado
-4. As cores de fundo conflitam (`bg-background` vs `bg-card`)
+### Alteracoes
 
-### Solução
+**1. Componente base `table.tsx`** -- ajustes globais que beneficiam todas as tabelas:
+- `TableHead`: subir de `h-12 px-4` para `h-10 px-3` com `bg-muted/30` e `text-xs` base
+- `TableCell`: de `p-4` para `px-3 py-2.5`
+- `TableRow`: adicionar zebra-striping com `even:bg-muted/20` e bordas mais visíveis `border-border/40`
 
-**Princípio**: O componente `Table` deve ser **neutro** — sem borda nem fundo próprio. O container externo (que cada página já define) cuida da aparência.
+**2. Página `Processos.tsx`** -- elevar tamanhos de fonte inline:
+- Headers: de `text-[10px]` para `text-[11px]`
+- Cells de conteúdo: de `text-[10px]`/`text-[11px]` para `text-xs` (12px)
+- Badges: de `text-[9px]` para `text-[10px]`
+- Número CNJ (mono): de `text-[11px]` para `text-xs`
+- Altura da linha: de `h-9` para `h-10`
 
-#### 1. Simplificar `src/components/ui/table.tsx`
+**3. Página `Analise.tsx`** -- mesma padronização:
+- Headers e cells seguem o mesmo aumento de `text-[10px]` para `text-[11px]` e cells para `text-xs`
 
-- **Table wrapper**: Remover `border`, `rounded-lg`, `bg-background`. Deixar apenas `relative w-full overflow-auto`
-- **TableRow**: Manter zebra-striping `even:bg-muted/30`, hover `hover:bg-muted/50`, borda `border-b border-border/50`
-- **TableHead**: Manter `bg-muted/40` para contraste sutil, `text-[11px] font-semibold uppercase tracking-wider`
-- **TableCell**: Manter `px-3 py-2.5 text-xs`
-
-#### 2. Páginas que usam tabelas — ajustar containers
-
-As páginas já têm `glass-card rounded-xl overflow-hidden` como container. Isso fica como o visual padrão. Sem mudanças nas páginas.
-
-Com o `Table` neutro, as páginas controlam borda/fundo via `glass-card`, e a tabela de Processos (com 2 `<Table>`) não terá mais bordas duplicadas.
+**4. CSS global `index.css`** -- adicionar utilitário de antialiasing:
+- Adicionar `-webkit-font-smoothing: antialiased` e `text-rendering: optimizeLegibility` ao body para melhorar renderização de fontes pequenas
 
 ### Resultado esperado
-
-- Tabelas com fundo branco (`bg-card` via `glass-card`)
-- Borda única sutil ao redor
-- Header com fundo levemente acinzentado
-- Listras alternadas sutis
-- Sem bordas duplas em nenhuma página
-
-### Arquivo editado
-
-- `src/components/ui/table.tsx` (única mudança)
+Tabelas com texto mais legível, espaçamento confortável, contraste entre linhas alternadas e renderização de fonte mais nítida em todos os navegadores.
 
