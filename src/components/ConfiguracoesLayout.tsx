@@ -8,6 +8,7 @@ const settingsNav = [
   { label: "Equipes", to: "/configuracoes/equipes", icon: Building2 },
   { label: "Usuários", to: "/configuracoes/usuarios", icon: UserCog },
   { label: "Campos Personalizados", to: "/configuracoes/campos-analise", icon: Briefcase },
+  { label: "Tipos de Atividade", to: "/configuracoes/tipos-atividade", icon: ListChecks },
   { label: "Pipelines", to: "/configuracoes/pipelines", icon: GitBranchPlus },
   { label: "Roteamento", to: "/configuracoes/roteamento", icon: Route },
   { label: "Notificações", to: "/configuracoes/notificacoes", icon: Bell },

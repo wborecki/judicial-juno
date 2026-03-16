@@ -71,6 +71,7 @@ const App = () => (
                 <Route path="equipes" element={<Equipes />} />
                 <Route path="usuarios" element={<UsuariosPage />} />
                 <Route path="campos-analise" element={<CamposAnalise />} />
+                <Route path="tipos-atividade" element={<TiposAtividade />} />
                 <Route path="pipelines" element={<ConfigPipelines />} />
                 <Route path="roteamento" element={<ConfigRoteamento />} />
                 <Route path="notificacoes" element={<Notificacoes />} />
