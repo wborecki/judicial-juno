@@ -339,10 +339,11 @@ function WeekView({ currentDate, eventos, onSlotClick, onEventClick }: {
 }
 
 // ─── List View ──────────────────────────────────────────
-function ListView({ eventos, onEventClick, getUsuarioNome }: {
+function ListView({ eventos, onEventClick, getUsuarioNome, tipoIconMap }: {
   eventos: AgendaEvento[];
   onEventClick: (e: AgendaEvento) => void;
   getUsuarioNome: (id: string | null) => string;
+  tipoIconMap: Record<string, string>;
 }) {
   // Group by date
   const grouped = useMemo(() => {
