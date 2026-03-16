@@ -13,13 +13,6 @@ import { useContatos, useCreateContato, useDeleteContato } from "@/hooks/useCont
 import { PessoaDB, useCreatePessoa, useUpdatePessoa, useDeletePessoa } from "@/hooks/usePessoas";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Phone, Mail, MessageCircle, Plus, User, MapPin, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
-import { useContatos, useCreateContato, useDeleteContato } from "@/hooks/useContatos";
-import { PessoaDB, useCreatePessoa, useUpdatePessoa, useDeletePessoa } from "@/hooks/usePessoas";
 
 const TIPO_OPTIONS = [
   { value: "autor", label: "Autor" },
