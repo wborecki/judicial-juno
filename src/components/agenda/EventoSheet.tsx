@@ -11,6 +11,7 @@ import { useUsuarios } from "@/hooks/useEquipes";
 import { useProcessos } from "@/hooks/useProcessos";
 import { useNegocios } from "@/hooks/useNegocios";
 import { usePessoas } from "@/hooks/usePessoas";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
