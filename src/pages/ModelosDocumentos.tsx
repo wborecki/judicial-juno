@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDocumentoModelos, useCreateModelo, useUpdateModelo, useDeleteModelo, type DocumentoModelo } from "@/hooks/useDocumentoModelos";
+import { useCallClickSign } from "@/hooks/useDocumentoEnvios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, FileText, Pencil, Trash2, Variable, X } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Variable, X, Download, Loader2 } from "lucide-react";
 
 const TIPO_VAR_OPTIONS = [
   { value: "texto", label: "Texto" },
@@ -29,17 +31,30 @@ const emptyForm = {
   ativo: true,
 };
 
+interface ClickSignTemplate {
+  id: string;
+  key: string;
+  name: string;
+}
+
 export default function ModelosDocumentos() {
   const { data: modelos = [], isLoading } = useDocumentoModelos();
   const createMut = useCreateModelo();
   const updateMut = useUpdateModelo();
   const deleteMut = useDeleteModelo();
+  const callClickSign = useCallClickSign();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<DocumentoModelo | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [newVarNome, setNewVarNome] = useState("");
   const [newVarTipo, setNewVarTipo] = useState("texto");
+
+  // Import templates state
+  const [importOpen, setImportOpen] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [csTemplates, setCsTemplates] = useState<ClickSignTemplate[]>([]);
+  const [importingKey, setImportingKey] = useState<string | null>(null);
 
   const openNew = () => {
     setEditing(null);
@@ -111,6 +126,51 @@ export default function ModelosDocumentos() {
     });
   };
 
+  const handleOpenImport = async () => {
+    setImportOpen(true);
+    setImportLoading(true);
+    try {
+      const res = await callClickSign.mutateAsync({ action: "list-templates" });
+      const templates = res?.data || res?.templates || [];
+      setCsTemplates(
+        templates.map((t: any) => ({
+          id: t.id,
+          key: t.attributes?.key || t.key || t.id,
+          name: t.attributes?.name || t.name || "Sem nome",
+        }))
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao carregar templates do ClickSign");
+      setCsTemplates([]);
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleImportTemplate = async (tpl: ClickSignTemplate) => {
+    const existing = modelos.find(m => m.clicksign_template_key === tpl.key);
+    if (existing) {
+      toast.info(`Modelo "${existing.nome}" já usa este template.`);
+      return;
+    }
+    setImportingKey(tpl.key);
+    try {
+      await createMut.mutateAsync({
+        nome: tpl.name,
+        descricao: `Importado do ClickSign (${tpl.key})`,
+        clicksign_template_key: tpl.key,
+        arquivo_url: null,
+        variaveis: [],
+        ativo: true,
+      } as any);
+      toast.success(`Modelo "${tpl.name}" importado!`);
+    } catch {
+      toast.error("Erro ao importar template");
+    } finally {
+      setImportingKey(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -118,9 +178,14 @@ export default function ModelosDocumentos() {
           <h1 className="text-xl font-bold tracking-tight">Modelos de Documentos</h1>
           <p className="text-xs text-muted-foreground mt-1">Gerencie templates para envio via ClickSign</p>
         </div>
-        <Button size="sm" onClick={openNew} className="text-xs gap-1.5">
-          <Plus className="w-3.5 h-3.5" /> Novo Modelo
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleOpenImport} className="text-xs gap-1.5">
+            <Download className="w-3.5 h-3.5" /> Importar do ClickSign
+          </Button>
+          <Button size="sm" onClick={openNew} className="text-xs gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Novo Modelo
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -262,6 +327,55 @@ export default function ModelosDocumentos() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Dialog para importar templates */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="w-4 h-4" /> Importar Templates do ClickSign
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {importLoading ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Carregando templates...
+              </div>
+            ) : csTemplates.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Nenhum template encontrado na sua conta ClickSign.</p>
+              </div>
+            ) : (
+              csTemplates.map(tpl => {
+                const alreadyImported = modelos.some(m => m.clicksign_template_key === tpl.key);
+                return (
+                  <div key={tpl.id} className="flex items-center gap-3 border rounded-lg p-3">
+                    <FileText className="w-4 h-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{tpl.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono">{tpl.key}</p>
+                    </div>
+                    {alreadyImported ? (
+                      <Badge variant="secondary" className="text-[10px] shrink-0">Já importado</Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs shrink-0"
+                        disabled={importingKey === tpl.key}
+                        onClick={() => handleImportTemplate(tpl)}
+                      >
+                        {importingKey === tpl.key ? <Loader2 className="w-3 h-3 animate-spin" /> : "Importar"}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

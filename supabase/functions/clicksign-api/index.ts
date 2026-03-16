@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,11 +48,14 @@ serve(async (req) => {
           method: "POST",
           headers,
           body: JSON.stringify({
-            envelope: {
-              name: params.name || "Envelope",
-              locale: "pt-BR",
-              auto_close: true,
-              block_after_refusal: true,
+            data: {
+              type: "envelopes",
+              attributes: {
+                name: params.name || "Envelope",
+                locale: "pt-BR",
+                auto_close: true,
+                block_after_refusal: true,
+              },
             },
           }),
         });
@@ -72,9 +74,12 @@ serve(async (req) => {
             method: "POST",
             headers,
             body: JSON.stringify({
-              document: {
-                filename: params.filename || "documento.pdf",
-                content_base64: params.content_base64,
+              data: {
+                type: "documents",
+                attributes: {
+                  filename: params.filename || "documento.pdf",
+                  content_base64: params.content_base64,
+                },
               },
             }),
           }
@@ -94,9 +99,12 @@ serve(async (req) => {
             method: "POST",
             headers,
             body: JSON.stringify({
-              document: {
-                template_key: params.template_key,
-                template_data: params.template_data || {},
+              data: {
+                type: "documents",
+                attributes: {
+                  template_key: params.template_key,
+                  template_data: params.template_data || {},
+                },
               },
             }),
           }
@@ -110,21 +118,30 @@ serve(async (req) => {
       }
 
       case "add-signer": {
+        const signatureType = params.papel === "witness"
+          ? "witness"
+          : params.papel === "approve"
+          ? "approval"
+          : "signature";
+
         const res = await fetch(
           `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}/signers`,
           {
             method: "POST",
             headers,
             body: JSON.stringify({
-              signer: {
-                name: params.name,
-                email: params.email,
-                cpf: params.cpf || undefined,
-                phone: params.phone || undefined,
-                refusable: true,
-                group: 0,
-                communicate_events: ["signed", "refused"],
-                signature_type: params.papel === "witness" ? "witness" : params.papel === "approve" ? "approval" : "signature",
+              data: {
+                type: "signers",
+                attributes: {
+                  name: params.name,
+                  email: params.email,
+                  cpf: params.cpf || undefined,
+                  phone: params.phone || undefined,
+                  refusable: true,
+                  group: 0,
+                  communicate_events: ["signed", "refused"],
+                  signature_type: signatureType,
+                },
               },
             }),
           }
@@ -137,17 +154,82 @@ serve(async (req) => {
         break;
       }
 
+      case "add-requirement": {
+        const res = await fetch(
+          `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}/requirements`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              data: {
+                type: "requirements",
+                attributes: {
+                  action: "agree",
+                  auth: "email",
+                },
+                relationships: {
+                  document: {
+                    data: { type: "documents", id: params.document_key },
+                  },
+                  signer: {
+                    data: { type: "signers", id: params.signer_key },
+                  },
+                },
+              },
+            }),
+          }
+        );
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`Add requirement failed [${res.status}]: ${body}`);
+        }
+        result = await res.json();
+        break;
+      }
+
       case "activate-envelope": {
         const res = await fetch(
-          `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}/activate`,
+          `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}`,
           {
             method: "PATCH",
             headers,
+            body: JSON.stringify({
+              data: {
+                type: "envelopes",
+                attributes: {
+                  status: "running",
+                },
+              },
+            }),
           }
         );
         if (!res.ok) {
           const body = await res.text();
           throw new Error(`Activate envelope failed [${res.status}]: ${body}`);
+        }
+        result = await res.json();
+        break;
+      }
+
+      case "send-notifications": {
+        const res = await fetch(
+          `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}/notifications`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              data: {
+                type: "notifications",
+                attributes: {
+                  message: params.message || "Você tem um documento para assinar.",
+                },
+              },
+            }),
+          }
+        );
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`Send notifications failed [${res.status}]: ${body}`);
         }
         result = await res.json();
         break;
@@ -168,10 +250,18 @@ serve(async (req) => {
 
       case "cancel-envelope": {
         const res = await fetch(
-          `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}/cancel`,
+          `${CLICKSIGN_BASE}/envelopes/${params.envelope_id}`,
           {
             method: "PATCH",
             headers,
+            body: JSON.stringify({
+              data: {
+                type: "envelopes",
+                attributes: {
+                  status: "canceled",
+                },
+              },
+            }),
           }
         );
         if (!res.ok) {

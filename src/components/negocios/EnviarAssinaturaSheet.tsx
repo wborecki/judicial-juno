@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, X, Send, FileText, Users } from "lucide-react";
+import { Plus, X, Send, FileText, Users, Eye, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -32,13 +32,15 @@ const PAPEL_OPTIONS = [
   { value: "witness", label: "Testemunha" },
 ];
 
+type Step = "modelo" | "variaveis" | "signatarios" | "revisao";
+
 export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, processoId, contratoId }: Props) {
   const { data: modelos = [] } = useDocumentoModelos();
   const createEnvio = useCreateEnvio();
   const createSignatario = useCreateSignatario();
   const callClickSign = useCallClickSign();
 
-  const [step, setStep] = useState<"modelo" | "variaveis" | "signatarios">("modelo");
+  const [step, setStep] = useState<Step>("modelo");
   const [selectedModelo, setSelectedModelo] = useState<DocumentoModelo | null>(null);
   const [varValues, setVarValues] = useState<Record<string, string>>({});
   const [signatarios, setSignatarios] = useState<Signatario[]>([{ nome: "", email: "", cpf: "", telefone: "", papel: "sign" }]);
@@ -68,9 +70,12 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
     setSignatarios(s => s.map((sig, i) => i === idx ? { ...sig, [key]: value } : sig));
   };
 
+  const validSigs = signatarios.filter(s => s.nome && s.email);
+  const emptyVars = selectedModelo?.variaveis.filter(v => !varValues[v.nome]?.trim()) || [];
+  const hasReviewIssues = validSigs.length === 0 || emptyVars.length > 0;
+
   const handleSend = async () => {
     if (!selectedModelo) return;
-    const validSigs = signatarios.filter(s => s.nome && s.email);
     if (validSigs.length === 0) {
       toast.error("Adicione ao menos um signatário com nome e email");
       return;
@@ -83,11 +88,11 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
         action: "create-envelope",
         name: selectedModelo.nome,
       });
-      const envelopeId = envelopeRes?.envelope?.id || envelopeRes?.data?.id;
+      const envelopeId = envelopeRes?.data?.id;
       if (!envelopeId) throw new Error("Falha ao criar envelope");
 
       // 2. Create document from template
-      let documentKey = null;
+      let documentKey: string | null = null;
       if (selectedModelo.clicksign_template_key) {
         const docRes = await callClickSign.mutateAsync({
           action: "create-from-template",
@@ -95,7 +100,7 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
           template_key: selectedModelo.clicksign_template_key,
           template_data: varValues,
         });
-        documentKey = docRes?.document?.key || docRes?.data?.key;
+        documentKey = docRes?.data?.id || null;
       }
 
       // 3. Add signers
@@ -110,17 +115,36 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
           phone: sig.telefone || undefined,
           papel: sig.papel,
         });
-        const signerKey = sigRes?.signer?.key || sigRes?.data?.key;
-        signerKeys.push(signerKey || "");
+        signerKeys.push(sigRes?.data?.id || "");
       }
 
-      // 4. Activate envelope
+      // 4. Add requirements (link each signer to the document)
+      if (documentKey) {
+        for (const signerKey of signerKeys) {
+          if (signerKey) {
+            await callClickSign.mutateAsync({
+              action: "add-requirement",
+              envelope_id: envelopeId,
+              document_key: documentKey,
+              signer_key: signerKey,
+            });
+          }
+        }
+      }
+
+      // 5. Activate envelope
       await callClickSign.mutateAsync({
         action: "activate-envelope",
         envelope_id: envelopeId,
       });
 
-      // 5. Save to database
+      // 6. Send notifications
+      await callClickSign.mutateAsync({
+        action: "send-notifications",
+        envelope_id: envelopeId,
+      });
+
+      // 7. Save to database
       const envioData = await createEnvio.mutateAsync({
         modelo_id: selectedModelo.id,
         negocio_id: negocioId,
@@ -132,7 +156,7 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
         dados_variaveis: varValues,
       });
 
-      // 6. Save signatários
+      // 8. Save signatários
       for (let i = 0; i < validSigs.length; i++) {
         await createSignatario.mutateAsync({
           envio_id: (envioData as any).id,
@@ -163,6 +187,14 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
     setSignatarios([{ nome: "", email: "", cpf: "", telefone: "", papel: "sign" }]);
   };
 
+  const goToReview = () => {
+    if (validSigs.length === 0) {
+      toast.error("Adicione ao menos um signatário com nome e email");
+      return;
+    }
+    setStep("revisao");
+  };
+
   return (
     <Sheet open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm(); }}>
       <SheetContent className="sm:max-w-lg">
@@ -174,12 +206,14 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
 
         <div className="space-y-4 py-4 flex-1 overflow-y-auto">
           {/* Step indicator */}
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1.5 text-xs flex-wrap">
             <Badge variant={step === "modelo" ? "default" : "secondary"} className="text-[10px]">1. Modelo</Badge>
             <span className="text-muted-foreground">→</span>
             <Badge variant={step === "variaveis" ? "default" : "secondary"} className="text-[10px]">2. Variáveis</Badge>
             <span className="text-muted-foreground">→</span>
             <Badge variant={step === "signatarios" ? "default" : "secondary"} className="text-[10px]">3. Signatários</Badge>
+            <span className="text-muted-foreground">→</span>
+            <Badge variant={step === "revisao" ? "default" : "secondary"} className="text-[10px]">4. Revisão</Badge>
           </div>
 
           {/* Step 1: Select template */}
@@ -292,6 +326,89 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
               </Button>
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" size="sm" onClick={() => setStep(selectedModelo?.variaveis.length ? "variaveis" : "modelo")}>Voltar</Button>
+                <Button size="sm" onClick={goToReview} className="gap-1.5">
+                  <Eye className="w-3 h-3" /> Revisar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Revisão */}
+          {step === "revisao" && selectedModelo && (
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Modelo</h4>
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">{selectedModelo.nome}</span>
+                  {selectedModelo.clicksign_template_key && (
+                    <Badge variant="outline" className="text-[10px]">ClickSign</Badge>
+                  )}
+                </div>
+              </div>
+
+              {selectedModelo.variaveis.length > 0 && (
+                <div className="border rounded-lg p-4 space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Variáveis</h4>
+                  <div className="space-y-1.5">
+                    {selectedModelo.variaveis.map(v => (
+                      <div key={v.nome} className="flex items-center justify-between text-xs">
+                        <span className="font-mono text-muted-foreground">{`{{${v.nome}}}`}</span>
+                        {varValues[v.nome]?.trim() ? (
+                          <span className="font-medium flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-green-500" />
+                            {varValues[v.nome]}
+                          </span>
+                        ) : (
+                          <span className="text-destructive flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3" /> Vazio
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border rounded-lg p-4 space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Signatários ({validSigs.length})
+                </h4>
+                {validSigs.length === 0 ? (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Nenhum signatário válido
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {validSigs.map((sig, i) => (
+                      <div key={i} className="flex items-center gap-3 text-xs bg-muted/30 rounded-lg px-3 py-2">
+                        <div className="flex-1">
+                          <p className="font-medium">{sig.nome}</p>
+                          <p className="text-muted-foreground">{sig.email}</p>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {PAPEL_OPTIONS.find(o => o.value === sig.papel)?.label || sig.papel}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {hasReviewIssues && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-xs text-destructive flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div>
+                    {validSigs.length === 0 && <p>Adicione ao menos um signatário com nome e email.</p>}
+                    {emptyVars.length > 0 && (
+                      <p>Variáveis não preenchidas: {emptyVars.map(v => v.nome).join(", ")}. O documento será enviado com esses campos vazios.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setStep("signatarios")}>Voltar</Button>
               </div>
             </div>
           )}
@@ -299,8 +416,8 @@ export default function EnviarAssinaturaSheet({ open, onOpenChange, negocioId, p
 
         <SheetFooter>
           <SheetClose asChild><Button variant="outline">Cancelar</Button></SheetClose>
-          {step === "signatarios" && (
-            <Button onClick={handleSend} disabled={sending} className="gap-1.5">
+          {step === "revisao" && (
+            <Button onClick={handleSend} disabled={sending || validSigs.length === 0} className="gap-1.5">
               <Send className="w-3.5 h-3.5" />
               {sending ? "Enviando..." : "Enviar para Assinatura"}
             </Button>
