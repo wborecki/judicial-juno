@@ -176,7 +176,7 @@ export default function ConfigPipelines() {
               {formEtapas.map((etapa, idx) => (
                 <div key={etapa.id} className="flex items-center gap-2 group">
                   <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: etapa.cor }} />
+                  <div className="w-3 h-3 rounded-full bg-primary shrink-0" />
                   <span className="text-sm flex-1">{etapa.nome}</span>
                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveEtapa(idx, -1)} disabled={idx === 0}>
