@@ -1,5 +1,5 @@
 export type ProcessStatus = 1 | 2 | 3 | 4;
-export type TriageResult = "pendente" | "apto" | "descartado" | "reanálise";
+export type TriageResult = "pendente" | "em_acompanhamento" | "convertido" | "descartado";
 export type NaturezaProcesso = "Cível" | "Trabalhista" | "Federal" | "Previdenciário" | "Tributário";
 export type TipoPagamento = "RPV" | "Precatório";
 

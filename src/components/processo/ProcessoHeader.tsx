@@ -194,12 +194,12 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
           )}
           <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5 shrink-0">{processo.tribunal}</Badge>
 
-          {triagem !== "descartado" && (
+      {triagem !== "descartado" && triagem !== "convertido" && (
             <>
               <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg bg-success hover:bg-success/90 text-success-foreground shrink-0">
                 <Briefcase className="w-3.5 h-3.5" />Criar Negócio
               </Button>
-              {triagem !== "reanálise" ? (
+              {triagem !== "em_acompanhamento" ? (
                 <Button size="sm" variant="outline" onClick={onReanalyse} className="text-xs gap-1.5 h-7 rounded-lg border-info/40 text-info hover:bg-info/10 shrink-0">
                   <Eye className="w-3.5 h-3.5" />Acompanhar
                 </Button>

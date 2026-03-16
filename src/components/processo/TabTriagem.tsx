@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { Eye, XCircle, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
 
 const TRIAGEM_LABELS: Record<string, string> = {
   pendente: "Pendente",
-  apto: "Apto",
+  em_acompanhamento: "Em Acompanhamento",
+  convertido: "Convertido",
   descartado: "Descartado",
-  "reanálise": "Reanálise",
 };
 
 const formatDate = (d?: string | null) => {
@@ -102,11 +102,8 @@ export default function TabTriagem({ processo }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button onClick={() => handleTriagem("apto")} size="sm" className="bg-success hover:bg-success/90 text-success-foreground text-xs gap-1.5" disabled={updateProcesso.isPending}>
-            <CheckCircle2 className="w-3.5 h-3.5" />Apto
-          </Button>
-          <Button onClick={() => handleTriagem("reanálise")} variant="outline" size="sm" className="border-info/30 text-info hover:bg-info/10 text-xs gap-1.5" disabled={updateProcesso.isPending}>
-            <RotateCcw className="w-3.5 h-3.5" />Reanálise
+          <Button onClick={() => handleTriagem("em_acompanhamento")} variant="outline" size="sm" className="border-info/30 text-info hover:bg-info/10 text-xs gap-1.5" disabled={updateProcesso.isPending}>
+            <Eye className="w-3.5 h-3.5" />Acompanhar
           </Button>
           <Button onClick={() => handleTriagem("descartado")} variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10 text-xs gap-1.5" disabled={updateProcesso.isPending}>
             <XCircle className="w-3.5 h-3.5" />Descartar

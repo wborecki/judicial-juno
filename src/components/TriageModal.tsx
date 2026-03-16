@@ -163,19 +163,12 @@ export function TriageModal({ processo, open, onClose, onUpdate }: TriageModalPr
           {/* Action buttons */}
           <div className="flex gap-2 pt-2">
             <Button
-              onClick={() => handleTriagem("apto")}
-              className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
-            >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Apto
-            </Button>
-            <Button
-              onClick={() => handleTriagem("reanálise")}
+              onClick={() => handleTriagem("em_acompanhamento")}
               variant="outline"
               className="flex-1 border-info/30 text-info hover:bg-info/10"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
-              Reanálise
+              Acompanhar
             </Button>
             <Button
               onClick={() => handleTriagem("descartado")}

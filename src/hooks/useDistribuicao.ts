@@ -35,7 +35,7 @@ export function useProcessosFila() {
       const { data, error } = await supabase
         .from("processos")
         .select("*")
-        .eq("triagem_resultado", "apto")
+        .in("triagem_resultado", ["pendente", "em_acompanhamento"])
         .is("analista_id", null)
         .order("data_captacao", { ascending: false });
       if (error) throw error;

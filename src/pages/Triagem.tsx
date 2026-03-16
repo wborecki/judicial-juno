@@ -19,9 +19,9 @@ export default function Triagem() {
   const counts = useMemo(() => ({
     todos: processos.length,
     pendente: processos.filter(p => p.triagem_resultado === "pendente").length,
-    apto: processos.filter(p => p.triagem_resultado === "apto").length,
+    em_acompanhamento: processos.filter(p => p.triagem_resultado === "em_acompanhamento").length,
+    convertido: processos.filter(p => p.triagem_resultado === "convertido").length,
     descartado: processos.filter(p => p.triagem_resultado === "descartado").length,
-    "reanálise": processos.filter(p => p.triagem_resultado === "reanálise").length,
   }), [processos]);
 
   const filtered = useMemo(() => {
@@ -75,9 +75,9 @@ export default function Triagem() {
         <TabsList>
           <TabsTrigger value="todos">Todos ({counts.todos})</TabsTrigger>
           <TabsTrigger value="pendente">Pendentes ({counts.pendente})</TabsTrigger>
-          <TabsTrigger value="apto">Aptos ({counts.apto})</TabsTrigger>
+          <TabsTrigger value="em_acompanhamento">Acompanhamento ({counts.em_acompanhamento})</TabsTrigger>
+          <TabsTrigger value="convertido">Convertidos ({counts.convertido})</TabsTrigger>
           <TabsTrigger value="descartado">Descartados ({counts.descartado})</TabsTrigger>
-          <TabsTrigger value="reanálise">Reanálise ({counts["reanálise"]})</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -105,7 +105,7 @@ export default function Triagem() {
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map((p, i) => (
+            {filtered.map((p) => (
               <TableRow
                 key={p.id}
                 className="cursor-pointer border-border/30 hover:bg-accent/5 transition-colors"

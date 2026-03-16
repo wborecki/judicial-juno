@@ -119,7 +119,7 @@ export function useProcessosStats() {
       const pendente = data.filter(p => !p.triagem_resultado || p.triagem_resultado === "pendente").length;
       const convertido = data.filter(p => p.triagem_resultado === "convertido").length;
       const descartado = data.filter(p => p.triagem_resultado === "descartado").length;
-      return { total, pendente, apto, descartado };
+      return { total, pendente, convertido, descartado };
     },
   });
 }

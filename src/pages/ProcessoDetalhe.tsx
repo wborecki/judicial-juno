@@ -215,7 +215,7 @@ export default function ProcessoDetalhe() {
               try {
                 await updateProcesso.mutateAsync({
                   id: processo.id,
-                  updates: { triagem_resultado: "reanálise", triagem_data: new Date().toISOString() },
+                  updates: { triagem_resultado: "em_acompanhamento", triagem_data: new Date().toISOString() },
                 });
                 toast.success("Processo em acompanhamento");
               } catch {

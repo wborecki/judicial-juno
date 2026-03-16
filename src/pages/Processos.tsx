@@ -365,12 +365,12 @@ export default function Processos() {
                           <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
                             <CheckCircle2 className="w-3.5 h-3.5" />Triagem
                           </DropdownMenuItem>
-                          {triagem === "apto" && (
+                          {triagem !== "convertido" && triagem !== "descartado" && (
                             <DropdownMenuItem
                               onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
                               className="text-xs gap-2"
                             >
-                              <Briefcase className="w-3.5 h-3.5" />Enviar para Negócios
+                              <Briefcase className="w-3.5 h-3.5" />Criar Negócio
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
