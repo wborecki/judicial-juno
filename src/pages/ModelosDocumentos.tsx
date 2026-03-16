@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose }
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, FileText, Pencil, Trash2, Variable, X, Download, Loader2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Variable, X, Download, Loader2, AlertCircle } from "lucide-react";
 
 const TIPO_VAR_OPTIONS = [
   { value: "texto", label: "Texto" },
@@ -55,6 +55,7 @@ export default function ModelosDocumentos() {
   const [importLoading, setImportLoading] = useState(false);
   const [csTemplates, setCsTemplates] = useState<ClickSignTemplate[]>([]);
   const [importingKey, setImportingKey] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const openNew = () => {
     setEditing(null);
@@ -129,6 +130,7 @@ export default function ModelosDocumentos() {
   const handleOpenImport = async () => {
     setImportOpen(true);
     setImportLoading(true);
+    setImportError(null);
     try {
       const res = await callClickSign.mutateAsync({ action: "list-templates" });
       const templates = res?.data || res?.templates || [];
@@ -140,8 +142,10 @@ export default function ModelosDocumentos() {
         }))
       );
     } catch (err: any) {
-      toast.error(err.message || "Erro ao carregar templates do ClickSign");
+      const msg = err.message || "Erro ao carregar templates do ClickSign";
+      toast.error(msg);
       setCsTemplates([]);
+      setImportError(msg);
     } finally {
       setImportLoading(false);
     }
@@ -340,6 +344,15 @@ export default function ModelosDocumentos() {
             {importLoading ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" /> Carregando templates...
+              </div>
+            ) : importError ? (
+              <div className="text-center py-8 space-y-2">
+                <AlertCircle className="w-8 h-8 mx-auto text-destructive opacity-60" />
+                <p className="text-sm text-destructive font-medium">Falha ao carregar templates</p>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">{importError}</p>
+                <Button size="sm" variant="outline" className="text-xs mt-2" onClick={handleOpenImport}>
+                  Tentar novamente
+                </Button>
               </div>
             ) : csTemplates.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
