@@ -304,21 +304,7 @@ export default function Processos() {
                   onClick={() => navigate(`/processos/${p.id}`)}
                 >
                   <td className="px-3 py-2.5 align-middle text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-xs font-medium truncate">{p.numero_processo}</span>
-                      {tribunalUrl && (
-                        <a
-                          href={tribunalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-                          title="Consultar no tribunal"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
+                    <span className="font-mono text-xs font-medium truncate">{p.numero_processo}</span>
                   </td>
                   <td className="px-3 py-2.5 align-middle text-xs">
                     <span className="text-[11px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
