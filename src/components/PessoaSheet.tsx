@@ -15,8 +15,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const TIPO_OPTIONS = [
-  { value: "autor", label: "Autor" },
-  { value: "reu", label: "Réu" },
+  { value: "credor", label: "Credor" },
+  { value: "devedor", label: "Devedor" },
+  { value: "cedente", label: "Cedente" },
+  { value: "cessionario", label: "Cessionário" },
   { value: "advogado", label: "Advogado" },
   { value: "terceiro", label: "Terceiro" },
 ];
