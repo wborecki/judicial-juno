@@ -136,7 +136,7 @@ export default function NegocioDetalhe() {
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={handleSaveTitle}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1"
+                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1 border-transparent bg-transparent focus-visible:border-input focus-visible:bg-background focus-visible:ring-1"
                 />
               ) : (
                 <button onClick={handleStartEditTitle} className="group flex items-center gap-1.5 text-left">
