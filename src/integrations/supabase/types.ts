@@ -399,6 +399,160 @@ export type Database = {
           },
         ]
       }
+      documento_envio_signatarios: {
+        Row: {
+          assinado_em: string | null
+          clicksign_signer_key: string | null
+          cpf: string | null
+          email: string
+          envio_id: string
+          id: string
+          nome: string
+          papel: string
+          status: string
+          telefone: string | null
+        }
+        Insert: {
+          assinado_em?: string | null
+          clicksign_signer_key?: string | null
+          cpf?: string | null
+          email: string
+          envio_id: string
+          id?: string
+          nome: string
+          papel?: string
+          status?: string
+          telefone?: string | null
+        }
+        Update: {
+          assinado_em?: string | null
+          clicksign_signer_key?: string | null
+          cpf?: string | null
+          email?: string
+          envio_id?: string
+          id?: string
+          nome?: string
+          papel?: string
+          status?: string
+          telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documento_envio_signatarios_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "documento_envios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documento_envios: {
+        Row: {
+          clicksign_document_key: string | null
+          clicksign_envelope_id: string | null
+          contrato_id: string | null
+          created_at: string
+          criado_por: string | null
+          dados_variaveis: Json
+          id: string
+          modelo_id: string | null
+          negocio_id: string | null
+          processo_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          clicksign_document_key?: string | null
+          clicksign_envelope_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          dados_variaveis?: Json
+          id?: string
+          modelo_id?: string | null
+          negocio_id?: string | null
+          processo_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          clicksign_document_key?: string | null
+          clicksign_envelope_id?: string | null
+          contrato_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          dados_variaveis?: Json
+          id?: string
+          modelo_id?: string | null
+          negocio_id?: string | null
+          processo_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documento_envios_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_cessao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_envios_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "documento_modelos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_envios_negocio_id_fkey"
+            columns: ["negocio_id"]
+            isOneToOne: false
+            referencedRelation: "negocios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_envios_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documento_modelos: {
+        Row: {
+          arquivo_url: string | null
+          ativo: boolean
+          clicksign_template_key: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          variaveis: Json
+        }
+        Insert: {
+          arquivo_url?: string | null
+          ativo?: boolean
+          clicksign_template_key?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          variaveis?: Json
+        }
+        Update: {
+          arquivo_url?: string | null
+          ativo?: boolean
+          clicksign_template_key?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          variaveis?: Json
+        }
+        Relationships: []
+      }
       equipe_membros: {
         Row: {
           equipe_id: string
