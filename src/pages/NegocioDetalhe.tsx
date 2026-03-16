@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon } from "lucide-react";
+import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 // ArrowLeft removed — now using breadcrumbs
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -32,6 +34,31 @@ export default function NegocioDetalhe() {
   const { data: negocio, isLoading } = useNegocio(id);
   const { data: pipeline } = useDefaultPipeline();
   const updateNegocio = useUpdateNegocio();
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitle]);
+
+  const handleStartEditTitle = () => {
+    setTitleValue(negocio?.titulo || "");
+    setEditingTitle(true);
+  };
+
+  const handleSaveTitle = async () => {
+    setEditingTitle(false);
+    if (!negocio || titleValue === (negocio.titulo || "")) return;
+    try {
+      await updateNegocio.mutateAsync({ id: negocio.id, updates: { titulo: titleValue || null } });
+    } catch {
+      toast.error("Erro ao salvar título");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -102,7 +129,21 @@ export default function NegocioDetalhe() {
               <Briefcase className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold tracking-tight truncate">{negocio.titulo || "Sem título"}</h1>
+              {editingTitle ? (
+                <Input
+                  ref={titleInputRef}
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1"
+                />
+              ) : (
+                <button onClick={handleStartEditTitle} className="group flex items-center gap-1.5 text-left">
+                  <h1 className="text-lg font-bold tracking-tight truncate">{negocio.titulo || "Sem título"}</h1>
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </button>
+              )}
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                 {negocio.pessoas?.nome && <span>{negocio.pessoas.nome}</span>}
                 {negocio.tipo_servico && (
