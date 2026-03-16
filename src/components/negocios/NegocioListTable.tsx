@@ -13,9 +13,9 @@ const TIPO_SERVICO_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  em_andamento: "bg-blue-100 text-blue-800",
-  ganho: "bg-green-100 text-green-800",
-  perdido: "bg-red-100 text-red-800",
+  em_andamento: "bg-primary/10 text-primary",
+  ganho: "bg-success/10 text-success",
+  perdido: "bg-destructive/10 text-destructive",
 };
 
 function formatCurrency(v?: number | null) {
@@ -36,15 +36,15 @@ export default function NegocioListTable({ negocios, etapas }: Props) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Título</TableHead>
-          <TableHead>Processo</TableHead>
-          <TableHead>Pessoa</TableHead>
-          <TableHead>Serviço</TableHead>
-          <TableHead>Etapa</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Valor</TableHead>
-          <TableHead>Responsável</TableHead>
-          <TableHead>Abertura</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Título</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Processo</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pessoa</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Serviço</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Etapa</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Status</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Valor</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Responsável</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Abertura</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

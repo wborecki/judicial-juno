@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil } from "lucide-react";
+import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil, User, Activity, Settings2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 // ArrowLeft removed — now using breadcrumbs
@@ -136,7 +136,7 @@ export default function NegocioDetalhe() {
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={handleSaveTitle}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1"
+                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1 border-transparent bg-transparent focus-visible:border-input focus-visible:bg-background focus-visible:ring-1"
                 />
               ) : (
                 <button onClick={handleStartEditTitle} className="group flex items-center gap-1.5 text-left">
@@ -233,16 +233,25 @@ export default function NegocioDetalhe() {
           )}
 
           {/* Valor */}
-          <span className="text-sm font-bold ml-auto">{formatCurrency(negocio.valor_proposta)}</span>
+          <div className="ml-auto text-right">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Valor Proposta</p>
+            <span className="text-sm font-bold">{formatCurrency(negocio.valor_proposta)}</span>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="dados" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="dados">Dados Gerais</TabsTrigger>
-          <TabsTrigger value="atividades">Atividades</TabsTrigger>
-          <TabsTrigger value="campos">Campos Personalizados</TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-border/40 rounded-none h-auto p-0 bg-transparent">
+          <TabsTrigger value="dados" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <User className="w-3.5 h-3.5" /> Dados Gerais
+          </TabsTrigger>
+          <TabsTrigger value="atividades" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <Activity className="w-3.5 h-3.5" /> Atividades
+          </TabsTrigger>
+          <TabsTrigger value="campos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <Settings2 className="w-3.5 h-3.5" /> Campos Personalizados
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados">

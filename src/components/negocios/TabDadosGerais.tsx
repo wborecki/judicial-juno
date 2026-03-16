@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useUsuarios } from "@/hooks/useEquipes";
 import { usePessoas } from "@/hooks/usePessoas";
 import { useNavigate } from "react-router-dom";
-import { Link as LinkIcon, User, Briefcase } from "lucide-react";
+import { Link as LinkIcon, User, Briefcase, DollarSign, MessageSquare } from "lucide-react";
 
 const TIPO_SERVICO_OPTIONS = [
   { value: "compra_credito", label: "Compra de Crédito Judicial" },
@@ -39,7 +39,10 @@ export default function TabDadosGerais({ negocio }: Props) {
     <div className="space-y-4">
       {/* Responsável + Vínculos */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Responsável & Vínculos</p>
+        <div className="flex items-center gap-2 mb-1">
+          <User className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Responsável & Vínculos</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Responsável</p>
@@ -94,7 +97,10 @@ export default function TabDadosGerais({ negocio }: Props) {
 
       {/* Informações do Negócio */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Informações do Negócio</p>
+        <div className="flex items-center gap-2 mb-1">
+          <Briefcase className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Informações do Negócio</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <InlineField label="Título" defaultValue={negocio.titulo ?? ""} onSave={(v) => saveField("titulo", v || null)} />
           <div>
@@ -124,7 +130,10 @@ export default function TabDadosGerais({ negocio }: Props) {
 
       {/* Valores */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Valores</p>
+        <div className="flex items-center gap-2 mb-1">
+          <DollarSign className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Valores</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <InlineNumberField label="Valor Proposta (R$)" defaultValue={negocio.valor_proposta} onSave={(v) => saveField("valor_proposta", v)} />
           <InlineNumberField label="Valor Fechamento (R$)" defaultValue={negocio.valor_fechamento} onSave={(v) => saveField("valor_fechamento", v)} />
@@ -137,7 +146,10 @@ export default function TabDadosGerais({ negocio }: Props) {
 
       {/* Observações */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Observações</p>
+        <div className="flex items-center gap-2 mb-1">
+          <MessageSquare className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Observações</p>
+        </div>
         <ObservacoesField defaultValue={negocio.observacoes ?? ""} onSave={(v) => saveField("observacoes", v || null)} />
       </div>
     </div>

@@ -1,64 +1,34 @@
 
 
-## Plano: Polish de UX/UI no Sistema
+## Plano: Melhorar nitidez e legibilidade das tabelas
 
-Vou aplicar melhorias visuais e de consistencia em diversas areas do sistema, focando em detalhes que elevam a qualidade percebida.
+### Problemas identificados
+- Fontes muito pequenas (`text-[9px]`, `text-[10px]`, `text-[11px]`) prejudicam leitura
+- Linhas muito comprimidas (`h-9`, `py-1.5`) criam sensação de "apertado"
+- Falta contraste visual entre linhas (sem zebra-striping)
+- Header da tabela pouco destacado do conteúdo
+- Bordas entre linhas muito sutis (`border-border/20`)
 
----
+### Alteracoes
 
-### 1. NegocioDetalhe - Header refinado
+**1. Componente base `table.tsx`** -- ajustes globais que beneficiam todas as tabelas:
+- `TableHead`: subir de `h-12 px-4` para `h-10 px-3` com `bg-muted/30` e `text-xs` base
+- `TableCell`: de `p-4` para `px-3 py-2.5`
+- `TableRow`: adicionar zebra-striping com `even:bg-muted/20` e bordas mais visíveis `border-border/40`
 
-**Problemas atuais:**
-- Input de edicao do titulo mostra borda completa, parece um campo de formulario solto
-- Tabs usam o estilo padrao (fundo cinza pill) enquanto ProcessoDetalhe usa tabs com underline e icones - inconsistente
-- Valor da proposta solto no canto sem label
+**2. Página `Processos.tsx`** -- elevar tamanhos de fonte inline:
+- Headers: de `text-[10px]` para `text-[11px]`
+- Cells de conteúdo: de `text-[10px]`/`text-[11px]` para `text-xs` (12px)
+- Badges: de `text-[9px]` para `text-[10px]`
+- Número CNJ (mono): de `text-[11px]` para `text-xs`
+- Altura da linha: de `h-9` para `h-10`
 
-**Ajustes:**
-- Input de edicao: borda transparente, so aparece ao focar (estilo inline edit limpo)
-- Tabs: mesma estilo do ProcessoDetalhe (underline, com contadores, sem fundo cinza)
-- Valor com label "Valor Proposta" acima, alinhado a direita como no ProcessoHeader
+**3. Página `Analise.tsx`** -- mesma padronização:
+- Headers e cells seguem o mesmo aumento de `text-[10px]` para `text-[11px]` e cells para `text-xs`
 
-### 2. NegocioListTable - Padronizar com tabela de Processos
+**4. CSS global `index.css`** -- adicionar utilitário de antialiasing:
+- Adicionar `-webkit-font-smoothing: antialiased` e `text-rendering: optimizeLegibility` ao body para melhorar renderização de fontes pequenas
 
-**Problemas atuais:**
-- Cores hardcoded (`bg-blue-100`, `bg-green-100`, `bg-red-100`) fora do design system
-- Sem zebra-striping, sem hover consistente
-- Headers sem uppercase/tracking padrao
-
-**Ajustes:**
-- Trocar cores por tokens (`bg-primary/10 text-primary`, `bg-success/10 text-success`, `bg-destructive/10 text-destructive`)
-- Aplicar mesmo padrao de header da tabela de Processos (text-[11px] uppercase tracking-wider)
-- Hover e transicoes consistentes
-
-### 3. TabDadosGerais - Icones nos headers de secao
-
-**Problemas atuais:**
-- Headers de secao sao apenas texto ("Responsavel & Vinculos", "Valores")
-- Sem hierarquia visual clara
-
-**Ajustes:**
-- Adicionar icones nos headers de secao (User para Responsavel, Briefcase para Informacoes, DollarSign para Valores, MessageSquare para Observacoes)
-- Usar gap e flex para alinhar icone + texto
-
-### 4. TabAtividades - Cores do design system
-
-**Problemas atuais:**
-- Cores hardcoded (`bg-amber-500/10`, `bg-blue-500/10`, `bg-purple-500/10`, `bg-emerald-500/10`, `bg-cyan-500/10`)
-
-**Ajustes:**
-- Substituir por cores do design system (primary, success, warning, info, accent)
-
-### 5. NegocioKanban - Micro-ajustes
-
-- Cards: adicionar sombra sutil no hover (`hover:shadow-md` ja existe, manter)
-- Barra de cor no topo: usar cor da etapa em vez de primary fixo (o usuario pediu primary no Kanban, manter)
-
----
-
-### Arquivos editados
-
-1. `src/pages/NegocioDetalhe.tsx` - Tabs com underline/icones, input inline limpo, valor com label
-2. `src/components/negocios/NegocioListTable.tsx` - Cores do design system, headers padronizados, hover
-3. `src/components/negocios/TabDadosGerais.tsx` - Icones nos headers de secao
-4. `src/components/negocios/TabAtividades.tsx` - Cores do design system
+### Resultado esperado
+Tabelas com texto mais legível, espaçamento confortável, contraste entre linhas alternadas e renderização de fonte mais nítida em todos os navegadores.
 
