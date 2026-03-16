@@ -117,7 +117,7 @@ export default function TabAtividades({ negocioId }: Props) {
               <Select value={tipo} onValueChange={setTipo}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPO_OPTIONS.map((o) => (
+                  {tipoOptions.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
                 </SelectContent>
