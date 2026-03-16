@@ -1,30 +1,23 @@
 import { useState, useMemo } from "react";
 import { useAgendaEventos, type AgendaEvento } from "@/hooks/useAgendaEventos";
 import { useUsuarios } from "@/hooks/useEquipes";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { EventoSheet } from "@/components/agenda/EventoSheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, List, ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, Scale, Briefcase } from "lucide-react";
+import { Calendar, List, ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, Scale, Briefcase, CheckSquare, Phone, RefreshCw, FileSearch, FileSignature, Users, Mail, Send, FileText, StickyNote, MessageSquare, DollarSign, Star } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, addMonths, addWeeks, isSameDay, isSameMonth, isToday, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "mensal" | "semanal" | "lista";
 
-const TIPO_LABELS: Record<string, string> = {
-  tarefa: "Tarefa",
-  reuniao: "Reunião",
-  audiencia: "Audiência",
-  prazo: "Prazo",
-};
-
-const TIPO_ICONS: Record<string, React.ElementType> = {
-  tarefa: Clock,
-  reuniao: User,
-  audiencia: Scale,
-  prazo: Briefcase,
+const ICON_MAP: Record<string, React.ElementType> = {
+  CheckSquare, Users, Phone, Mail, RefreshCw, FileSearch, FileSignature,
+  StickyNote, Send, FileText, Calendar, Clock, Briefcase, MessageSquare,
+  DollarSign, Star, User, Scale,
 };
 
 const PRIORIDADE_COLORS: Record<string, string> = {
@@ -39,6 +32,7 @@ const STATUS_COLORS: Record<string, string> = {
   concluido: "bg-success/10 text-success",
   cancelado: "bg-muted text-muted-foreground line-through",
 };
+
 
 export default function Agenda() {
   const [view, setView] = useState<ViewMode>("mensal");
@@ -69,6 +63,10 @@ export default function Agenda() {
 
   const { data: eventos, isLoading } = useAgendaEventos(dateRange.start, dateRange.end);
   const { data: usuarios } = useUsuarios();
+  const { data: tiposAtividade = [] } = useTiposAtividade("agenda");
+
+  const tipoLabels = useMemo(() => Object.fromEntries(tiposAtividade.map(t => [t.slug, t.nome])), [tiposAtividade]);
+  const tipoIconMap = useMemo(() => Object.fromEntries(tiposAtividade.map(t => [t.slug, t.icone])), [tiposAtividade]);
 
   const filtered = useMemo(() => {
     return (eventos ?? []).filter((e) => {
@@ -163,7 +161,7 @@ export default function Agenda() {
           <SelectTrigger className="h-8 text-xs w-[150px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos tipos</SelectItem>
-            {Object.entries(TIPO_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            {tiposAtividade.map(t => <SelectItem key={t.slug} value={t.slug}>{t.nome}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterResponsavel} onValueChange={setFilterResponsavel}>
@@ -182,7 +180,7 @@ export default function Agenda() {
         <div className="flex-1 min-h-0 overflow-auto">
           {view === "mensal" && <MonthView currentDate={currentDate} eventos={filtered} onDayClick={openNew} onEventClick={openEdit} />}
           {view === "semanal" && <WeekView currentDate={currentDate} eventos={filtered} onSlotClick={openNew} onEventClick={openEdit} />}
-          {view === "lista" && <ListView eventos={filtered} onEventClick={openEdit} getUsuarioNome={getUsuarioNome} />}
+          {view === "lista" && <ListView eventos={filtered} onEventClick={openEdit} getUsuarioNome={getUsuarioNome} tipoIconMap={tipoIconMap} />}
         </div>
       )}
 
@@ -341,10 +339,11 @@ function WeekView({ currentDate, eventos, onSlotClick, onEventClick }: {
 }
 
 // ─── List View ──────────────────────────────────────────
-function ListView({ eventos, onEventClick, getUsuarioNome }: {
+function ListView({ eventos, onEventClick, getUsuarioNome, tipoIconMap }: {
   eventos: AgendaEvento[];
   onEventClick: (e: AgendaEvento) => void;
   getUsuarioNome: (id: string | null) => string;
+  tipoIconMap: Record<string, string>;
 }) {
   // Group by date
   const grouped = useMemo(() => {
@@ -379,7 +378,7 @@ function ListView({ eventos, onEventClick, getUsuarioNome }: {
           </div>
           <div className="space-y-1.5">
             {evs.map((ev) => {
-              const Icon = TIPO_ICONS[ev.tipo] ?? Clock;
+              const Icon = ICON_MAP[tipoIconMap[ev.tipo] ?? ""] ?? Clock;
               return (
                 <div
                   key={ev.id}

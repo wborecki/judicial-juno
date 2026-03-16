@@ -11,15 +11,16 @@ import { useUsuarios } from "@/hooks/useEquipes";
 import { useProcessos } from "@/hooks/useProcessos";
 import { useNegocios } from "@/hooks/useNegocios";
 import { usePessoas } from "@/hooks/usePessoas";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
-const TIPO_OPTIONS = [
-  { value: "tarefa", label: "Tarefa Interna" },
-  { value: "reuniao", label: "Reunião com Cliente" },
-  { value: "audiencia", label: "Audiência Judicial" },
-  { value: "prazo", label: "Prazo Processual" },
+const FALLBACK_TIPO_OPTIONS = [
+  { value: "tarefa", label: "Tarefa" },
+  { value: "reuniao", label: "Reunião" },
+  { value: "contato_credor", label: "Contato com Credor" },
+  { value: "followup", label: "Follow-up" },
 ];
 
 const PRIORIDADE_OPTIONS = [
@@ -48,6 +49,10 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
   const { data: processos } = useProcessos();
   const { data: negocios } = useNegocios();
   const { data: pessoas } = usePessoas();
+  const { data: tiposAtividade = [] } = useTiposAtividade("agenda");
+  const tipoOptions = tiposAtividade.length > 0
+    ? tiposAtividade.map(t => ({ value: t.slug, label: t.nome }))
+    : FALLBACK_TIPO_OPTIONS;
 
   const [form, setForm] = useState({
     titulo: "",
@@ -173,7 +178,7 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
               <Select value={form.tipo} onValueChange={(v) => set("tipo", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPO_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  {tipoOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

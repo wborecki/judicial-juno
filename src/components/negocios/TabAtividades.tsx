@@ -1,29 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNegocioAtividades, useCreateNegocioAtividade } from "@/hooks/useNegocioAtividades";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Phone, Mail, Users, StickyNote, CheckSquare } from "lucide-react";
+import { Plus, Phone, Mail, Users, StickyNote, CheckSquare, Send, FileText, RefreshCw, FileSearch, FileSignature, MessageSquare, DollarSign, Star, Clock, Briefcase, Calendar } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const TIPO_OPTIONS = [
-  { value: "nota", label: "Nota", icon: StickyNote },
-  { value: "ligacao", label: "Ligação", icon: Phone },
-  { value: "email", label: "E-mail", icon: Mail },
-  { value: "reuniao", label: "Reunião", icon: Users },
-  { value: "tarefa", label: "Tarefa", icon: CheckSquare },
-];
-
-const TIPO_COLORS: Record<string, string> = {
-  nota: "bg-warning/10 text-warning border-warning/20",
-  ligacao: "bg-primary/10 text-primary border-primary/20",
-  email: "bg-accent/20 text-accent-foreground border-accent/30",
-  reuniao: "bg-success/10 text-success border-success/20",
-  tarefa: "bg-info/10 text-info border-info/20",
+const ICON_MAP: Record<string, React.ElementType> = {
+  CheckSquare, Users, Phone, Mail, RefreshCw, FileSearch, FileSignature,
+  StickyNote, Send, FileText, Calendar, Clock, Briefcase, MessageSquare,
+  DollarSign, Star,
 };
+
+const FALLBACK_TIPO_OPTIONS = [
+  { value: "nota", label: "Nota", icon: "StickyNote" },
+  { value: "ligacao", label: "Ligação", icon: "Phone" },
+  { value: "email", label: "E-mail", icon: "Mail" },
+  { value: "reuniao", label: "Reunião", icon: "Users" },
+  { value: "tarefa", label: "Tarefa", icon: "CheckSquare" },
+];
 
 interface Props {
   negocioId: string;
@@ -31,10 +30,20 @@ interface Props {
 
 export default function TabAtividades({ negocioId }: Props) {
   const { data: atividades = [], isLoading } = useNegocioAtividades(negocioId);
+  const { data: tiposAtividade = [] } = useTiposAtividade("negocio");
   const createAtividade = useCreateNegocioAtividade();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [tipo, setTipo] = useState("nota");
   const [descricao, setDescricao] = useState("");
+
+  const tipoOptions = useMemo(() =>
+    tiposAtividade.length > 0
+      ? tiposAtividade.map(t => ({ value: t.slug, label: t.nome, icon: t.icone, cor: t.cor }))
+      : FALLBACK_TIPO_OPTIONS.map(t => ({ ...t, cor: "#3b82f6" })),
+    [tiposAtividade]
+  );
+
+  const tipoMap = useMemo(() => Object.fromEntries(tipoOptions.map(t => [t.value, t])), [tipoOptions]);
 
   const handleCreate = () => {
     if (!descricao.trim()) { toast.error("Informe a descrição"); return; }
@@ -73,17 +82,17 @@ export default function TabAtividades({ negocioId }: Props) {
           <div className="absolute left-[9px] top-1 bottom-1 w-px bg-border/60" />
           <div className="space-y-0">
             {atividades.map((a) => {
-              const tipoOpt = TIPO_OPTIONS.find((t) => t.value === a.tipo);
-              const Icon = tipoOpt?.icon ?? StickyNote;
+              const opt = tipoMap[a.tipo];
+              const Icon = ICON_MAP[opt?.icon ?? ""] ?? StickyNote;
               return (
                 <div key={a.id} className="relative pb-1 last:pb-0 group">
                   <div className="absolute -left-6 top-3 w-[10px] h-[10px] rounded-full border-2 border-card bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
                   <div className="py-2.5 px-3 rounded-lg hover:bg-muted/30 transition-colors">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Badge className={`text-[9px] shrink-0 rounded-full px-2 py-0 ${TIPO_COLORS[a.tipo] ?? ""}`}>
+                        <Badge className="text-[9px] shrink-0 rounded-full px-2 py-0" style={{ backgroundColor: `${opt?.cor ?? '#3b82f6'}20`, color: opt?.cor ?? '#3b82f6', borderColor: `${opt?.cor ?? '#3b82f6'}30` }}>
                           <Icon className="w-3 h-3 mr-1" />
-                          {tipoOpt?.label ?? a.tipo}
+                          {opt?.label ?? a.tipo}
                         </Badge>
                         <span className="text-xs text-foreground">{a.descricao}</span>
                       </div>
@@ -108,7 +117,7 @@ export default function TabAtividades({ negocioId }: Props) {
               <Select value={tipo} onValueChange={setTipo}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPO_OPTIONS.map((o) => (
+                  {tipoOptions.map((o) => (
                     <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
                 </SelectContent>

@@ -1,91 +1,34 @@
 
 
-## Plano: Tipos de Atividade Configuráveis + Integração Google Calendar
+## Plano: Melhorar nitidez e legibilidade das tabelas
 
-### Parte 1 — Tipos de Atividade Configuráveis
+### Problemas identificados
+- Fontes muito pequenas (`text-[9px]`, `text-[10px]`, `text-[11px]`) prejudicam leitura
+- Linhas muito comprimidas (`h-9`, `py-1.5`) criam sensação de "apertado"
+- Falta contraste visual entre linhas (sem zebra-striping)
+- Header da tabela pouco destacado do conteúdo
+- Bordas entre linhas muito sutis (`border-border/20`)
 
-**1. Migração: tabela `tipos_atividade`**
-- Campos: `id`, `nome`, `slug`, `icone`, `cor`, `entidade` (agenda/negocio/ambos), `ativo`, `ordem`, `created_at`
-- Seed com tipos adequados ao negócio de compra de créditos judiciais:
-  - Agenda: Tarefa, Reunião, Contato com Credor, Follow-up, Análise de Processo, Assinatura/Contrato
-  - Negócio: Nota, Ligação, E-mail, Reunião, Tarefa, Proposta Enviada, Contrato
-- RLS: acesso total para authenticated
+### Alteracoes
 
-**2. Hook `useTiposAtividade.ts`**
-- Query filtrando por `entidade` e `ativo`
-- Mutations CRUD
+**1. Componente base `table.tsx`** -- ajustes globais que beneficiam todas as tabelas:
+- `TableHead`: subir de `h-12 px-4` para `h-10 px-3` com `bg-muted/30` e `text-xs` base
+- `TableCell`: de `p-4` para `px-3 py-2.5`
+- `TableRow`: adicionar zebra-striping com `even:bg-muted/20` e bordas mais visíveis `border-border/40`
 
-**3. Página de configuração `TiposAtividade.tsx`**
-- No menu Configurações, item "Tipos de Atividade"
-- Tabela com nome, ícone, cor, entidade, ativo/inativo
-- Sheet para criar/editar tipo
+**2. Página `Processos.tsx`** -- elevar tamanhos de fonte inline:
+- Headers: de `text-[10px]` para `text-[11px]`
+- Cells de conteúdo: de `text-[10px]`/`text-[11px]` para `text-xs` (12px)
+- Badges: de `text-[9px]` para `text-[10px]`
+- Número CNJ (mono): de `text-[11px]` para `text-xs`
+- Altura da linha: de `h-9` para `h-10`
 
-**4. Atualizar componentes consumidores**
-- `Agenda.tsx`, `EventoSheet.tsx`, `TabAtividades.tsx` — substituir constantes hardcoded por dados dinâmicos do hook
+**3. Página `Analise.tsx`** -- mesma padronização:
+- Headers e cells seguem o mesmo aumento de `text-[10px]` para `text-[11px]` e cells para `text-xs`
 
-**5. Rotas**
-- Adicionar `/configuracoes/tipos-atividade` no `App.tsx` e link no `ConfiguracoesLayout.tsx`
+**4. CSS global `index.css`** -- adicionar utilitário de antialiasing:
+- Adicionar `-webkit-font-smoothing: antialiased` e `text-rendering: optimizeLegibility` ao body para melhorar renderização de fontes pequenas
 
----
-
-### Parte 2 — Integração Google Calendar
-
-Não existe um conector Google Calendar disponível na plataforma, então a integração precisa ser construída via Google Calendar API com OAuth.
-
-**Arquitetura:**
-
-```text
-┌─────────────┐     ┌──────────────────┐     ┌──────────────┐
-│  Frontend   │────▶│  Edge Functions   │────▶│ Google API   │
-│  (Agenda)   │     │  google-calendar  │     │ Calendar v3  │
-└─────────────┘     └──────────────────┘     └──────────────┘
-                           │
-                    ┌──────┴──────┐
-                    │ google_     │
-                    │ tokens (DB) │
-                    └─────────────┘
-```
-
-**1. Configuração Google Cloud Console (manual pelo usuário)**
-- Criar projeto no Google Cloud Console
-- Ativar Google Calendar API
-- Criar credenciais OAuth 2.0 (Web Application)
-- Redirect URI: `https://<project-id>.supabase.co/functions/v1/google-calendar-callback`
-- Guardar Client ID e Client Secret como secrets do projeto
-
-**2. Migração: tabela `google_tokens`**
-- Campos: `id`, `user_id` (unique), `access_token`, `refresh_token`, `expires_at`, `calendar_id`, `sync_enabled`, `created_at`, `updated_at`
-- RLS: cada usuário vê apenas seus próprios tokens
-
-**3. Edge Functions**
-- `google-calendar-auth`: Inicia fluxo OAuth, redireciona para Google
-- `google-calendar-callback`: Recebe code, troca por tokens, salva na tabela
-- `google-calendar-sync`: Busca eventos do Google Calendar e sincroniza com `agenda_eventos` (e vice-versa); campo `google_event_id` na tabela `agenda_eventos` para evitar duplicatas
-
-**4. Migração: adicionar coluna `google_event_id` em `agenda_eventos`**
-- Nullable, usado para tracking de eventos sincronizados
-
-**5. UI na página de Integrações**
-- Card "Google Calendar" com botão "Conectar"
-- Status de conexão (conectado/desconectado)
-- Toggle de sincronização automática
-- Botão "Sincronizar agora"
-
-**6. Sincronização no hook `useAgendaEventos`**
-- Após criar/atualizar/deletar evento local, chamar edge function para espelhar no Google Calendar
-- Opção de sync periódico via polling ou manual
-
-**Secrets necessários:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — serão solicitados ao usuário via ferramenta de secrets.
-
-**Limitação:** A sincronização inicial será unidirecional (local → Google) com opção de importar eventos do Google. Bidirecional completo (webhooks push do Google) requer domínio verificado e é uma evolução futura.
-
----
-
-### Ordem de implementação sugerida
-1. Tipos de atividade configuráveis (independente)
-2. Infraestrutura Google Calendar (tabelas + edge functions)
-3. UI de integração + conexão na Agenda
-
-**Arquivos novos:** `useTiposAtividade.ts`, `TiposAtividade.tsx`, edge functions `google-calendar-*`, `useGoogleCalendar.ts`
-**Arquivos editados:** `Agenda.tsx`, `EventoSheet.tsx`, `TabAtividades.tsx`, `ConfiguracoesLayout.tsx`, `Integracoes.tsx`, `App.tsx`, migração `agenda_eventos`
+### Resultado esperado
+Tabelas com texto mais legível, espaçamento confortável, contraste entre linhas alternadas e renderização de fonte mais nítida em todos os navegadores.
 
