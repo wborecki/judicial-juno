@@ -34,8 +34,32 @@ export default function NegocioDetalhe() {
   const { data: negocio, isLoading } = useNegocio(id);
   const { data: pipeline } = useDefaultPipeline();
   const updateNegocio = useUpdateNegocio();
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitle]);
+
+  const handleStartEditTitle = () => {
+    setTitleValue(negocio?.titulo || "");
+    setEditingTitle(true);
+  };
+
+  const handleSaveTitle = async () => {
+    setEditingTitle(false);
+    if (!negocio || titleValue === (negocio.titulo || "")) return;
+    try {
+      await updateNegocio.mutateAsync({ id: negocio.id, updates: { titulo: titleValue || null } });
+    } catch {
+      toast.error("Erro ao salvar título");
+    }
+  };
+
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
