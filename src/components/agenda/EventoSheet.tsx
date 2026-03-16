@@ -178,7 +178,7 @@ export function EventoSheet({ open, onOpenChange, evento, defaultDate }: Props) 
               <Select value={form.tipo} onValueChange={(v) => set("tipo", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TIPO_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  {tipoOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
