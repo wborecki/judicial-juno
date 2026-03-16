@@ -38,10 +38,30 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   pessoa?: PessoaDB | null;
   mode?: "create" | "edit";
+  // Backward compat props (used from ProcessoHeader)
+  pessoaId?: string | null;
+  nome?: string;
+  cpfCnpj?: string | null;
 }
 
-export default function PessoaSheet({ open, onOpenChange, pessoa, mode = "edit" }: Props) {
-  const isCreate = mode === "create" || !pessoa;
+function usePessoaById(id?: string | null) {
+  return useQuery({
+    queryKey: ["pessoa", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase.from("pessoas").select("*").eq("id", id).single();
+      if (error) return null;
+      return data as PessoaDB;
+    },
+    enabled: !!id,
+  });
+}
+
+export default function PessoaSheet({ open, onOpenChange, pessoa: pessoProp, mode = "edit", pessoaId, nome: nomeProp, cpfCnpj: cpfProp }: Props) {
+  // Support legacy props: fetch pessoa by ID if pessoaId is provided
+  const { data: pessoaById } = usePessoaById(!pessoProp ? pessoaId : null);
+  const pessoa = pessoProp ?? pessoaById ?? null;
+  const isCreate = mode === "create" || (!pessoa && !pessoaId);
 
   // Form state
   const [nome, setNome] = useState("");
