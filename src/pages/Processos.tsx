@@ -40,9 +40,9 @@ const STATUS_LABELS: Record<number, string> = {
 
 const TRIAGEM_COLORS: Record<string, string> = {
   pendente: "bg-warning/10 text-warning border-warning/20",
-  apto: "bg-success/10 text-success border-success/20",
+  em_acompanhamento: "bg-info/10 text-info border-info/20",
+  convertido: "bg-success/10 text-success border-success/20",
   descartado: "bg-destructive/10 text-destructive border-destructive/20",
-  "reanálise": "bg-info/10 text-info border-info/20",
 };
 
 const TRIBUNAL_URLS: Record<string, string> = {
