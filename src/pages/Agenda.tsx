@@ -1,30 +1,36 @@
 import { useState, useMemo } from "react";
 import { useAgendaEventos, type AgendaEvento } from "@/hooks/useAgendaEventos";
 import { useUsuarios } from "@/hooks/useEquipes";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { EventoSheet } from "@/components/agenda/EventoSheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, List, ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, Scale, Briefcase } from "lucide-react";
+import { Calendar, List, ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, Scale, Briefcase, CheckSquare, Phone, RefreshCw, FileSearch, FileSignature, Users, Mail, Send, FileText, StickyNote, MessageSquare, DollarSign, Star } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, addMonths, addWeeks, isSameDay, isSameMonth, isToday, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "mensal" | "semanal" | "lista";
 
-const TIPO_LABELS: Record<string, string> = {
-  tarefa: "Tarefa",
-  reuniao: "Reunião",
-  audiencia: "Audiência",
-  prazo: "Prazo",
+const ICON_MAP: Record<string, React.ElementType> = {
+  CheckSquare, Users, Phone, Mail, RefreshCw, FileSearch, FileSignature,
+  StickyNote, Send, FileText, Calendar, Clock, Briefcase, MessageSquare,
+  DollarSign, Star, User, Scale,
 };
 
-const TIPO_ICONS: Record<string, React.ElementType> = {
-  tarefa: Clock,
-  reuniao: User,
-  audiencia: Scale,
-  prazo: Briefcase,
+const PRIORIDADE_COLORS: Record<string, string> = {
+  baixa: "bg-muted text-muted-foreground",
+  media: "bg-info/10 text-info border-info/20",
+  alta: "bg-warning/10 text-warning border-warning/20",
+  urgente: "bg-destructive/10 text-destructive border-destructive/20",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  pendente: "bg-warning/10 text-warning",
+  concluido: "bg-success/10 text-success",
+  cancelado: "bg-muted text-muted-foreground line-through",
 };
 
 const PRIORIDADE_COLORS: Record<string, string> = {
