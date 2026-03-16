@@ -99,8 +99,8 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
             data_fechamento: null,
             responsavel_id: null,
             observacoes: [
-              `Autor: ${autor.nome}`,
-              `Réu: ${reuNome}`,
+              `Titular: ${autor.nome}`,
+              `Devedor: ${reuNome}`,
               observacoes.trim() || null,
             ].filter(Boolean).join("\n"),
           });
