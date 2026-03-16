@@ -140,8 +140,10 @@ export default function ModelosDocumentos() {
         }))
       );
     } catch (err: any) {
-      toast.error(err.message || "Erro ao carregar templates do ClickSign");
+      const msg = err.message || "Erro ao carregar templates do ClickSign";
+      toast.error(msg);
       setCsTemplates([]);
+      setImportError(msg);
     } finally {
       setImportLoading(false);
     }
