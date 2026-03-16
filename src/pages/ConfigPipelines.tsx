@@ -45,10 +45,9 @@ export default function ConfigPipelines() {
 
   function addEtapa() {
     if (!newEtapaNome.trim()) return;
-    const colors = ["#3b82f6", "#f59e0b", "#8b5cf6", "#10b981", "#ef4444", "#ec4899", "#06b6d4", "#f97316"];
     setFormEtapas((prev) => [
       ...prev,
-      { id: genId(), nome: newEtapaNome.trim(), cor: colors[prev.length % colors.length] },
+      { id: genId(), nome: newEtapaNome.trim(), cor: "hsl(var(--primary))" },
     ]);
     setNewEtapaNome("");
   }
@@ -137,7 +136,7 @@ export default function ConfigPipelines() {
                 {p.etapas.map((etapa, i) => (
                   <div key={etapa.id} className="flex items-center gap-1.5">
                     <div className="flex items-center gap-1 border rounded-md px-2 py-1 text-xs bg-muted/30">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: etapa.cor }} />
+                      <div className="w-2 h-2 rounded-full bg-primary" />
                       {etapa.nome}
                     </div>
                     {i < p.etapas.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
@@ -177,7 +176,7 @@ export default function ConfigPipelines() {
               {formEtapas.map((etapa, idx) => (
                 <div key={etapa.id} className="flex items-center gap-2 group">
                   <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: etapa.cor }} />
+                  <div className="w-3 h-3 rounded-full bg-primary shrink-0" />
                   <span className="text-sm flex-1">{etapa.nome}</span>
                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveEtapa(idx, -1)} disabled={idx === 0}>
