@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type EquipeDB = {
@@ -74,5 +74,80 @@ export function useUserRole() {
       if (error) throw error;
       return data?.role as string | null;
     },
+  });
+}
+
+// --- Mutations ---
+
+export function useCreateEquipe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { nome: string; tipo: string }) => {
+      const { data, error } = await supabase.from("equipes").insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipes"] }),
+  });
+}
+
+export function useUpdateEquipe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Pick<EquipeDB, "nome" | "tipo" | "ativa">> }) => {
+      const { error } = await supabase.from("equipes").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipes"] }),
+  });
+}
+
+export function useDeleteEquipe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Delete members first
+      await supabase.from("equipe_membros").delete().eq("equipe_id", id);
+      const { error } = await supabase.from("equipes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["equipes"] });
+      qc.invalidateQueries({ queryKey: ["equipe_membros"] });
+    },
+  });
+}
+
+export function useAddEquipeMembro() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { equipe_id: string; usuario_id: string; peso?: number }) => {
+      const { data, error } = await supabase.from("equipe_membros").insert(input).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe_membros"] }),
+  });
+}
+
+export function useUpdateEquipeMembro() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, peso }: { id: string; peso: number }) => {
+      const { error } = await supabase.from("equipe_membros").update({ peso }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe_membros"] }),
+  });
+}
+
+export function useRemoveEquipeMembro() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("equipe_membros").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe_membros"] }),
   });
 }
