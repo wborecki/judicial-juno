@@ -142,7 +142,7 @@ export default function NegocioDetalhe() {
                 />
                 {!editingTitle && <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
               </div>
-              )}
+              
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                 {negocio.pessoas?.nome && <span>{negocio.pessoas.nome}</span>}
                 {negocio.tipo_servico && (
