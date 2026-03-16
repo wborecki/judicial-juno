@@ -89,7 +89,7 @@ export default function Triagem() {
             <TableRow className="border-border/50 hover:bg-transparent">
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Processo</TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tribunal</TableHead>
-              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parte Autora</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Titular do Crédito</TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Trânsito</TableHead>
               <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor Est.</TableHead>

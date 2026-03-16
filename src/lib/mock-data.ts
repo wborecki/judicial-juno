@@ -1,16 +1,16 @@
 import { ProcessoLead, Pessoa, Equipe, Usuario, Negocio } from "./types";
 
 export const mockPessoas: Pessoa[] = [
-  { id: "p1", nome: "Maria Silva Santos", cpfCnpj: "123.456.789-00", email: "maria@email.com", telefone: "(11) 99999-1234", cidade: "São Paulo", uf: "SP", tipo: "autor", dataCadastro: "2026-01-15" },
-  { id: "p2", nome: "João Pedro Oliveira", cpfCnpj: "234.567.890-11", email: "joao@email.com", telefone: "(21) 98888-5678", cidade: "Rio de Janeiro", uf: "RJ", tipo: "autor", dataCadastro: "2026-01-20" },
-  { id: "p3", nome: "Ana Carolina Lima", cpfCnpj: "345.678.901-22", email: "ana@email.com", telefone: "(31) 97777-9012", cidade: "Belo Horizonte", uf: "MG", tipo: "autor", dataCadastro: "2026-02-01" },
-  { id: "p4", nome: "Carlos Eduardo Ferreira", cpfCnpj: "456.789.012-33", email: "carlos@email.com", telefone: "(61) 96666-3456", cidade: "Brasília", uf: "DF", tipo: "autor", dataCadastro: "2026-02-05" },
-  { id: "p5", nome: "Fernanda Souza Costa", cpfCnpj: "567.890.123-44", email: "fernanda@email.com", telefone: "(21) 95555-7890", cidade: "Rio de Janeiro", uf: "RJ", tipo: "autor", dataCadastro: "2026-02-10" },
-  { id: "p6", nome: "Roberto Alves Mendes", cpfCnpj: "678.901.234-55", email: "roberto@email.com", telefone: "(51) 94444-1234", cidade: "Porto Alegre", uf: "RS", tipo: "autor", dataCadastro: "2026-02-12" },
-  { id: "p7", nome: "Luciana Martins", cpfCnpj: "789.012.345-66", telefone: "(21) 93333-5678", cidade: "Niterói", uf: "RJ", tipo: "autor", dataCadastro: "2026-02-15" },
-  { id: "p8", nome: "Pedro Henrique Dias", cpfCnpj: "890.123.456-77", email: "pedro@email.com", telefone: "(31) 92222-9012", cidade: "Belo Horizonte", uf: "MG", tipo: "autor", dataCadastro: "2026-02-18" },
-  { id: "p9", nome: "Empresa ABC Ltda", cpfCnpj: "12.345.678/0001-99", email: "contato@abc.com.br", telefone: "(81) 91111-3456", cidade: "Recife", uf: "PE", tipo: "autor", dataCadastro: "2026-02-20" },
-  { id: "p10", nome: "Mariana Rocha", cpfCnpj: "901.234.567-88", email: "mariana@email.com", telefone: "(51) 90000-7890", cidade: "Porto Alegre", uf: "RS", tipo: "autor", dataCadastro: "2026-02-22" },
+  { id: "p1", nome: "Maria Silva Santos", cpfCnpj: "123.456.789-00", email: "maria@email.com", telefone: "(11) 99999-1234", cidade: "São Paulo", uf: "SP", tipo: "credor", dataCadastro: "2026-01-15" },
+  { id: "p2", nome: "João Pedro Oliveira", cpfCnpj: "234.567.890-11", email: "joao@email.com", telefone: "(21) 98888-5678", cidade: "Rio de Janeiro", uf: "RJ", tipo: "credor", dataCadastro: "2026-01-20" },
+  { id: "p3", nome: "Ana Carolina Lima", cpfCnpj: "345.678.901-22", email: "ana@email.com", telefone: "(31) 97777-9012", cidade: "Belo Horizonte", uf: "MG", tipo: "credor", dataCadastro: "2026-02-01" },
+  { id: "p4", nome: "Carlos Eduardo Ferreira", cpfCnpj: "456.789.012-33", email: "carlos@email.com", telefone: "(61) 96666-3456", cidade: "Brasília", uf: "DF", tipo: "credor", dataCadastro: "2026-02-05" },
+  { id: "p5", nome: "Fernanda Souza Costa", cpfCnpj: "567.890.123-44", email: "fernanda@email.com", telefone: "(21) 95555-7890", cidade: "Rio de Janeiro", uf: "RJ", tipo: "credor", dataCadastro: "2026-02-10" },
+  { id: "p6", nome: "Roberto Alves Mendes", cpfCnpj: "678.901.234-55", email: "roberto@email.com", telefone: "(51) 94444-1234", cidade: "Porto Alegre", uf: "RS", tipo: "credor", dataCadastro: "2026-02-12" },
+  { id: "p7", nome: "Luciana Martins", cpfCnpj: "789.012.345-66", telefone: "(21) 93333-5678", cidade: "Niterói", uf: "RJ", tipo: "credor", dataCadastro: "2026-02-15" },
+  { id: "p8", nome: "Pedro Henrique Dias", cpfCnpj: "890.123.456-77", email: "pedro@email.com", telefone: "(31) 92222-9012", cidade: "Belo Horizonte", uf: "MG", tipo: "credor", dataCadastro: "2026-02-18" },
+  { id: "p9", nome: "Empresa ABC Ltda", cpfCnpj: "12.345.678/0001-99", email: "contato@abc.com.br", telefone: "(81) 91111-3456", cidade: "Recife", uf: "PE", tipo: "credor", dataCadastro: "2026-02-20" },
+  { id: "p10", nome: "Mariana Rocha", cpfCnpj: "901.234.567-88", email: "mariana@email.com", telefone: "(51) 90000-7890", cidade: "Porto Alegre", uf: "RS", tipo: "credor", dataCadastro: "2026-02-22" },
 ];
 
 export const mockEquipes: Equipe[] = [

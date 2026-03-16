@@ -218,7 +218,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
           ) : (
             <div className="bg-muted/20 rounded-lg p-3 text-xs text-muted-foreground">
               <div className="flex justify-between">
-                <span>Autor</span>
+                <span>Titular</span>
                 <span className="font-medium text-foreground truncate max-w-[250px]">{processo.parte_autora}</span>
               </div>
             </div>
