@@ -1,34 +1,50 @@
 
 
-## Plano: Melhorar nitidez e legibilidade das tabelas
+## Plano: Reformular status de triagem dos processos
 
-### Problemas identificados
-- Fontes muito pequenas (`text-[9px]`, `text-[10px]`, `text-[11px]`) prejudicam leitura
-- Linhas muito comprimidas (`h-9`, `py-1.5`) criam sensação de "apertado"
-- Falta contraste visual entre linhas (sem zebra-striping)
-- Header da tabela pouco destacado do conteúdo
-- Bordas entre linhas muito sutis (`border-border/20`)
+### Problema atual
+O campo `triagem_resultado` usa o valor "apto" como status, mas isso não faz sentido no fluxo real:
+- Processo chega via captação automática → status **pendente**
+- Analista revê o processo e decide: **Criar Negócio**, **Acompanhar** ou **Descartar**
+- Se cria negócio, o processo deveria ficar como **"convertido"** (virou negócio), não "apto"
+- "Apto" é redundante — se está apto, a ação é criar negócio
 
-### Alteracoes
+### Novo modelo de status
 
-**1. Componente base `table.tsx`** -- ajustes globais que beneficiam todas as tabelas:
-- `TableHead`: subir de `h-12 px-4` para `h-10 px-3` com `bg-muted/30` e `text-xs` base
-- `TableCell`: de `p-4` para `px-3 py-2.5`
-- `TableRow`: adicionar zebra-striping com `even:bg-muted/20` e bordas mais visíveis `border-border/40`
+| Valor BD | Label | Cor | Significado |
+|---|---|---|---|
+| `pendente` | Pendente | warning/amarelo | Processo captado, aguardando análise |
+| `em_acompanhamento` | Em Acompanhamento | info/azul | Analista monitorando, ainda não decidiu |
+| `convertido` | Convertido | success/verde | Negócio criado a partir deste processo |
+| `descartado` | Descartado | destructive/vermelho | Processo descartado |
 
-**2. Página `Processos.tsx`** -- elevar tamanhos de fonte inline:
-- Headers: de `text-[10px]` para `text-[11px]`
-- Cells de conteúdo: de `text-[10px]`/`text-[11px]` para `text-xs` (12px)
-- Badges: de `text-[9px]` para `text-[10px]`
-- Número CNJ (mono): de `text-[11px]` para `text-xs`
-- Altura da linha: de `h-9` para `h-10`
+**Remove**: `apto` e `reanálise`
+**Adiciona**: `convertido` e `em_acompanhamento`
 
-**3. Página `Analise.tsx`** -- mesma padronização:
-- Headers e cells seguem o mesmo aumento de `text-[10px]` para `text-[11px]` e cells para `text-xs`
+### Arquivos a alterar
 
-**4. CSS global `index.css`** -- adicionar utilitário de antialiasing:
-- Adicionar `-webkit-font-smoothing: antialiased` e `text-rendering: optimizeLegibility` ao body para melhorar renderização de fontes pequenas
+1. **`src/lib/types.ts`** — Atualizar `TriageResult` type
+2. **`src/components/StatusBadge.tsx`** — Atualizar labels e cores
+3. **`src/components/processo/ProcessoHeader.tsx`** — Trocar `TRIAGEM_LABELS`/`TRIAGEM_COLORS`, badge "Apto" → lógica com novos status
+4. **`src/components/processo/ModalConverter.tsx`** — Ao criar negócio, marcar como `convertido` em vez de `apto`
+5. **`src/components/processo/TabTriagem.tsx`** — Atualizar labels e ações
+6. **`src/components/TriageModal.tsx`** — Atualizar botões de triagem
+7. **`src/pages/Processos.tsx`** — Atualizar filtros e cores de triagem
+8. **`src/pages/Triagem.tsx`** — Atualizar tabs e contadores
+9. **`src/pages/ProcessoDetalhe.tsx`** — Atualizar ações de acompanhamento: usar `em_acompanhamento` em vez de `reanálise`, e ao remover usar `pendente`
+10. **`src/hooks/useProcessos.ts`** — Stats: trocar `apto` → `convertido`
+11. **`src/hooks/useDistribuicao.ts`** — Fila de processos: filtrar por `pendente` (sem analista) em vez de `apto`
+12. **`src/lib/mock-data.ts`** — Atualizar dados mock
 
-### Resultado esperado
-Tabelas com texto mais legível, espaçamento confortável, contraste entre linhas alternadas e renderização de fonte mais nítida em todos os navegadores.
+### Lógica de transição
+
+- **Criar Negócio** → `triagem_resultado = "convertido"`
+- **Acompanhar** → `triagem_resultado = "em_acompanhamento"`
+- **Remover Acompanhamento** → `triagem_resultado = "pendente"`
+- **Descartar** → `triagem_resultado = "descartado"` (sem mudança)
+
+### Nota sobre dados existentes
+Processos com `triagem_resultado = "apto"` ou `"reanálise"` no banco precisarão de uma migração SQL para mapear:
+- `apto` → `convertido`
+- `reanálise` → `em_acompanhamento`
 
