@@ -130,7 +130,10 @@ export default function TabDadosGerais({ negocio }: Props) {
 
       {/* Valores */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Valores</p>
+        <div className="flex items-center gap-2 mb-1">
+          <DollarSign className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Valores</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <InlineNumberField label="Valor Proposta (R$)" defaultValue={negocio.valor_proposta} onSave={(v) => saveField("valor_proposta", v)} />
           <InlineNumberField label="Valor Fechamento (R$)" defaultValue={negocio.valor_fechamento} onSave={(v) => saveField("valor_fechamento", v)} />
