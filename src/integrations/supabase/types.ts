@@ -23,6 +23,7 @@ export type Database = {
           data_inicio: string
           descricao: string | null
           dia_inteiro: boolean
+          google_event_id: string | null
           id: string
           local: string | null
           negocio_id: string | null
@@ -43,6 +44,7 @@ export type Database = {
           data_inicio: string
           descricao?: string | null
           dia_inteiro?: boolean
+          google_event_id?: string | null
           id?: string
           local?: string | null
           negocio_id?: string | null
@@ -63,6 +65,7 @@ export type Database = {
           data_inicio?: string
           descricao?: string | null
           dia_inteiro?: boolean
+          google_event_id?: string | null
           id?: string
           local?: string | null
           negocio_id?: string | null
@@ -390,6 +393,42 @@ export type Database = {
           id?: string
           nome?: string
           tipo?: string
+        }
+        Relationships: []
+      }
+      google_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          refresh_token: string
+          sync_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          refresh_token: string
+          sync_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          refresh_token?: string
+          sync_enabled?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1241,6 +1280,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tipos_atividade: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          entidade: string
+          icone: string
+          id: string
+          nome: string
+          ordem: number
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          entidade?: string
+          icone?: string
+          id?: string
+          nome: string
+          ordem?: number
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          entidade?: string
+          icone?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          slug?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
