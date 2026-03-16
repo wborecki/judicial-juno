@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil, User, Activity, Settings2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+// Input replaced with native input for zero-layout-shift inline editing
 // ArrowLeft removed — now using breadcrumbs
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -129,21 +129,20 @@ export default function NegocioDetalhe() {
               <Briefcase className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0">
-              {editingTitle ? (
-                <Input
+              <div className="group flex items-center gap-1.5">
+                <input
                   ref={titleInputRef}
-                  value={titleValue}
+                  value={editingTitle ? titleValue : (negocio.titulo || "Sem título")}
+                  readOnly={!editingTitle}
+                  onClick={handleStartEditTitle}
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={handleSaveTitle}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1 border-transparent bg-transparent focus-visible:border-input focus-visible:bg-background focus-visible:ring-1"
+                  className={`h-8 text-lg font-bold tracking-tight bg-transparent outline-none truncate w-full px-1 -ml-1 rounded border ${editingTitle ? "border-input ring-1 ring-ring" : "border-transparent cursor-pointer"}`}
                 />
-              ) : (
-                <button onClick={handleStartEditTitle} className="group flex items-center gap-1.5 text-left">
-                  <h1 className="text-lg font-bold tracking-tight truncate">{negocio.titulo || "Sem título"}</h1>
-                  <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </button>
-              )}
+                {!editingTitle && <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
+              </div>
+              
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                 {negocio.pessoas?.nome && <span>{negocio.pessoas.nome}</span>}
                 {negocio.tipo_servico && (
