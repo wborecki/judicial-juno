@@ -357,36 +357,15 @@ function MembrosManager({
                 const user = usuarios.find((u) => u.id === m.usuario_id);
                 if (!user) return null;
                 return (
-                  <div key={m.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/30 transition-colors group">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary shrink-0">
-                      {user.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium truncate">{user.nome}</p>
-                      <p className="text-[10px] text-muted-foreground">{user.cargo}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <Scale className="w-3 h-3 text-muted-foreground" />
-                        <input
-                          type="number"
-                          value={m.peso}
-                          onChange={(e) => onUpdatePeso(m.id, Number(e.target.value) || 0)}
-                          className="w-14 h-7 text-xs text-center bg-transparent outline-none rounded border border-transparent hover:border-border/60 focus:border-input focus:ring-1 focus:ring-ring transition-colors font-mono"
-                          min={0}
-                          max={1000}
-                        />
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                        onClick={() => onRemove(m.id)}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
+                  <MembroRow
+                    key={m.id}
+                    membroId={m.id}
+                    nome={user.nome}
+                    cargo={user.cargo}
+                    peso={m.peso}
+                    onUpdatePeso={onUpdatePeso}
+                    onRemove={onRemove}
+                  />
                 );
               })}
             </div>
@@ -401,7 +380,7 @@ function MembrosManager({
               {available.map((u) => (
                 <div
                   key={u.id}
-                  className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                  className="flex items-center gap-3 h-11 px-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
                   onClick={() => onAdd(u.id)}
                 >
                   <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shrink-0">
@@ -419,5 +398,67 @@ function MembrosManager({
         )}
       </div>
     </>
+  );
+}
+
+// --- Individual member row with local peso state ---
+
+function MembroRow({
+  membroId,
+  nome,
+  cargo,
+  peso,
+  onUpdatePeso,
+  onRemove,
+}: {
+  membroId: string;
+  nome: string;
+  cargo: string;
+  peso: number;
+  onUpdatePeso: (membroId: string, peso: number) => void;
+  onRemove: (membroId: string) => void;
+}) {
+  const [localPeso, setLocalPeso] = useState(String(peso));
+
+  const handleBlur = () => {
+    const parsed = Number(localPeso) || 0;
+    if (parsed !== peso) {
+      onUpdatePeso(membroId, parsed);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 h-11 px-3 rounded-lg hover:bg-muted/30 transition-colors group">
+      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary shrink-0">
+        {nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium truncate">{nome}</p>
+        <p className="text-[10px] text-muted-foreground">{cargo}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <Scale className="w-3 h-3 text-muted-foreground" />
+          <input
+            type="number"
+            value={localPeso}
+            onChange={(e) => setLocalPeso(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+            className="w-14 h-7 text-xs text-center bg-transparent outline-none rounded border border-transparent hover:border-border/60 focus:border-input focus:ring-1 focus:ring-ring transition-colors font-mono"
+            min={0}
+            max={1000}
+          />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+          onClick={() => onRemove(membroId)}
+        >
+          <X className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    </div>
   );
 }
