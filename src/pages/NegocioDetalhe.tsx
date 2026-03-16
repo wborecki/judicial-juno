@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil, User, Activity, Settings2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+// Input replaced with native input for zero-layout-shift inline editing
 // ArrowLeft removed — now using breadcrumbs
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
