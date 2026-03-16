@@ -39,7 +39,10 @@ export default function TabDadosGerais({ negocio }: Props) {
     <div className="space-y-4">
       {/* Responsável + Vínculos */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Responsável & Vínculos</p>
+        <div className="flex items-center gap-2 mb-1">
+          <User className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Responsável & Vínculos</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Responsável</p>
