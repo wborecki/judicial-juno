@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, Building2, UserCog, Settings, Briefcase, Bell, Plug, GitBranchPlus, Route } from "lucide-react";
+import { Users, Building2, UserCog, Settings, Briefcase, Bell, Plug, GitBranchPlus, Route, ListChecks } from "lucide-react";
 
 const settingsNav = [
   { label: "Geral", to: "/configuracoes", icon: Settings, end: true },
