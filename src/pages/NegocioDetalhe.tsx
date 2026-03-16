@@ -256,6 +256,9 @@ export default function NegocioDetalhe() {
           <TabsTrigger value="contratos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
             <FileText className="w-3.5 h-3.5" /> Contratos
           </TabsTrigger>
+          <TabsTrigger value="assinaturas" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <FileSignature className="w-3.5 h-3.5" /> Assinaturas
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados">
