@@ -16,11 +16,11 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
-const TIPO_OPTIONS = [
-  { value: "tarefa", label: "Tarefa Interna" },
-  { value: "reuniao", label: "Reunião com Cliente" },
-  { value: "audiencia", label: "Audiência Judicial" },
-  { value: "prazo", label: "Prazo Processual" },
+const FALLBACK_TIPO_OPTIONS = [
+  { value: "tarefa", label: "Tarefa" },
+  { value: "reuniao", label: "Reunião" },
+  { value: "contato_credor", label: "Contato com Credor" },
+  { value: "followup", label: "Follow-up" },
 ];
 
 const PRIORIDADE_OPTIONS = [
