@@ -30,10 +30,20 @@ interface Props {
 
 export default function TabAtividades({ negocioId }: Props) {
   const { data: atividades = [], isLoading } = useNegocioAtividades(negocioId);
+  const { data: tiposAtividade = [] } = useTiposAtividade("negocio");
   const createAtividade = useCreateNegocioAtividade();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [tipo, setTipo] = useState("nota");
   const [descricao, setDescricao] = useState("");
+
+  const tipoOptions = useMemo(() =>
+    tiposAtividade.length > 0
+      ? tiposAtividade.map(t => ({ value: t.slug, label: t.nome, icon: t.icone, cor: t.cor }))
+      : FALLBACK_TIPO_OPTIONS.map(t => ({ ...t, cor: "#3b82f6" })),
+    [tiposAtividade]
+  );
+
+  const tipoMap = useMemo(() => Object.fromEntries(tipoOptions.map(t => [t.value, t])), [tipoOptions]);
 
   const handleCreate = () => {
     if (!descricao.trim()) { toast.error("Informe a descrição"); return; }
