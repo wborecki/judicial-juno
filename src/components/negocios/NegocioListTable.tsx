@@ -13,9 +13,9 @@ const TIPO_SERVICO_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  em_andamento: "bg-blue-100 text-blue-800",
-  ganho: "bg-green-100 text-green-800",
-  perdido: "bg-red-100 text-red-800",
+  em_andamento: "bg-primary/10 text-primary",
+  ganho: "bg-success/10 text-success",
+  perdido: "bg-destructive/10 text-destructive",
 };
 
 function formatCurrency(v?: number | null) {
