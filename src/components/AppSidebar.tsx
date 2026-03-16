@@ -1,4 +1,4 @@
-import { LayoutDashboard, Filter, CheckCircle2, XCircle, RotateCcw, Users, Settings } from "lucide-react";
+import { LayoutDashboard, Filter, Briefcase, XCircle, Eye, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MegaTecLogo } from "./MegaTecLogo";
 
@@ -11,9 +11,9 @@ interface SidebarProps {
 const navItems = [
   { id: "todos", label: "Todos os Processos", icon: LayoutDashboard },
   { id: "pendente", label: "Pendentes", icon: Filter },
-  { id: "apto", label: "Aptos", icon: CheckCircle2 },
+  { id: "em_acompanhamento", label: "Em Acompanhamento", icon: Eye },
+  { id: "convertido", label: "Convertidos", icon: Briefcase },
   { id: "descartado", label: "Descartados", icon: XCircle },
-  { id: "reanálise", label: "Reanálise", icon: RotateCcw },
 ];
 
 export function AppSidebar({ activeFilter, onFilterChange, counts }: SidebarProps) {

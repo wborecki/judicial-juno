@@ -1,4 +1,4 @@
-import { Filter, CheckCircle2, XCircle, RotateCcw, TrendingUp } from "lucide-react";
+import { Filter, Briefcase, XCircle, Eye, TrendingUp } from "lucide-react";
 
 interface StatsCardsProps {
   counts: Record<string, number>;
@@ -9,9 +9,9 @@ export function StatsCards({ counts, total }: StatsCardsProps) {
   const cards = [
     { label: "Total Captados", value: total, icon: TrendingUp, color: "text-foreground" },
     { label: "Pendentes", value: counts.pendente, icon: Filter, color: "text-warning" },
-    { label: "Aptos", value: counts.apto, icon: CheckCircle2, color: "text-success" },
+    { label: "Em Acompanhamento", value: counts.em_acompanhamento, icon: Eye, color: "text-info" },
+    { label: "Convertidos", value: counts.convertido, icon: Briefcase, color: "text-success" },
     { label: "Descartados", value: counts.descartado, icon: XCircle, color: "text-destructive" },
-    { label: "Reanálise", value: counts["reanálise"], icon: RotateCcw, color: "text-info" },
   ];
 
   return (

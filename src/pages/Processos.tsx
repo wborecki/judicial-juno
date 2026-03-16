@@ -27,9 +27,9 @@ const NATUREZAS = ["Cível", "Trabalhista", "Federal", "Previdenciário", "Tribu
 const TIPOS_PAGAMENTO = ["RPV", "Precatório"];
 const TRIAGEM_OPTIONS = [
   { value: "pendente", label: "Pendente" },
-  { value: "apto", label: "Apto" },
+  { value: "em_acompanhamento", label: "Em Acompanhamento" },
+  { value: "convertido", label: "Convertido" },
   { value: "descartado", label: "Descartado" },
-  { value: "reanálise", label: "Reanálise" },
 ];
 
 const STATUS_LABELS: Record<number, string> = {
@@ -40,9 +40,9 @@ const STATUS_LABELS: Record<number, string> = {
 
 const TRIAGEM_COLORS: Record<string, string> = {
   pendente: "bg-warning/10 text-warning border-warning/20",
-  apto: "bg-success/10 text-success border-success/20",
+  em_acompanhamento: "bg-info/10 text-info border-info/20",
+  convertido: "bg-success/10 text-success border-success/20",
   descartado: "bg-destructive/10 text-destructive border-destructive/20",
-  "reanálise": "bg-info/10 text-info border-info/20",
 };
 
 const TRIBUNAL_URLS: Record<string, string> = {
@@ -365,12 +365,12 @@ export default function Processos() {
                           <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
                             <CheckCircle2 className="w-3.5 h-3.5" />Triagem
                           </DropdownMenuItem>
-                          {triagem === "apto" && (
+                          {triagem !== "convertido" && triagem !== "descartado" && (
                             <DropdownMenuItem
                               onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
                               className="text-xs gap-2"
                             >
-                              <Briefcase className="w-3.5 h-3.5" />Enviar para Negócios
+                              <Briefcase className="w-3.5 h-3.5" />Criar Negócio
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>

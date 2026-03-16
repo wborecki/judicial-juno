@@ -17,16 +17,16 @@ export function ProcessStatusBadge({ status }: { status: ProcessStatus }) {
 export function TriageBadge({ triagem }: { triagem: TriageResult }) {
   const styles: Record<TriageResult, string> = {
     pendente: "bg-warning/10 text-warning",
-    apto: "bg-success/10 text-success",
+    em_acompanhamento: "bg-info/10 text-info",
+    convertido: "bg-success/10 text-success",
     descartado: "bg-destructive/10 text-destructive",
-    "reanálise": "bg-info/10 text-info",
   };
 
   const labels: Record<TriageResult, string> = {
     pendente: "Pendente",
-    apto: "Apto",
+    em_acompanhamento: "Em Acompanhamento",
+    convertido: "Convertido",
     descartado: "Descartado",
-    "reanálise": "Reanálise",
   };
 
   return (

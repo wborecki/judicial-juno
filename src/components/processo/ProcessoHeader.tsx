@@ -32,12 +32,12 @@ const STATUS_LABELS: Record<number, string> = {
 
 const TRIAGEM_COLORS: Record<string, string> = {
   pendente: "bg-warning/10 text-warning border-warning/20",
-  apto: "bg-success/10 text-success border-success/20",
+  em_acompanhamento: "bg-info/10 text-info border-info/20",
+  convertido: "bg-success/10 text-success border-success/20",
   descartado: "bg-destructive/10 text-destructive border-destructive/20",
-  "reanálise": "bg-info/10 text-info border-info/20",
 };
 const TRIAGEM_LABELS: Record<string, string> = {
-  pendente: "Pendente", apto: "Apto", descartado: "Descartado", "reanálise": "Em Acompanhamento",
+  pendente: "Pendente", em_acompanhamento: "Em Acompanhamento", convertido: "Convertido", descartado: "Descartado",
 };
 
 const TRIBUNAL_URLS: Record<string, string> = {
@@ -194,12 +194,12 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
           )}
           <Badge variant="secondary" className="rounded-full text-[11px] font-medium px-2.5 py-0.5 shrink-0">{processo.tribunal}</Badge>
 
-          {triagem !== "descartado" && (
+      {triagem !== "descartado" && triagem !== "convertido" && (
             <>
               <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg bg-success hover:bg-success/90 text-success-foreground shrink-0">
                 <Briefcase className="w-3.5 h-3.5" />Criar Negócio
               </Button>
-              {triagem !== "reanálise" ? (
+              {triagem !== "em_acompanhamento" ? (
                 <Button size="sm" variant="outline" onClick={onReanalyse} className="text-xs gap-1.5 h-7 rounded-lg border-info/40 text-info hover:bg-info/10 shrink-0">
                   <Eye className="w-3.5 h-3.5" />Acompanhar
                 </Button>

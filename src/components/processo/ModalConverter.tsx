@@ -71,12 +71,12 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
   const handleConverter = async () => {
     setIsConverting(true);
     try {
-      // Mark as apto if not already
-      if (processo.triagem_resultado !== "apto") {
+      // Mark as convertido
+      if (processo.triagem_resultado !== "convertido") {
         await updateProcesso.mutateAsync({
           id: processo.id,
           updates: {
-            triagem_resultado: "apto",
+            triagem_resultado: "convertido",
             triagem_data: new Date().toISOString(),
           },
         });
