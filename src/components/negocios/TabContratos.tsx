@@ -50,6 +50,8 @@ export default function TabContratos({ negocioId, processoId }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<ContratoCessao | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [assinaturaOpen, setAssinaturaOpen] = useState(false);
+  const [assinaturaContratoId, setAssinaturaContratoId] = useState<string | null>(null);
 
   const openNew = () => {
     setEditing(null);
