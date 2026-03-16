@@ -129,7 +129,21 @@ export default function NegocioDetalhe() {
               <Briefcase className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold tracking-tight truncate">{negocio.titulo || "Sem título"}</h1>
+              {editingTitle ? (
+                <Input
+                  ref={titleInputRef}
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                  className="h-8 text-lg font-bold tracking-tight px-1 -ml-1"
+                />
+              ) : (
+                <button onClick={handleStartEditTitle} className="group flex items-center gap-1.5 text-left">
+                  <h1 className="text-lg font-bold tracking-tight truncate">{negocio.titulo || "Sem título"}</h1>
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </button>
+              )}
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                 {negocio.pessoas?.nome && <span>{negocio.pessoas.nome}</span>}
                 {negocio.tipo_servico && (
