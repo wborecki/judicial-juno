@@ -17,9 +17,9 @@ const Index = () => {
   const counts = useMemo(() => ({
     todos: processos.length,
     pendente: processos.filter(p => p.triagem === "pendente").length,
-    apto: processos.filter(p => p.triagem === "apto").length,
+    convertido: processos.filter(p => p.triagem === "convertido").length,
     descartado: processos.filter(p => p.triagem === "descartado").length,
-    "reanálise": processos.filter(p => p.triagem === "reanálise").length,
+    em_acompanhamento: processos.filter(p => p.triagem === "em_acompanhamento").length,
   }), [processos]);
 
   const filtered = useMemo(() => {
