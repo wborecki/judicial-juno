@@ -45,10 +45,9 @@ export default function ConfigPipelines() {
 
   function addEtapa() {
     if (!newEtapaNome.trim()) return;
-    const colors = ["#3b82f6", "#f59e0b", "#8b5cf6", "#10b981", "#ef4444", "#ec4899", "#06b6d4", "#f97316"];
     setFormEtapas((prev) => [
       ...prev,
-      { id: genId(), nome: newEtapaNome.trim(), cor: colors[prev.length % colors.length] },
+      { id: genId(), nome: newEtapaNome.trim(), cor: "hsl(var(--primary))" },
     ]);
     setNewEtapaNome("");
   }
