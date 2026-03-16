@@ -146,7 +146,10 @@ export default function TabDadosGerais({ negocio }: Props) {
 
       {/* Observações */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Observações</p>
+        <div className="flex items-center gap-2 mb-1">
+          <MessageSquare className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Observações</p>
+        </div>
         <ObservacoesField defaultValue={negocio.observacoes ?? ""} onSave={(v) => saveField("observacoes", v || null)} />
       </div>
     </div>

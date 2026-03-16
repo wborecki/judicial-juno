@@ -18,11 +18,11 @@ const TIPO_OPTIONS = [
 ];
 
 const TIPO_COLORS: Record<string, string> = {
-  nota: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  ligacao: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  email: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-  reuniao: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  tarefa: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
+  nota: "bg-warning/10 text-warning border-warning/20",
+  ligacao: "bg-primary/10 text-primary border-primary/20",
+  email: "bg-accent/20 text-accent-foreground border-accent/30",
+  reuniao: "bg-success/10 text-success border-success/20",
+  tarefa: "bg-info/10 text-info border-info/20",
 };
 
 interface Props {

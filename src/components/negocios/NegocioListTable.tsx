@@ -36,15 +36,15 @@ export default function NegocioListTable({ negocios, etapas }: Props) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Título</TableHead>
-          <TableHead>Processo</TableHead>
-          <TableHead>Pessoa</TableHead>
-          <TableHead>Serviço</TableHead>
-          <TableHead>Etapa</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Valor</TableHead>
-          <TableHead>Responsável</TableHead>
-          <TableHead>Abertura</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Título</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Processo</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Pessoa</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Serviço</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Etapa</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Status</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-right">Valor</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Responsável</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Abertura</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

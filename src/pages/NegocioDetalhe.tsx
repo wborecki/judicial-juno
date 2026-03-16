@@ -242,10 +242,16 @@ export default function NegocioDetalhe() {
 
       {/* Tabs */}
       <Tabs defaultValue="dados" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="dados">Dados Gerais</TabsTrigger>
-          <TabsTrigger value="atividades">Atividades</TabsTrigger>
-          <TabsTrigger value="campos">Campos Personalizados</TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-border/40 rounded-none h-auto p-0 bg-transparent">
+          <TabsTrigger value="dados" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <User className="w-3.5 h-3.5" /> Dados Gerais
+          </TabsTrigger>
+          <TabsTrigger value="atividades" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <Activity className="w-3.5 h-3.5" /> Atividades
+          </TabsTrigger>
+          <TabsTrigger value="campos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <Settings2 className="w-3.5 h-3.5" /> Campos Personalizados
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados">
