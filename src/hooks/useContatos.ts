@@ -41,3 +41,17 @@ export function useCreateContato() {
     },
   });
 }
+
+export function useDeleteContato() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, pessoaId }: { id: string; pessoaId: string }) => {
+      const { error } = await supabase.from("contatos").delete().eq("id", id);
+      if (error) throw error;
+      return { pessoaId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["contatos", data.pessoaId] });
+    },
+  });
+}
