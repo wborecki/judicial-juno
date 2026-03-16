@@ -252,6 +252,9 @@ export default function NegocioDetalhe() {
           <TabsTrigger value="campos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
             <Settings2 className="w-3.5 h-3.5" /> Campos Personalizados
           </TabsTrigger>
+          <TabsTrigger value="contratos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <FileText className="w-3.5 h-3.5" /> Contratos
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados">
@@ -262,6 +265,9 @@ export default function NegocioDetalhe() {
         </TabsContent>
         <TabsContent value="campos">
           <TabCamposPersonalizados negocioId={negocio.id} />
+        </TabsContent>
+        <TabsContent value="contratos">
+          <TabContratos negocioId={negocio.id} processoId={negocio.processo_id} />
         </TabsContent>
       </Tabs>
     </div>
