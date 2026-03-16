@@ -130,6 +130,7 @@ export default function ModelosDocumentos() {
   const handleOpenImport = async () => {
     setImportOpen(true);
     setImportLoading(true);
+    setImportError(null);
     try {
       const res = await callClickSign.mutateAsync({ action: "list-templates" });
       const templates = res?.data || res?.templates || [];
