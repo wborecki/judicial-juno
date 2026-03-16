@@ -16,6 +16,7 @@ import TabDadosGerais from "@/components/negocios/TabDadosGerais";
 import TabAtividades from "@/components/negocios/TabAtividades";
 import TabCamposPersonalizados from "@/components/negocios/TabCamposPersonalizados";
 import TabContratos from "@/components/negocios/TabContratos";
+import TabAssinaturas from "@/components/negocios/TabAssinaturas";
 
 const TIPO_SERVICO_LABELS: Record<string, string> = {
   compra_credito: "Compra de Crédito",
