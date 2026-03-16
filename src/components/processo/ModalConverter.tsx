@@ -167,12 +167,12 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
               <span>{processo.tribunal}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Valor Estimado</span>
+              <span className="text-muted-foreground">Valor da Causa</span>
               <span className="font-semibold text-primary">{formatCurrency(processo.valor_estimado)}</span>
             </div>
             {reus.length > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Réu(s)</span>
+                <span className="text-muted-foreground">Devedor(es)</span>
                 <span className="truncate max-w-[250px]">{reus.map(r => r.nome).join(", ")}</span>
               </div>
             )}
