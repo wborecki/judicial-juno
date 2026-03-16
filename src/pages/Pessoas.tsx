@@ -10,8 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PessoaSheet from "@/components/PessoaSheet";
 
 const tipoLabels: Record<string, string> = {
-  autor: "Autor",
-  reu: "Réu",
+  autor: "Credor",
+  reu: "Devedor",
+  credor: "Credor",
+  devedor: "Devedor",
+  cedente: "Cedente",
+  cessionario: "Cessionário",
   advogado: "Advogado",
   terceiro: "Terceiro",
 };
@@ -51,7 +55,7 @@ export default function Pessoas() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold">Pessoas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Cadastro de partes, autores e envolvidos nos processos</p>
+          <p className="text-sm text-muted-foreground mt-1">Cadastro de credores, devedores e envolvidos nos processos</p>
         </div>
         <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Nova Pessoa</Button>
       </div>

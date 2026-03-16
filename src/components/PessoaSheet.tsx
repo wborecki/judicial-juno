@@ -15,8 +15,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const TIPO_OPTIONS = [
-  { value: "autor", label: "Autor" },
-  { value: "reu", label: "Réu" },
+  { value: "credor", label: "Credor" },
+  { value: "devedor", label: "Devedor" },
+  { value: "cedente", label: "Cedente" },
+  { value: "cessionario", label: "Cessionário" },
   { value: "advogado", label: "Advogado" },
   { value: "terceiro", label: "Terceiro" },
 ];
@@ -61,7 +63,7 @@ export default function PessoaSheet({ open, onOpenChange, pessoa: pessoProp, mod
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [tipo, setTipo] = useState("autor");
+  const [tipo, setTipo] = useState("credor");
   const [endereco, setEndereco] = useState("");
   const [cidade, setCidade] = useState("");
   const [uf, setUf] = useState("");
@@ -95,7 +97,7 @@ export default function PessoaSheet({ open, onOpenChange, pessoa: pessoProp, mod
       setCpfCnpj(cpfProp ?? "");
       setEmail("");
       setTelefone("");
-      setTipo("autor");
+      setTipo("credor");
       setEndereco("");
       setCidade("");
       setUf("");

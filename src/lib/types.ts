@@ -49,7 +49,7 @@ export interface Pessoa {
   endereco?: string;
   cidade?: string;
   uf?: string;
-  tipo: "autor" | "reu" | "advogado" | "terceiro";
+  tipo: "credor" | "devedor" | "cedente" | "cessionario" | "advogado" | "terceiro";
   dataCadastro: string;
 }
 

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil, User, Activity, Settings2 } from "lucide-react";
+import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil, User, Activity, Settings2, FileText } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 // Input replaced with native input for zero-layout-shift inline editing
 // ArrowLeft removed — now using breadcrumbs
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import TabDadosGerais from "@/components/negocios/TabDadosGerais";
 import TabAtividades from "@/components/negocios/TabAtividades";
 import TabCamposPersonalizados from "@/components/negocios/TabCamposPersonalizados";
+import TabContratos from "@/components/negocios/TabContratos";
 
 const TIPO_SERVICO_LABELS: Record<string, string> = {
   compra_credito: "Compra de Crédito",
@@ -251,6 +252,9 @@ export default function NegocioDetalhe() {
           <TabsTrigger value="campos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
             <Settings2 className="w-3.5 h-3.5" /> Campos Personalizados
           </TabsTrigger>
+          <TabsTrigger value="contratos" className="data-[state=active]:border-primary data-[state=active]:text-foreground border-b-2 border-transparent rounded-none px-4 py-3 bg-transparent text-muted-foreground text-xs gap-2 data-[state=active]:shadow-none">
+            <FileText className="w-3.5 h-3.5" /> Contratos
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dados">
@@ -261,6 +265,9 @@ export default function NegocioDetalhe() {
         </TabsContent>
         <TabsContent value="campos">
           <TabCamposPersonalizados negocioId={negocio.id} />
+        </TabsContent>
+        <TabsContent value="contratos">
+          <TabContratos negocioId={negocio.id} processoId={negocio.processo_id} />
         </TabsContent>
       </Tabs>
     </div>

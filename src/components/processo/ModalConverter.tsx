@@ -99,8 +99,8 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
             data_fechamento: null,
             responsavel_id: null,
             observacoes: [
-              `Autor: ${autor.nome}`,
-              `Réu: ${reuNome}`,
+              `Titular: ${autor.nome}`,
+              `Devedor: ${reuNome}`,
               observacoes.trim() || null,
             ].filter(Boolean).join("\n"),
           });
@@ -150,7 +150,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
           </SheetTitle>
           <SheetDescription className="text-xs">
             {hasStructuredAutores
-              ? "Selecione os autores para criar um negócio por autor."
+              ? "Selecione os titulares do crédito para criar um negócio por titular."
               : "Um novo negócio será criado a partir deste processo."}
           </SheetDescription>
         </SheetHeader>
@@ -167,12 +167,12 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
               <span>{processo.tribunal}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Valor Estimado</span>
+              <span className="text-muted-foreground">Valor da Causa</span>
               <span className="font-semibold text-primary">{formatCurrency(processo.valor_estimado)}</span>
             </div>
             {reus.length > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Réu(s)</span>
+                <span className="text-muted-foreground">Devedor(es)</span>
                 <span className="truncate max-w-[250px]">{reus.map(r => r.nome).join(", ")}</span>
               </div>
             )}
@@ -184,7 +184,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" />
-                  Autores — selecione para criar negócios
+                  Titulares do Crédito — selecione para criar negócios
                 </Label>
                 <Button variant="ghost" size="sm" onClick={selectAll} className="text-[10px] h-6 px-2">
                   {selectedAutores.size === autores.length ? "Desmarcar todos" : "Selecionar todos"}
@@ -218,7 +218,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
           ) : (
             <div className="bg-muted/20 rounded-lg p-3 text-xs text-muted-foreground">
               <div className="flex justify-between">
-                <span>Autor</span>
+                <span>Titular</span>
                 <span className="font-medium text-foreground truncate max-w-[250px]">{processo.parte_autora}</span>
               </div>
             </div>
