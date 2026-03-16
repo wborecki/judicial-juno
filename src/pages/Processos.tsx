@@ -27,9 +27,9 @@ const NATUREZAS = ["Cível", "Trabalhista", "Federal", "Previdenciário", "Tribu
 const TIPOS_PAGAMENTO = ["RPV", "Precatório"];
 const TRIAGEM_OPTIONS = [
   { value: "pendente", label: "Pendente" },
-  { value: "apto", label: "Apto" },
+  { value: "em_acompanhamento", label: "Em Acompanhamento" },
+  { value: "convertido", label: "Convertido" },
   { value: "descartado", label: "Descartado" },
-  { value: "reanálise", label: "Reanálise" },
 ];
 
 const STATUS_LABELS: Record<number, string> = {
