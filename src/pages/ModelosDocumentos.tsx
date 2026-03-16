@@ -55,6 +55,7 @@ export default function ModelosDocumentos() {
   const [importLoading, setImportLoading] = useState(false);
   const [csTemplates, setCsTemplates] = useState<ClickSignTemplate[]>([]);
   const [importingKey, setImportingKey] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const openNew = () => {
     setEditing(null);
