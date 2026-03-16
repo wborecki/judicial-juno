@@ -377,7 +377,7 @@ function ListView({ eventos, onEventClick, getUsuarioNome }: {
           </div>
           <div className="space-y-1.5">
             {evs.map((ev) => {
-              const Icon = TIPO_ICONS[ev.tipo] ?? Clock;
+              const Icon = ICON_MAP[tipoIconMap[ev.tipo] ?? ""] ?? Clock;
               return (
                 <div
                   key={ev.id}
