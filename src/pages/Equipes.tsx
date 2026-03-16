@@ -212,7 +212,7 @@ export default function Equipes() {
                       <p className="text-xs text-muted-foreground italic">Nenhum membro adicionado</p>
                     ) : (
                       <div className="space-y-1.5">
-                        {equipeUsuarios.map((m) => (
+                        {equipeUsuarios.slice(0, 3).map((m) => (
                           <div key={m.membroId} className="flex items-center gap-2 h-7">
                             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary shrink-0">
                               {m.nome?.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
@@ -224,6 +224,11 @@ export default function Equipes() {
                             </div>
                           </div>
                         ))}
+                        {equipeUsuarios.length > 3 && (
+                          <p className="text-[11px] text-muted-foreground pl-8">
+                            +{equipeUsuarios.length - 3} membro{equipeUsuarios.length - 3 > 1 ? "s" : ""}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
