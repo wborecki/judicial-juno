@@ -33,18 +33,6 @@ const STATUS_COLORS: Record<string, string> = {
   cancelado: "bg-muted text-muted-foreground line-through",
 };
 
-const PRIORIDADE_COLORS: Record<string, string> = {
-  baixa: "bg-muted text-muted-foreground",
-  media: "bg-info/10 text-info border-info/20",
-  alta: "bg-warning/10 text-warning border-warning/20",
-  urgente: "bg-destructive/10 text-destructive border-destructive/20",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pendente: "bg-warning/10 text-warning",
-  concluido: "bg-success/10 text-success",
-  cancelado: "bg-muted text-muted-foreground line-through",
-};
 
 export default function Agenda() {
   const [view, setView] = useState<ViewMode>("mensal");
