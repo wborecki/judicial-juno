@@ -82,17 +82,17 @@ export default function TabAtividades({ negocioId }: Props) {
           <div className="absolute left-[9px] top-1 bottom-1 w-px bg-border/60" />
           <div className="space-y-0">
             {atividades.map((a) => {
-              const tipoOpt = TIPO_OPTIONS.find((t) => t.value === a.tipo);
-              const Icon = tipoOpt?.icon ?? StickyNote;
+              const opt = tipoMap[a.tipo];
+              const Icon = ICON_MAP[opt?.icon ?? ""] ?? StickyNote;
               return (
                 <div key={a.id} className="relative pb-1 last:pb-0 group">
                   <div className="absolute -left-6 top-3 w-[10px] h-[10px] rounded-full border-2 border-card bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
                   <div className="py-2.5 px-3 rounded-lg hover:bg-muted/30 transition-colors">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Badge className={`text-[9px] shrink-0 rounded-full px-2 py-0 ${TIPO_COLORS[a.tipo] ?? ""}`}>
+                        <Badge className="text-[9px] shrink-0 rounded-full px-2 py-0" style={{ backgroundColor: `${opt?.cor ?? '#3b82f6'}20`, color: opt?.cor ?? '#3b82f6', borderColor: `${opt?.cor ?? '#3b82f6'}30` }}>
                           <Icon className="w-3 h-3 mr-1" />
-                          {tipoOpt?.label ?? a.tipo}
+                          {opt?.label ?? a.tipo}
                         </Badge>
                         <span className="text-xs text-foreground">{a.descricao}</span>
                       </div>
