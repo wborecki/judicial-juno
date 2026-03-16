@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft, CalendarDays
+  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft, CalendarDays, Wallet
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
