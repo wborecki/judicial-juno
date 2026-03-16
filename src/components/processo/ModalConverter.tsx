@@ -150,7 +150,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
           </SheetTitle>
           <SheetDescription className="text-xs">
             {hasStructuredAutores
-              ? "Selecione os autores para criar um negócio por autor."
+              ? "Selecione os titulares do crédito para criar um negócio por titular."
               : "Um novo negócio será criado a partir deste processo."}
           </SheetDescription>
         </SheetHeader>
