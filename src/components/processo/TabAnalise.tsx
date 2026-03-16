@@ -142,12 +142,13 @@ function InlineNumberField({ label, defaultValue, onSave }: { label: string; def
   return (
     <div>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
-      <Input
+      <input
         type="number"
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onBlur={() => onSave(val === "" ? null : Number(val))}
-        className="h-8 text-xs"
+        className="h-8 w-full text-xs bg-transparent outline-none rounded border border-transparent px-2 hover:border-border/60 focus:border-input focus:ring-1 focus:ring-ring transition-colors"
+        step="0.01"
       />
     </div>
   );
