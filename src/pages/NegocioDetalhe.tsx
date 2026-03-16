@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import TabDadosGerais from "@/components/negocios/TabDadosGerais";
 import TabAtividades from "@/components/negocios/TabAtividades";
 import TabCamposPersonalizados from "@/components/negocios/TabCamposPersonalizados";
+import TabContratos from "@/components/negocios/TabContratos";
 
 const TIPO_SERVICO_LABELS: Record<string, string> = {
   compra_credito: "Compra de Crédito",
