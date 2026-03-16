@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Send } from "lucide-react";
+import EnviarAssinaturaSheet from "./EnviarAssinaturaSheet";
 import { format } from "date-fns";
 
 const STATUS_OPTIONS = [
@@ -49,6 +50,8 @@ export default function TabContratos({ negocioId, processoId }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<ContratoCessao | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [assinaturaOpen, setAssinaturaOpen] = useState(false);
+  const [assinaturaContratoId, setAssinaturaContratoId] = useState<string | null>(null);
 
   const openNew = () => {
     setEditing(null);
@@ -145,6 +148,9 @@ export default function TabContratos({ negocioId, processoId }: Props) {
                 {c.observacoes && <p className="text-xs text-muted-foreground mt-1 truncate">{c.observacoes}</p>}
               </div>
               <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-7 w-7" title="Enviar para assinatura" onClick={() => { setAssinaturaContratoId(c.id); setAssinaturaOpen(true); }}>
+                  <Send className="w-3.5 h-3.5 text-primary" />
+                </Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}>
                   <Pencil className="w-3.5 h-3.5" />
                 </Button>
@@ -215,6 +221,14 @@ export default function TabContratos({ negocioId, processoId }: Props) {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <EnviarAssinaturaSheet
+        open={assinaturaOpen}
+        onOpenChange={setAssinaturaOpen}
+        negocioId={negocioId}
+        processoId={processoId}
+        contratoId={assinaturaContratoId}
+      />
     </div>
   );
 }

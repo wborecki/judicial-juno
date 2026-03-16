@@ -3,10 +3,61 @@ import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plug, Calendar, RefreshCw, ExternalLink, Unplug } from "lucide-react";
+import { Plug, Calendar, RefreshCw, ExternalLink, Unplug, FileSignature, CheckCircle2, XCircle } from "lucide-react";
+import { useCallClickSign } from "@/hooks/useDocumentoEnvios";
 import { useGoogleToken, useGoogleCalendarAuth, useGoogleCalendarSync, useDisconnectGoogle, useToggleGoogleSync } from "@/hooks/useGoogleCalendar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+
+function ClickSignCard() {
+  const callClickSign = useCallClickSign();
+  const [status, setStatus] = useState<"idle" | "checking" | "connected" | "error">("idle");
+
+  const handleTestConnection = async () => {
+    setStatus("checking");
+    try {
+      await callClickSign.mutateAsync({ action: "test-connection" });
+      setStatus("connected");
+      toast.success("ClickSign conectado!");
+    } catch {
+      setStatus("error");
+      toast.error("Falha ao conectar com ClickSign");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center gap-4 pb-2">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          <FileSignature className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <CardTitle className="text-base">ClickSign</CardTitle>
+          <CardDescription className="text-xs">Envio de documentos para assinatura eletrônica</CardDescription>
+        </div>
+        <Badge variant={status === "connected" ? "default" : "secondary"} className="text-[10px]">
+          {status === "connected" ? "Conectado" : status === "error" ? "Erro" : "Não verificado"}
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={handleTestConnection} disabled={status === "checking"}>
+          {status === "checking" ? (
+            <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Verificando...</>
+          ) : status === "connected" ? (
+            <><CheckCircle2 className="w-3.5 h-3.5 text-success" /> Conexão verificada</>
+          ) : status === "error" ? (
+            <><XCircle className="w-3.5 h-3.5 text-destructive" /> Tentar novamente</>
+          ) : (
+            <><RefreshCw className="w-3.5 h-3.5" /> Testar Conexão</>
+          )}
+        </Button>
+        <p className="text-[10px] text-muted-foreground">
+          Configure modelos em Configurações → Modelos de Documentos. Envie para assinatura pela aba Contratos do negócio.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Integracoes() {
   const { data: googleToken, isLoading } = useGoogleToken();
@@ -115,6 +166,9 @@ export default function Integracoes() {
           )}
         </CardContent>
       </Card>
+
+      {/* ClickSign */}
+      <ClickSignCard />
 
       {/* Placeholder for future integrations */}
       <Card className="glass-card">

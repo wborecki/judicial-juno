@@ -28,6 +28,7 @@ import Notificacoes from "./pages/Notificacoes";
 import ConfigRoteamento from "./pages/ConfigRoteamento";
 import Integracoes from "./pages/Integracoes";
 import TiposAtividade from "./pages/TiposAtividade";
+import ModelosDocumentos from "./pages/ModelosDocumentos";
 import Carteira from "./pages/Carteira";
 import MeuPerfil from "./pages/MeuPerfil";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
@@ -78,6 +79,7 @@ const App = () => (
                 <Route path="roteamento" element={<ConfigRoteamento />} />
                 <Route path="notificacoes" element={<Notificacoes />} />
                 <Route path="integracoes" element={<Integracoes />} />
+                <Route path="modelos-documentos" element={<ModelosDocumentos />} />
                 <Route path="perfil" element={<MeuPerfil />} />
               </Route>
             </Route>
