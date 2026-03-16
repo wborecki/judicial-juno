@@ -269,119 +269,115 @@ export default function Processos() {
       </div>
 
       {/* Table with sticky header and scrollable body */}
-      <div className={`flex-1 min-h-0 mt-4 glass-card rounded-xl overflow-hidden flex flex-col transition-opacity duration-150 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-card">
-            <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Nº CNJ</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vara/Comarca</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classe/Fase</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-28">Triagem</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Status</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Captação</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-24">Analista</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-10"></TableHead>
-            </TableRow>
-          </TableHeader>
-        </Table>
-        <div className="flex-1 overflow-y-auto">
-          <Table>
-            <TableBody>
-              {processos.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground text-sm">
-                    Nenhum processo encontrado.
-                  </TableCell>
-                </TableRow>
-              )}
-              {processos.map((p) => {
-                const triagem = p.triagem_resultado ?? "pendente";
-                const tribunalUrl = getTribunalUrl(p.tribunal, p.numero_processo);
-                return (
-                  <TableRow
-                    key={p.id}
-                    className="cursor-pointer hover:bg-accent/5 transition-colors h-10"
-                    onClick={() => navigate(`/processos/${p.id}`)}
-                  >
-                    <TableCell className="w-[180px]">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-medium">{p.numero_processo}</span>
-                        {tribunalUrl && (
-                          <a
-                            href={tribunalUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-muted-foreground hover:text-primary transition-colors"
-                            title="Consultar no tribunal"
+      <div className={`flex-1 min-h-0 mt-4 glass-card rounded-xl overflow-y-auto transition-opacity duration-150 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
+        <table className="w-full caption-bottom text-sm table-fixed">
+          <thead className="sticky top-0 z-10 bg-card [&_tr]:border-b">
+            <tr className="border-border/50 hover:bg-transparent">
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[14%]">Nº CNJ</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[7%]">Tribunal</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[13%]">Vara/Comarca</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[13%]">Classe/Fase</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[11%]">Triagem</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[7%]">Status</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[6%]">Trânsito</th>
+              <th className="h-10 px-3 text-right align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[10%]">Valor Est.</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[8%]">Captação</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[8%]">Analista</th>
+              <th className="h-10 px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 w-[3%]"></th>
+            </tr>
+          </thead>
+          <tbody className="[&_tr:last-child]:border-0">
+            {processos.length === 0 && (
+              <tr>
+                <td colSpan={11} className="text-center py-12 text-muted-foreground text-sm">
+                  Nenhum processo encontrado.
+                </td>
+              </tr>
+            )}
+            {processos.map((p) => {
+              const triagem = p.triagem_resultado ?? "pendente";
+              const tribunalUrl = getTribunalUrl(p.tribunal, p.numero_processo);
+              return (
+                <tr
+                  key={p.id}
+                  className="border-b border-border/50 transition-colors even:bg-muted/30 hover:bg-muted/50 cursor-pointer h-10"
+                  onClick={() => navigate(`/processos/${p.id}`)}
+                >
+                  <td className="px-3 py-2.5 align-middle text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-xs font-medium truncate">{p.numero_processo}</span>
+                      {tribunalUrl && (
+                        <a
+                          href={tribunalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                          title="Consultar no tribunal"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5 align-middle text-xs">
+                    <span className="text-[11px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
+                  </td>
+                  <td className="px-3 py-2.5 align-middle text-xs truncate">{p.vara_comarca || "—"}</td>
+                  <td className="px-3 py-2.5 align-middle text-xs truncate">{p.classe_fase || "—"}</td>
+                  <td className="px-3 py-2.5 align-middle text-xs">
+                    <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${TRIAGEM_COLORS[triagem] ?? ""}`}>
+                      {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
+                    </Badge>
+                  </td>
+                  <td className="px-3 py-2.5 align-middle text-xs">{STATUS_LABELS[p.status_processo] ?? "—"}</td>
+                  <td className="px-3 py-2.5 align-middle text-xs">{p.transito_julgado ? "Sim" : "Não"}</td>
+                  <td className="px-3 py-2.5 align-middle text-xs font-medium text-right">{formatCurrency(p.valor_estimado)}</td>
+                  <td className="px-3 py-2.5 align-middle text-xs text-muted-foreground">{formatDate(p.data_captacao)}</td>
+                  <td className="px-3 py-2.5 align-middle text-xs">
+                    {(() => {
+                      const analista = getUsuario(p.analista_id);
+                      if (!analista) return <span className="text-xs text-muted-foreground">—</span>;
+                      return (
+                        <div className="flex items-center gap-1">
+                          <Avatar className="w-5 h-5">
+                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs truncate">{analista.nome.split(" ")[0]}</span>
+                        </div>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-3 py-2.5 align-middle text-xs" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}`)} className="text-xs gap-2">
+                          <Eye className="w-3.5 h-3.5" />Ver detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5" />Triagem
+                        </DropdownMenuItem>
+                        {triagem !== "convertido" && triagem !== "descartado" && (
+                          <DropdownMenuItem
+                            onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
+                            className="text-xs gap-2"
                           >
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                            <Briefcase className="w-3.5 h-3.5" />Criar Negócio
+                          </DropdownMenuItem>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="w-16">
-                      <span className="text-[11px] font-medium bg-primary/5 text-primary px-1.5 py-0.5 rounded">{p.tribunal}</span>
-                    </TableCell>
-                    <TableCell className="text-xs max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
-                    <TableCell className="text-xs max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
-                    <TableCell className="w-28">
-                      <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${TRIAGEM_COLORS[triagem] ?? ""}`}>
-                        {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs w-16">{STATUS_LABELS[p.status_processo] ?? "—"}</TableCell>
-                    <TableCell className="text-xs w-16">{p.transito_julgado ? "Sim" : "Não"}</TableCell>
-                    <TableCell className="text-xs font-medium text-right w-24">{formatCurrency(p.valor_estimado)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground w-20">{formatDate(p.data_captacao)}</TableCell>
-                    <TableCell className="w-24">
-                      {(() => {
-                        const analista = getUsuario(p.analista_id);
-                        if (!analista) return <span className="text-xs text-muted-foreground">—</span>;
-                        return (
-                          <div className="flex items-center gap-1">
-                            <Avatar className="w-5 h-5">
-                              <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{initials(analista.nome)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs truncate max-w-[60px]">{analista.nome.split(" ")[0]}</span>
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}`)} className="text-xs gap-2">
-                            <Eye className="w-3.5 h-3.5" />Ver detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/processos/${p.id}?tab=triagem`)} className="text-xs gap-2">
-                            <CheckCircle2 className="w-3.5 h-3.5" />Triagem
-                          </DropdownMenuItem>
-                          {triagem !== "convertido" && triagem !== "descartado" && (
-                            <DropdownMenuItem
-                              onClick={() => handleEnviarNegocios(p.id, p.valor_estimado)}
-                              className="text-xs gap-2"
-                            >
-                              <Briefcase className="w-3.5 h-3.5" />Criar Negócio
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination — sticky bottom */}
