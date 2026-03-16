@@ -97,7 +97,7 @@ export default function PessoaSheet({ open, onOpenChange, pessoa: pessoProp, mod
       setCpfCnpj(cpfProp ?? "");
       setEmail("");
       setTelefone("");
-      setTipo("autor");
+      setTipo("credor");
       setEndereco("");
       setCidade("");
       setUf("");
