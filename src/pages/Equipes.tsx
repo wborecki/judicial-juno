@@ -160,7 +160,7 @@ export default function Equipes() {
             return (
               <Card
                 key={eq.id}
-                className={`glass-card hover:border-accent/30 transition-colors ${!eq.ativa ? "opacity-60" : ""}`}
+                className={`glass-card hover:border-accent/30 transition-colors flex flex-col ${!eq.ativa ? "opacity-60" : ""}`}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -200,31 +200,33 @@ export default function Equipes() {
                     {EQUIPE_TIPO_LABELS[eq.tipo as keyof typeof EQUIPE_TIPO_LABELS] ?? eq.tipo}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col flex-1">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                     <Users className="w-3.5 h-3.5" />
                     <span>
                       {equipeUsuarios.length} membro{equipeUsuarios.length !== 1 ? "s" : ""}
                     </span>
                   </div>
-                  {equipeUsuarios.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Nenhum membro adicionado</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {equipeUsuarios.map((m) => (
-                        <div key={m.membroId} className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
-                            {m.nome?.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                  <div className="flex-1">
+                    {equipeUsuarios.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Nenhum membro adicionado</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {equipeUsuarios.map((m) => (
+                          <div key={m.membroId} className="flex items-center gap-2 h-7">
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary shrink-0">
+                              {m.nome?.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                            </div>
+                            <span className="text-xs truncate">{m.nome}</span>
+                            <div className="flex items-center gap-1 ml-auto shrink-0">
+                              <Scale className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground font-mono">{m.peso}</span>
+                            </div>
                           </div>
-                          <span className="text-xs">{m.nome}</span>
-                          <div className="flex items-center gap-1 ml-auto">
-                            <Scale className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground font-mono">{m.peso}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
