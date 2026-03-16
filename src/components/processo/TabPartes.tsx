@@ -10,8 +10,8 @@ interface Props {
 }
 
 const TIPO_PRINCIPAL: Record<string, { label: string; icon: typeof User; colorClass: string }> = {
-  autor: { label: "Polo Ativo (Autor)", icon: User, colorClass: "text-primary" },
-  reu: { label: "Polo Passivo (Réu)", icon: Building2, colorClass: "text-warning" },
+  autor: { label: "Titular do Crédito (Credor)", icon: User, colorClass: "text-primary" },
+  reu: { label: "Devedor", icon: Building2, colorClass: "text-warning" },
   outros: { label: "Outros Participantes", icon: Users, colorClass: "text-muted-foreground" },
 };
 

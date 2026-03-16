@@ -73,11 +73,11 @@ export function TriageModal({ processo, open, onClose, onUpdate }: TriageModalPr
           {/* Info header */}
           <div className="grid grid-cols-1 gap-3 p-3 rounded-lg bg-muted/50 text-sm">
             <div>
-              <p className="text-muted-foreground text-xs">Parte Autora</p>
+              <p className="text-muted-foreground text-xs">Titular do Crédito</p>
               <p className="font-medium">{processo.parteAutora}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Parte Ré</p>
+              <p className="text-muted-foreground text-xs">Devedor</p>
               <p className="font-medium">{processo.parteRe}</p>
             </div>
             <div>
