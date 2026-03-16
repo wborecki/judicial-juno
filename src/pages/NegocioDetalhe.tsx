@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil } from "lucide-react";
+import { Briefcase, CheckCircle2, XCircle, MoreHorizontal, Link as LinkIcon, Pencil, User, Activity, Settings2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 // ArrowLeft removed — now using breadcrumbs
