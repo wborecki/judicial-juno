@@ -277,7 +277,7 @@ export default function Processos() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vara/Comarca</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classe/Fase</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Triagem</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-28">Triagem</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Status</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
@@ -328,8 +328,8 @@ export default function Processos() {
                     </TableCell>
                     <TableCell className="text-xs max-w-[140px] truncate">{p.vara_comarca || "—"}</TableCell>
                     <TableCell className="text-xs max-w-[140px] truncate">{p.classe_fase || "—"}</TableCell>
-                    <TableCell className="w-20">
-                      <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${TRIAGEM_COLORS[triagem] ?? ""}`}>
+                    <TableCell className="w-28">
+                      <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${TRIAGEM_COLORS[triagem] ?? ""}`}>
                         {TRIAGEM_OPTIONS.find((t) => t.value === triagem)?.label ?? triagem}
                       </Badge>
                     </TableCell>
