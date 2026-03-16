@@ -148,6 +148,9 @@ export default function TabContratos({ negocioId, processoId }: Props) {
                 {c.observacoes && <p className="text-xs text-muted-foreground mt-1 truncate">{c.observacoes}</p>}
               </div>
               <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-7 w-7" title="Enviar para assinatura" onClick={() => { setAssinaturaContratoId(c.id); setAssinaturaOpen(true); }}>
+                  <Send className="w-3.5 h-3.5 text-primary" />
+                </Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}>
                   <Pencil className="w-3.5 h-3.5" />
                 </Button>
