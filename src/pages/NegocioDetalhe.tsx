@@ -233,7 +233,10 @@ export default function NegocioDetalhe() {
           )}
 
           {/* Valor */}
-          <span className="text-sm font-bold ml-auto">{formatCurrency(negocio.valor_proposta)}</span>
+          <div className="ml-auto text-right">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Valor Proposta</p>
+            <span className="text-sm font-bold">{formatCurrency(negocio.valor_proposta)}</span>
+          </div>
         </div>
       </div>
 
