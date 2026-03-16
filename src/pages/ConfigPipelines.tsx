@@ -136,7 +136,7 @@ export default function ConfigPipelines() {
                 {p.etapas.map((etapa, i) => (
                   <div key={etapa.id} className="flex items-center gap-1.5">
                     <div className="flex items-center gap-1 border rounded-md px-2 py-1 text-xs bg-muted/30">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: etapa.cor }} />
+                      <div className="w-2 h-2 rounded-full bg-primary" />
                       {etapa.nome}
                     </div>
                     {i < p.etapas.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
