@@ -97,7 +97,10 @@ export default function TabDadosGerais({ negocio }: Props) {
 
       {/* Informações do Negócio */}
       <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
-        <p className="text-xs font-semibold text-foreground mb-1">Informações do Negócio</p>
+        <div className="flex items-center gap-2 mb-1">
+          <Briefcase className="w-3.5 h-3.5 text-primary" />
+          <p className="text-xs font-semibold text-foreground">Informações do Negócio</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
           <InlineField label="Título" defaultValue={negocio.titulo ?? ""} onSave={(v) => saveField("titulo", v || null)} />
           <div>
