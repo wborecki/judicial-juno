@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose }
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, FileText, Pencil, Trash2, Variable, X, Download, Loader2 } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2, Variable, X, Download, Loader2, AlertCircle } from "lucide-react";
 
 const TIPO_VAR_OPTIONS = [
   { value: "texto", label: "Texto" },

@@ -118,8 +118,15 @@ export function useCallClickSign() {
       const { data, error } = await supabase.functions.invoke("clicksign-api", {
         body: payload,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        // Parse the edge function error for a cleaner message
+        const { parseClickSignError } = await import("@/lib/clicksign-errors");
+        throw new Error(parseClickSignError(error));
+      }
+      if (data?.error) {
+        const { parseClickSignError } = await import("@/lib/clicksign-errors");
+        throw new Error(parseClickSignError(new Error(data.error)));
+      }
       return data;
     },
   });
