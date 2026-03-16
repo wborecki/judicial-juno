@@ -13,6 +13,7 @@ const settingsNav = [
   { label: "Roteamento", to: "/configuracoes/roteamento", icon: Route },
   { label: "Notificações", to: "/configuracoes/notificacoes", icon: Bell },
   { label: "Integrações", to: "/configuracoes/integracoes", icon: Plug },
+  { label: "Modelos de Documentos", to: "/configuracoes/modelos-documentos", icon: FileText },
 ];
 
 export default function ConfiguracoesLayout() {

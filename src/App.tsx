@@ -79,6 +79,7 @@ const App = () => (
                 <Route path="roteamento" element={<ConfigRoteamento />} />
                 <Route path="notificacoes" element={<Notificacoes />} />
                 <Route path="integracoes" element={<Integracoes />} />
+                <Route path="modelos-documentos" element={<ModelosDocumentos />} />
                 <Route path="perfil" element={<MeuPerfil />} />
               </Route>
             </Route>

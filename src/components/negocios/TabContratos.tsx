@@ -221,6 +221,14 @@ export default function TabContratos({ negocioId, processoId }: Props) {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <EnviarAssinaturaSheet
+        open={assinaturaOpen}
+        onOpenChange={setAssinaturaOpen}
+        negocioId={negocioId}
+        processoId={processoId}
+        contratoId={assinaturaContratoId}
+      />
     </div>
   );
 }

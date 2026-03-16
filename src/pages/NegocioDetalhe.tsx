@@ -273,6 +273,9 @@ export default function NegocioDetalhe() {
         <TabsContent value="contratos">
           <TabContratos negocioId={negocio.id} processoId={negocio.processo_id} />
         </TabsContent>
+        <TabsContent value="assinaturas">
+          <TabAssinaturas negocioId={negocio.id} processoId={negocio.processo_id} />
+        </TabsContent>
       </Tabs>
     </div>
   );
