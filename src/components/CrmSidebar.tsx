@@ -20,6 +20,7 @@ const analiseItems: NavItem[] = [
 
 const comercialItems: NavItem[] = [
   { to: "/negocios", label: "Negócios", icon: Briefcase },
+  { to: "/carteira", label: "Carteira", icon: Wallet },
 ];
 
 const sistemaItems: NavItem[] = [
