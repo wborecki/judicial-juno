@@ -117,6 +117,9 @@ export default function Integracoes() {
         </CardContent>
       </Card>
 
+      {/* ClickSign */}
+      <ClickSignCard />
+
       {/* Placeholder for future integrations */}
       <Card className="glass-card">
         <CardContent className="p-12 flex flex-col items-center justify-center text-center">
