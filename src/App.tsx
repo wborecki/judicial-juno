@@ -27,6 +27,7 @@ import ConfigPipelines from "./pages/ConfigPipelines";
 import Notificacoes from "./pages/Notificacoes";
 import ConfigRoteamento from "./pages/ConfigRoteamento";
 import Integracoes from "./pages/Integracoes";
+import TiposAtividade from "./pages/TiposAtividade";
 import MeuPerfil from "./pages/MeuPerfil";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
 import Auth from "./pages/Auth";
