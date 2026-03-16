@@ -3,16 +3,20 @@ import { CrmSidebar } from "@/components/CrmSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { cn } from "@/lib/utils";
 
-const SELF_SCROLL_ROUTES = ["/configuracoes", "/chat", "/processos", "/analise", "/distribuicao", "/negocios"];
+const COMPACT_ROUTES = new Set(["/", "/triagem", "/precificacao", "/comercial"]);
+
+const getTopLevelRoute = (pathname: string) => {
+  const [segment] = pathname.split("/").filter(Boolean);
+  return segment ? `/${segment}` : "/";
+};
 
 export function AppLayout() {
   const location = useLocation();
-  const path = location.pathname;
+  const topLevelRoute = getTopLevelRoute(location.pathname);
 
-  const isSelfScroll = SELF_SCROLL_ROUTES.some(
-    (r) => path === r || path.startsWith(r + "/")
-  );
-  const isFullWidth = isSelfScroll;
+  const isCompactRoute = COMPACT_ROUTES.has(topLevelRoute);
+  const isSelfScroll = !isCompactRoute;
+  const isFullWidth = !isCompactRoute;
 
   return (
     <div className="flex h-screen bg-background w-full overflow-hidden">
