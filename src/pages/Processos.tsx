@@ -277,7 +277,7 @@ export default function Processos() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Tribunal</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Vara/Comarca</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classe/Fase</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-20">Triagem</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-28">Triagem</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Status</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-16">Trânsito</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right w-24">Valor Est.</TableHead>
