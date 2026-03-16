@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft, CalendarDays, Wallet
+  LayoutDashboard, Scale, Briefcase, MessageSquare, Settings, PanelLeftClose, PanelLeft, CalendarDays, Wallet, Radar
 } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ interface NavItem {
 const analiseItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/processos", label: "Processos", icon: Scale },
+  { to: "/acompanhamento", label: "Acompanhamento", icon: Radar },
 ];
 
 const comercialItems: NavItem[] = [

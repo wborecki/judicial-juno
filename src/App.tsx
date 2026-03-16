@@ -30,6 +30,7 @@ import Integracoes from "./pages/Integracoes";
 import TiposAtividade from "./pages/TiposAtividade";
 import ModelosDocumentos from "./pages/ModelosDocumentos";
 import Carteira from "./pages/Carteira";
+import Acompanhamento from "./pages/Acompanhamento";
 import MeuPerfil from "./pages/MeuPerfil";
 import ProcessoDetalhe from "./pages/ProcessoDetalhe";
 import Auth from "./pages/Auth";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/negocios/:id" element={<NegocioDetalhe />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/carteira" element={<Carteira />} />
+              <Route path="/acompanhamento" element={<Acompanhamento />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/configuracoes" element={<ConfiguracoesLayout />}>
                 <Route index element={<ConfiguracoesGeral />} />

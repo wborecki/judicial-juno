@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      acompanhamento_resultados: {
+        Row: {
+          acompanhamento_id: string
+          created_at: string
+          dados_json: Json | null
+          encontrado_em: string
+          id: string
+          numero_processo: string | null
+          processo_id: string | null
+          tribunal: string | null
+          vinculado: boolean
+        }
+        Insert: {
+          acompanhamento_id: string
+          created_at?: string
+          dados_json?: Json | null
+          encontrado_em?: string
+          id?: string
+          numero_processo?: string | null
+          processo_id?: string | null
+          tribunal?: string | null
+          vinculado?: boolean
+        }
+        Update: {
+          acompanhamento_id?: string
+          created_at?: string
+          dados_json?: Json | null
+          encontrado_em?: string
+          id?: string
+          numero_processo?: string | null
+          processo_id?: string | null
+          tribunal?: string | null
+          vinculado?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acompanhamento_resultados_acompanhamento_id_fkey"
+            columns: ["acompanhamento_id"]
+            isOneToOne: false
+            referencedRelation: "acompanhamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acompanhamento_resultados_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acompanhamentos: {
+        Row: {
+          ativo: boolean
+          cpf_cnpj: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          observacoes: string | null
+          pessoa_id: string
+          total_processos_encontrados: number
+          ultima_verificacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cpf_cnpj: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          pessoa_id: string
+          total_processos_encontrados?: number
+          ultima_verificacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cpf_cnpj?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          pessoa_id?: string
+          total_processos_encontrados?: number
+          ultima_verificacao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acompanhamentos_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agenda_eventos: {
         Row: {
           cor: string | null
