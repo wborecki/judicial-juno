@@ -63,7 +63,7 @@ export default function PessoaSheet({ open, onOpenChange, pessoa: pessoProp, mod
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [tipo, setTipo] = useState("autor");
+  const [tipo, setTipo] = useState("credor");
   const [endereco, setEndereco] = useState("");
   const [cidade, setCidade] = useState("");
   const [uf, setUf] = useState("");
