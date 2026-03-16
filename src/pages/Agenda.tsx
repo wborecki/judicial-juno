@@ -75,6 +75,10 @@ export default function Agenda() {
 
   const { data: eventos, isLoading } = useAgendaEventos(dateRange.start, dateRange.end);
   const { data: usuarios } = useUsuarios();
+  const { data: tiposAtividade = [] } = useTiposAtividade("agenda");
+
+  const tipoLabels = useMemo(() => Object.fromEntries(tiposAtividade.map(t => [t.slug, t.nome])), [tiposAtividade]);
+  const tipoIconMap = useMemo(() => Object.fromEntries(tiposAtividade.map(t => [t.slug, t.icone])), [tiposAtividade]);
 
   const filtered = useMemo(() => {
     return (eventos ?? []).filter((e) => {
