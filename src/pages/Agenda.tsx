@@ -173,7 +173,7 @@ export default function Agenda() {
           <SelectTrigger className="h-8 text-xs w-[150px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos tipos</SelectItem>
-            {Object.entries(TIPO_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            {tiposAtividade.map(t => <SelectItem key={t.slug} value={t.slug}>{t.nome}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterResponsavel} onValueChange={setFilterResponsavel}>
