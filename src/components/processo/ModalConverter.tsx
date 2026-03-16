@@ -184,7 +184,7 @@ export default function ModalConverter({ processo, open, onOpenChange }: Props) 
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-semibold flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" />
-                  Autores — selecione para criar negócios
+                  Titulares do Crédito — selecione para criar negócios
                 </Label>
                 <Button variant="ghost" size="sm" onClick={selectAll} className="text-[10px] h-6 px-2">
                   {selectedAutores.size === autores.length ? "Desmarcar todos" : "Selecionar todos"}
