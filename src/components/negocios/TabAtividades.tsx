@@ -1,29 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNegocioAtividades, useCreateNegocioAtividade } from "@/hooks/useNegocioAtividades";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Phone, Mail, Users, StickyNote, CheckSquare } from "lucide-react";
+import { Plus, Phone, Mail, Users, StickyNote, CheckSquare, Send, FileText, RefreshCw, FileSearch, FileSignature, MessageSquare, DollarSign, Star, Clock, Briefcase, Calendar } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const TIPO_OPTIONS = [
-  { value: "nota", label: "Nota", icon: StickyNote },
-  { value: "ligacao", label: "Ligação", icon: Phone },
-  { value: "email", label: "E-mail", icon: Mail },
-  { value: "reuniao", label: "Reunião", icon: Users },
-  { value: "tarefa", label: "Tarefa", icon: CheckSquare },
-];
-
-const TIPO_COLORS: Record<string, string> = {
-  nota: "bg-warning/10 text-warning border-warning/20",
-  ligacao: "bg-primary/10 text-primary border-primary/20",
-  email: "bg-accent/20 text-accent-foreground border-accent/30",
-  reuniao: "bg-success/10 text-success border-success/20",
-  tarefa: "bg-info/10 text-info border-info/20",
+const ICON_MAP: Record<string, React.ElementType> = {
+  CheckSquare, Users, Phone, Mail, RefreshCw, FileSearch, FileSignature,
+  StickyNote, Send, FileText, Calendar, Clock, Briefcase, MessageSquare,
+  DollarSign, Star,
 };
+
+const FALLBACK_TIPO_OPTIONS = [
+  { value: "nota", label: "Nota", icon: "StickyNote" },
+  { value: "ligacao", label: "Ligação", icon: "Phone" },
+  { value: "email", label: "E-mail", icon: "Mail" },
+  { value: "reuniao", label: "Reunião", icon: "Users" },
+  { value: "tarefa", label: "Tarefa", icon: "CheckSquare" },
+];
 
 interface Props {
   negocioId: string;
