@@ -212,6 +212,8 @@ export type Database = {
           ativo: boolean
           created_at: string
           entidade: string
+          formato_formula: string | null
+          formula: string | null
           grupo: string
           id: string
           nome: string
@@ -224,6 +226,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           entidade?: string
+          formato_formula?: string | null
+          formula?: string | null
           grupo?: string
           id?: string
           nome: string
@@ -236,6 +240,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           entidade?: string
+          formato_formula?: string | null
+          formula?: string | null
           grupo?: string
           id?: string
           nome?: string

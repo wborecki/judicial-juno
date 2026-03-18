@@ -12,6 +12,8 @@ export interface CampoAnalise {
   ativo: boolean;
   entidade: string;
   created_at: string;
+  formula: string | null;
+  formato_formula: string | null;
 }
 
 export function useCamposAnalise(entidade: string = "processo") {

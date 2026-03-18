@@ -11,8 +11,9 @@ import { useProcessoCamposValores, useSaveProcessoCampoValor } from "@/hooks/use
 import { useProcessoAreas, useEnsureProcessoAreas, useToggleAreaConcluida, useUpdateAreaObservacoes, AREAS_TRABALHO, AREA_LABELS, type AreaTrabalho } from "@/hooks/useProcessoAreas";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Scale, DollarSign, FileCheck, ShieldCheck, CheckCircle2, Clock } from "lucide-react";
+import { Scale, DollarSign, FileCheck, ShieldCheck, CheckCircle2, Clock, FunctionSquare } from "lucide-react";
 import { useEffect } from "react";
+import { evaluateFormula, formatFormulaResult, FIXED_FIELD_MAP } from "@/lib/formula-engine";
 
 const AREA_ICONS: Record<AreaTrabalho, React.ReactNode> = {
   juridico: <Scale className="w-4 h-4" />,
@@ -36,7 +37,6 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
   const updateObs = useUpdateAreaObservacoes();
   const { user } = useAuth();
 
-  // Auto-create areas when entering analysis
   useEffect(() => {
     if (processo.id && ["distribuido", "em_analise"].includes(processo.pipeline_status) && areas.length === 0) {
       ensureAreas.mutate(processo.id);
@@ -47,16 +47,50 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
   const totalAreas = AREAS_TRABALHO.length;
   const progressPercent = totalAreas > 0 ? (concluidasCount / totalAreas) * 100 : 0;
 
+  const regularCampos = useMemo(() => campos.filter(c => c.tipo !== "formula"), [campos]);
+  const formulaCampos = useMemo(() => campos.filter(c => c.tipo === "formula" && c.formula), [campos]);
+
   const grouped = useMemo(() => {
-    const map: Record<string, typeof campos> = {};
-    campos.forEach((c) => {
+    const map: Record<string, typeof regularCampos> = {};
+    regularCampos.forEach((c) => {
       if (!map[c.grupo]) map[c.grupo] = [];
       map[c.grupo].push(c);
     });
     return map;
-  }, [campos]);
+  }, [regularCampos]);
 
   const getValor = (campoId: string) => valores.find((v) => v.campo_id === campoId)?.valor ?? "";
+
+  // Build vars map for formulas
+  const formulaVars = useMemo(() => {
+    const vars = new Map<string, number>();
+    // Fixed fields
+    if (processo.valor_estimado != null) {
+      vars.set("Valor da Causa", Number(processo.valor_estimado));
+      vars.set("Valor Estimado", Number(processo.valor_estimado));
+    }
+    if (processo.valor_precificado != null) {
+      vars.set("Valor Precificado", Number(processo.valor_precificado));
+    }
+    // Custom field values by name
+    campos.forEach(c => {
+      if (c.tipo !== "formula") {
+        const val = getValor(c.id);
+        if (val) vars.set(c.nome, Number(val) || 0);
+      }
+    });
+    return vars;
+  }, [processo.valor_estimado, processo.valor_precificado, campos, valores]);
+
+  // Group formula fields
+  const formulaGrouped = useMemo(() => {
+    const map: Record<string, typeof formulaCampos> = {};
+    formulaCampos.forEach((c) => {
+      if (!map[c.grupo]) map[c.grupo] = [];
+      map[c.grupo].push(c);
+    });
+    return map;
+  }, [formulaCampos]);
 
   const handleSave = async (campoId: string, valor: string | null) => {
     try {
@@ -198,6 +232,21 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
         </div>
       ))}
 
+      {/* Formula fields */}
+      {Object.entries(formulaGrouped).map(([grupo, camposGrupo]) => (
+        <div key={`fx-${grupo}`} className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <FunctionSquare className="w-3.5 h-3.5 text-primary" />
+            <p className="text-xs font-semibold text-foreground">{grupo} — Campos Calculados</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4">
+            {camposGrupo.map((campo) => (
+              <FormulaField key={campo.id} campo={campo} vars={formulaVars} />
+            ))}
+          </div>
+        </div>
+      ))}
+
       {campos.length === 0 && (
         <p className="text-[10px] text-muted-foreground italic text-center py-4">
           Nenhum campo de análise configurado. Acesse Configurações → Campos de Análise para criar campos.
@@ -207,16 +256,48 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
   );
 }
 
+function FormulaField({ campo, vars }: { campo: any; vars: Map<string, number> }) {
+  const result = useMemo(() => {
+    try {
+      return evaluateFormula(campo.formula, vars);
+    } catch {
+      return null;
+    }
+  }, [campo.formula, vars]);
+
+  const formatted = result !== null
+    ? formatFormulaResult(result, campo.formato_formula || "numero")
+    : "—";
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1 flex items-center gap-1">
+              <FunctionSquare className="w-3 h-3 text-primary" />
+              {campo.nome}
+            </p>
+            <div className="h-8 flex items-center px-2 rounded border border-border/30 bg-muted/30 text-xs font-medium text-foreground">
+              {formatted}
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p className="text-xs font-mono">{campo.formula}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function DynamicField({ campo, valor, onSave }: { campo: any; valor: string; onSave: (v: string | null) => void }) {
   const [localVal, setLocalVal] = useState(valor);
 
   if (campo.tipo === "checkbox") {
     return (
       <div className="flex items-center gap-2">
-        <Checkbox
-          checked={valor === "true"}
-          onCheckedChange={(checked) => onSave(checked ? "true" : "false")}
-        />
+        <Checkbox checked={valor === "true"} onCheckedChange={(checked) => onSave(checked ? "true" : "false")} />
         <p className="text-xs">{campo.nome}{campo.obrigatorio && <span className="text-destructive ml-0.5">*</span>}</p>
       </div>
     );
