@@ -21,6 +21,7 @@ export default function Acompanhamento() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
 
   const { data: acompanhamentos, isLoading } = useAcompanhamentos();
   const { data: resultados, isLoading: loadingResultados } = useAcompanhamentoResultados(detailId);
