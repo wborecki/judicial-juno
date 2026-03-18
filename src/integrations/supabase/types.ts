@@ -1128,6 +1128,54 @@ export type Database = {
           },
         ]
       }
+      processo_areas_trabalho: {
+        Row: {
+          area: string
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          id: string
+          observacoes: string | null
+          processo_id: string
+        }
+        Insert: {
+          area: string
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          processo_id: string
+        }
+        Update: {
+          area?: string
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processo_areas_trabalho_concluido_por_fkey"
+            columns: ["concluido_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processo_areas_trabalho_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processo_campos_valores: {
         Row: {
           campo_id: string

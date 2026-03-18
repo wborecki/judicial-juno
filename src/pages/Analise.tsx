@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { FileSearch } from "lucide-react";
 import { toast } from "sonner";
+import { useProcessosAreas, AREAS_TRABALHO } from "@/hooks/useProcessoAreas";
 
 const formatCurrency = (v?: number | null) =>
   v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
@@ -26,6 +28,16 @@ export default function Analise() {
   const { data: usuarios } = useUsuarios();
   const { data: membros } = useEquipeMembros();
   const trocar = useTrocarAnalista();
+
+  const processoIds = (processos ?? []).map(p => p.id);
+  const { data: allAreas = [] } = useProcessosAreas(processoIds);
+
+  const getProgressForProcesso = (processoId: string) => {
+    const areas = allAreas.filter(a => a.processo_id === processoId);
+    const total = AREAS_TRABALHO.length;
+    const done = areas.filter(a => a.concluido).length;
+    return { done, total };
+  };
 
   const [filterEquipe, setFilterEquipe] = useState("all");
   const [filterAnalista, setFilterAnalista] = useState("all");
@@ -92,6 +104,7 @@ export default function Analise() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Equipe</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Analista</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Progresso</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Distribuído em</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Trocar Analista</TableHead>
             </TableRow>
@@ -127,6 +140,20 @@ export default function Analise() {
                         <span className="text-xs">{analista.nome}</span>
                         </div>
                       ) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const { done, total } = getProgressForProcesso(p.id);
+                        const percent = total > 0 ? (done / total) * 100 : 0;
+                        return (
+                          <div className="flex items-center gap-2 min-w-[80px]">
+                            <Progress value={percent} className="h-1.5 flex-1" />
+                            <span className={`text-[11px] font-medium ${done === total && total > 0 ? "text-success" : "text-muted-foreground"}`}>
+                              {done}/{total}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDate(p.distribuido_em)}</TableCell>
                     <TableCell className="w-[180px]" onClick={e => e.stopPropagation()}>
