@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Eye, EyeOff, Trash2, Radar, ChevronRight } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, Trash2, Radar, ChevronRight, Gavel } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ComunicarDividaSheet from "@/components/acompanhamento/ComunicarDividaSheet";
 
 export default function Acompanhamento() {
   const [search, setSearch] = useState("");
@@ -20,6 +21,7 @@ export default function Acompanhamento() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
 
   const { data: acompanhamentos, isLoading } = useAcompanhamentos();
   const { data: resultados, isLoading: loadingResultados } = useAcompanhamentoResultados(detailId);
@@ -247,6 +249,14 @@ export default function Acompanhamento() {
               </div>
             )}
 
+            <Button
+              className="w-full"
+              onClick={() => setDividaSheetOpen(true)}
+            >
+              <Gavel className="w-4 h-4 mr-1" />
+              Comunicar Dívida ao Juiz
+            </Button>
+
             <div className="border-t pt-4">
               <h3 className="font-medium text-sm mb-3">Processos Encontrados</h3>
               {loadingResultados ? (
@@ -275,6 +285,18 @@ export default function Acompanhamento() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Sheet: Comunicar Dívida */}
+      <ComunicarDividaSheet
+        open={dividaSheetOpen}
+        onOpenChange={setDividaSheetOpen}
+        acompanhamento={selectedDetail ? {
+          id: selectedDetail.id,
+          pessoa_id: selectedDetail.pessoa_id,
+          cpf_cnpj: selectedDetail.cpf_cnpj,
+          pessoas: selectedDetail.pessoas as any,
+        } : null}
+      />
     </div>
   );
 }

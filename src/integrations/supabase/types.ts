@@ -396,6 +396,69 @@ export type Database = {
           },
         ]
       }
+      comunicacoes_divida: {
+        Row: {
+          acompanhamento_id: string
+          created_at: string
+          criado_por: string | null
+          dados_pessoa: Json | null
+          enviado_em: string | null
+          id: string
+          numero_processo: string
+          observacoes: string | null
+          pessoa_id: string | null
+          status: string
+          tribunal: string | null
+          valor_credito: number | null
+          valor_divida: number | null
+        }
+        Insert: {
+          acompanhamento_id: string
+          created_at?: string
+          criado_por?: string | null
+          dados_pessoa?: Json | null
+          enviado_em?: string | null
+          id?: string
+          numero_processo: string
+          observacoes?: string | null
+          pessoa_id?: string | null
+          status?: string
+          tribunal?: string | null
+          valor_credito?: number | null
+          valor_divida?: number | null
+        }
+        Update: {
+          acompanhamento_id?: string
+          created_at?: string
+          criado_por?: string | null
+          dados_pessoa?: Json | null
+          enviado_em?: string | null
+          id?: string
+          numero_processo?: string
+          observacoes?: string | null
+          pessoa_id?: string | null
+          status?: string
+          tribunal?: string | null
+          valor_credito?: number | null
+          valor_divida?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comunicacoes_divida_acompanhamento_id_fkey"
+            columns: ["acompanhamento_id"]
+            isOneToOne: false
+            referencedRelation: "acompanhamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comunicacoes_divida_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contatos: {
         Row: {
           created_at: string
