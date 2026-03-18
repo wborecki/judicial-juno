@@ -268,7 +268,7 @@ export default function NegocioDetalhe() {
           <TabAtividades negocioId={negocio.id} />
         </TabsContent>
         <TabsContent value="campos">
-          <TabCamposPersonalizados negocioId={negocio.id} />
+          <TabCamposPersonalizados negocioId={negocio.id} negocio={negocio} />
         </TabsContent>
         <TabsContent value="contratos">
           <TabContratos negocioId={negocio.id} processoId={negocio.processo_id} />
