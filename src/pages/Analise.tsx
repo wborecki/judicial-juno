@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { FileSearch } from "lucide-react";
 import { toast } from "sonner";
+import { useProcessosAreas, AREAS_TRABALHO } from "@/hooks/useProcessoAreas";
 
 const formatCurrency = (v?: number | null) =>
   v ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
