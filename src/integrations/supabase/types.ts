@@ -840,6 +840,77 @@ export type Database = {
         }
         Relationships: []
       }
+      n8n_webhook_logs: {
+        Row: {
+          created_at: string
+          evento: string
+          id: string
+          payload: Json
+          resposta: string | null
+          status_code: number | null
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          evento: string
+          id?: string
+          payload?: Json
+          resposta?: string | null
+          status_code?: number | null
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          resposta?: string | null
+          status_code?: number | null
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "n8n_webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "n8n_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      n8n_webhooks: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          eventos: Json
+          headers_custom: Json | null
+          id: string
+          nome: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          eventos?: Json
+          headers_custom?: Json | null
+          id?: string
+          nome: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          eventos?: Json
+          headers_custom?: Json | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       negocio_atividades: {
         Row: {
           created_at: string
