@@ -33,6 +33,9 @@ export type Processo = {
   vara_comarca: string | null;
   classe_fase: string | null;
   natureza_credito: string | null;
+  apto_analise: boolean;
+  apto_analise_por: string | null;
+  apto_analise_em: string | null;
   created_at: string;
   updated_at: string;
 };

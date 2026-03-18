@@ -42,7 +42,7 @@ export function useProcessoAreas(processoId?: string) {
 export function useEnsureProcessoAreas() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (processoId: string) => {
+    mutationFn: async ({ processoId, equipesPorArea }: { processoId: string; equipesPorArea?: Record<string, string | null> }) => {
       // Check existing
       const { data: existing } = await supabase
         .from("processo_areas_trabalho")
@@ -53,15 +53,35 @@ export function useEnsureProcessoAreas() {
       const missing = AREAS_TRABALHO.filter(a => !existingAreas.includes(a));
 
       if (missing.length > 0) {
-        const rows = missing.map(area => ({ processo_id: processoId, area }));
+        const rows = missing.map(area => ({
+          processo_id: processoId,
+          area,
+          equipe_id: equipesPorArea?.[area] ?? null,
+        }));
         const { error } = await supabase
           .from("processo_areas_trabalho")
           .insert(rows as any);
         if (error) throw error;
       }
     },
-    onSuccess: (_, processoId) => {
+    onSuccess: (_, { processoId }) => {
       qc.invalidateQueries({ queryKey: ["processo_areas", processoId] });
+    },
+  });
+}
+
+export function useUpdateAreaEquipe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, equipe_id }: { id: string; equipe_id: string | null }) => {
+      const { error } = await supabase
+        .from("processo_areas_trabalho")
+        .update({ equipe_id } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["processo_areas"] });
     },
   });
 }
