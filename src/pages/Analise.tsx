@@ -104,6 +104,7 @@ export default function Analise() {
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Equipe</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Analista</TableHead>
+              <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Progresso</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Distribuído em</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-[180px]">Trocar Analista</TableHead>
             </TableRow>
