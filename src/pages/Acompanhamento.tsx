@@ -285,6 +285,18 @@ export default function Acompanhamento() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Sheet: Comunicar Dívida */}
+      <ComunicarDividaSheet
+        open={dividaSheetOpen}
+        onOpenChange={setDividaSheetOpen}
+        acompanhamento={selectedDetail ? {
+          id: selectedDetail.id,
+          pessoa_id: selectedDetail.pessoa_id,
+          cpf_cnpj: selectedDetail.cpf_cnpj,
+          pessoas: selectedDetail.pessoas as any,
+        } : null}
+      />
     </div>
   );
 }
