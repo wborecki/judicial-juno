@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
@@ -92,6 +92,8 @@ export function useRemetentes(conversaId?: string) {
   });
 }
 
+const MESSAGES_PAGE_SIZE = 50;
+
 export function useMensagens(conversaId?: string) {
   const queryClient = useQueryClient();
 
@@ -103,9 +105,15 @@ export function useMensagens(conversaId?: string) {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_mensagens", filter: `conversa_id=eq.${conversaId}` },
         (payload) => {
-          queryClient.setQueryData<ChatMensagem[]>(
+          queryClient.setQueryData(
             ["chat-mensagens", conversaId],
-            (old) => [...(old ?? []), payload.new as ChatMensagem]
+            (old: { pages: ChatMensagem[][]; pageParams: unknown[] } | undefined) => {
+              if (!old) return old;
+              const lastPageIndex = old.pages.length - 1;
+              const newPages = [...old.pages];
+              newPages[lastPageIndex] = [...newPages[lastPageIndex], payload.new as ChatMensagem];
+              return { ...old, pages: newPages };
+            }
           );
           queryClient.invalidateQueries({ queryKey: ["chat-conversas"] });
         }
@@ -117,20 +125,39 @@ export function useMensagens(conversaId?: string) {
     };
   }, [conversaId, queryClient]);
 
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: ["chat-mensagens", conversaId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       if (!conversaId) return [];
-      const { data, error } = await supabase
+      let q = supabase
         .from("chat_mensagens")
         .select("*")
         .eq("conversa_id", conversaId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(MESSAGES_PAGE_SIZE);
+
+      if (pageParam) {
+        q = q.lt("created_at", pageParam);
+      }
+
+      const { data, error } = await q;
       if (error) throw error;
-      return data as ChatMensagem[];
+      return (data as ChatMensagem[]).reverse();
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.length < MESSAGES_PAGE_SIZE) return undefined;
+      return lastPage[0]?.created_at ?? undefined;
     },
     enabled: !!conversaId,
   });
+
+  const allMessages = query.data?.pages.flat() ?? [];
+
+  return {
+    ...query,
+    data: allMessages,
+  };
 }
 
 export function useSendMessage() {

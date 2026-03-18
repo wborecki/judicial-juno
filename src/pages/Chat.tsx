@@ -265,7 +265,7 @@ function RenameDialog({ open, onOpenChange, conversa }: { open: boolean; onOpenC
 function MessagePanel({ conversaId, userId, conversa, onAddMembers, onRename, onGroupSettings }: {
   conversaId: string; userId: string; conversa?: ChatConversa; onAddMembers: () => void; onRename: () => void; onGroupSettings: () => void;
 }) {
-  const { data: mensagens = [], isLoading } = useMensagens(conversaId);
+  const { data: mensagens = [], isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useMensagens(conversaId);
   const { data: participantes = [] } = useParticipantes(conversaId);
   const { data: remetentes = [] } = useRemetentes(conversaId);
   const sendMessage = useSendMessage();
@@ -353,6 +353,13 @@ function MessagePanel({ conversaId, userId, conversa, onAddMembers, onRename, on
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        {hasNextPage && (
+          <div className="text-center pb-2">
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+              {isFetchingNextPage ? "Carregando..." : "Carregar mensagens anteriores"}
+            </Button>
+          </div>
+        )}
         {isLoading && <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-2/3" />)}</div>}
         {!isLoading && mensagens.length === 0 && (
           <div className="text-center py-12 text-muted-foreground text-xs">Nenhuma mensagem ainda. Comece a conversa!</div>
