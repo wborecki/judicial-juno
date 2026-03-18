@@ -27,7 +27,7 @@ export function useCreateComunicacaoDivida() {
       tribunal?: string;
       valor_credito?: number;
       valor_divida?: number;
-      dados_pessoa?: Record<string, unknown>;
+      dados_pessoa?: Record<string, string | null | undefined>;
       observacoes?: string;
       criado_por?: string;
     }) => {
