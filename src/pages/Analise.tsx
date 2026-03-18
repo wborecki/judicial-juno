@@ -141,6 +141,20 @@ export default function Analise() {
                         </div>
                       ) : "—"}
                     </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const { done, total } = getProgressForProcesso(p.id);
+                        const percent = total > 0 ? (done / total) * 100 : 0;
+                        return (
+                          <div className="flex items-center gap-2 min-w-[80px]">
+                            <Progress value={percent} className="h-1.5 flex-1" />
+                            <span className={`text-[11px] font-medium ${done === total && total > 0 ? "text-success" : "text-muted-foreground"}`}>
+                              {done}/{total}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDate(p.distribuido_em)}</TableCell>
                     <TableCell className="w-[180px]" onClick={e => e.stopPropagation()}>
                       <Select value={p.analista_id ?? ""} onValueChange={(v) => handleTrocarAnalista(p.id, v)}>
