@@ -13,6 +13,7 @@ import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ComunicarDividaSheet from "@/components/acompanhamento/ComunicarDividaSheet";
 
 export default function Acompanhamento() {
   const [search, setSearch] = useState("");
