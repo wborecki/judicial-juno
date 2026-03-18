@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Eye, EyeOff, Trash2, Radar, ChevronRight } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, Trash2, Radar, ChevronRight, Gavel } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
