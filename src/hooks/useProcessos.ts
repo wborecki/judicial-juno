@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDispararWebhook } from "@/hooks/useN8nWebhooks";
 
 export type Processo = {
   id: string;
@@ -158,6 +159,7 @@ export function useProcesso(id: string | undefined) {
 
 export function useUpdateProcesso() {
   const queryClient = useQueryClient();
+  const disparar = useDispararWebhook();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Processo> }) => {
       const { data, error } = await supabase
@@ -167,13 +169,19 @@ export function useUpdateProcesso() {
         .select()
         .single();
       if (error) throw error;
-      return data;
+      return { data, updates };
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, updates }) => {
       queryClient.invalidateQueries({ queryKey: ["processos"] });
       queryClient.invalidateQueries({ queryKey: ["processos-paginated"] });
       queryClient.invalidateQueries({ queryKey: ["processos-stats"] });
       queryClient.setQueryData(["processo", data.id], data);
+      if (updates.pipeline_status === "em_analise" || updates.analista_id) {
+        disparar.mutate({ evento: "processo.distribuido", dados: { processo_id: data.id, numero_processo: data.numero_processo } });
+      }
+      if (updates.triagem_resultado === "descartado") {
+        disparar.mutate({ evento: "processo.descartado", dados: { processo_id: data.id, numero_processo: data.numero_processo } });
+      }
     },
   });
 }

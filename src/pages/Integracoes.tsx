@@ -3,9 +3,11 @@ import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plug, Calendar, RefreshCw, ExternalLink, Unplug, FileSignature, CheckCircle2, XCircle } from "lucide-react";
+import { Plug, Calendar, RefreshCw, ExternalLink, Unplug, FileSignature, CheckCircle2, XCircle, Webhook, Plus, Pencil, Trash2, Play } from "lucide-react";
 import { useCallClickSign } from "@/hooks/useDocumentoEnvios";
 import { useGoogleToken, useGoogleCalendarAuth, useGoogleCalendarSync, useDisconnectGoogle, useToggleGoogleSync } from "@/hooks/useGoogleCalendar";
+import { useN8nWebhooks, useUpdateN8nWebhook, useDeleteN8nWebhook, useDispararWebhook, EVENTOS_DISPONIVEIS, type N8nWebhook } from "@/hooks/useN8nWebhooks";
+import N8nWebhookSheet from "@/components/integracoes/N8nWebhookSheet";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -59,6 +61,102 @@ function ClickSignCard() {
   );
 }
 
+function N8nCard() {
+  const { data: webhooks, isLoading } = useN8nWebhooks();
+  const updateMut = useUpdateN8nWebhook();
+  const deleteMut = useDeleteN8nWebhook();
+  const dispararMut = useDispararWebhook();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<N8nWebhook | null>(null);
+
+  const handleTest = async (webhook: N8nWebhook) => {
+    try {
+      const result = await dispararMut.mutateAsync({
+        evento: webhook.eventos[0] ?? "test",
+        dados: { teste: true, webhook_nome: webhook.nome, timestamp: new Date().toISOString() },
+      });
+      toast.success(`Teste enviado! ${result.dispatched} webhook(s) disparado(s).`);
+    } catch {
+      toast.error("Erro ao testar webhook");
+    }
+  };
+
+  const handleToggle = (webhook: N8nWebhook, ativo: boolean) => {
+    updateMut.mutate({ id: webhook.id, updates: { ativo } as any });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Excluir este webhook?")) return;
+    try {
+      await deleteMut.mutateAsync(id);
+      toast.success("Webhook excluído");
+    } catch {
+      toast.error("Erro ao excluir");
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-4 pb-2">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Webhook className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <CardTitle className="text-base">n8n — Automações</CardTitle>
+            <CardDescription className="text-xs">Dispare webhooks para o n8n quando eventos acontecem na plataforma</CardDescription>
+          </div>
+          <Button size="sm" className="text-xs gap-1.5" onClick={() => { setEditing(null); setSheetOpen(true); }}>
+            <Plus className="w-3.5 h-3.5" /> Novo Webhook
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            <p className="text-xs text-muted-foreground">Carregando...</p>
+          ) : !webhooks?.length ? (
+            <p className="text-xs text-muted-foreground">Nenhum webhook configurado. Crie um para começar a automatizar.</p>
+          ) : (
+            <div className="space-y-2">
+              {webhooks.map((wh) => (
+                <div key={wh.id} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{wh.nome}</span>
+                      <Badge variant={wh.ativo ? "default" : "secondary"} className="text-[10px]">
+                        {wh.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </div>
+                    <Switch checked={wh.ativo} onCheckedChange={(v) => handleToggle(wh, v)} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-mono truncate">{wh.url}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {wh.eventos.map((ev) => (
+                      <Badge key={ev} variant="outline" className="text-[10px]">{ev}</Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button size="sm" variant="ghost" className="text-xs gap-1 h-7" onClick={() => handleTest(wh)} disabled={dispararMut.isPending}>
+                      <Play className="w-3 h-3" /> Testar
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-xs gap-1 h-7" onClick={() => { setEditing(wh); setSheetOpen(true); }}>
+                      <Pencil className="w-3 h-3" /> Editar
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-xs gap-1 h-7 text-destructive" onClick={() => handleDelete(wh.id)} disabled={deleteMut.isPending}>
+                      <Trash2 className="w-3 h-3" /> Excluir
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <N8nWebhookSheet open={sheetOpen} onOpenChange={setSheetOpen} webhook={editing} />
+    </>
+  );
+}
+
 export default function Integracoes() {
   const { data: googleToken, isLoading } = useGoogleToken();
   const authMut = useGoogleCalendarAuth();
@@ -67,7 +165,6 @@ export default function Integracoes() {
   const toggleSyncMut = useToggleGoogleSync();
   const qc = useQueryClient();
 
-  // Listen for OAuth callback message
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data === "google-calendar-connected") {
@@ -120,6 +217,9 @@ export default function Integracoes() {
         <p className="text-xs text-muted-foreground mt-1">Conecte com sistemas externos e APIs</p>
       </div>
 
+      {/* n8n */}
+      <N8nCard />
+
       {/* Google Calendar */}
       <Card>
         <CardHeader className="flex flex-row items-center gap-4 pb-2">
@@ -142,10 +242,7 @@ export default function Integracoes() {
                   <p className="text-xs font-medium">Sincronização automática</p>
                   <p className="text-[10px] text-muted-foreground">Enviar novos eventos automaticamente</p>
                 </div>
-                <Switch
-                  checked={googleToken.sync_enabled}
-                  onCheckedChange={handleToggleSync}
-                />
+                <Switch checked={googleToken.sync_enabled} onCheckedChange={handleToggleSync} />
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={handleSync} disabled={syncMut.isPending}>
@@ -170,7 +267,7 @@ export default function Integracoes() {
       {/* ClickSign */}
       <ClickSignCard />
 
-      {/* Placeholder for future integrations */}
+      {/* Placeholder */}
       <Card className="glass-card">
         <CardContent className="p-12 flex flex-col items-center justify-center text-center">
           <Plug className="w-12 h-12 text-muted-foreground mb-4" />

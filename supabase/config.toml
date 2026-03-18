@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.clicksign-api]
 verify_jwt = false
+
+[functions.n8n-webhook]
+verify_jwt = false

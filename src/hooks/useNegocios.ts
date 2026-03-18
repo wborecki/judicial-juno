@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDispararWebhook } from "@/hooks/useN8nWebhooks";
 
 export type NegocioWithRelations = {
   id: string;
@@ -80,29 +81,37 @@ export function useNegocio(id: string | undefined) {
 
 export function useCreateNegocio() {
   const queryClient = useQueryClient();
+  const disparar = useDispararWebhook();
   return useMutation({
     mutationFn: async (negocio: NegocioInsert) => {
       const { data, error } = await supabase.from("negocios").insert(negocio).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["negocios"] });
+      disparar.mutate({ evento: "negocio.criado", dados: { negocio_id: data.id, titulo: data.titulo } });
     },
   });
 }
 
 export function useUpdateNegocio() {
   const queryClient = useQueryClient();
+  const disparar = useDispararWebhook();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<NegocioInsert> }) => {
       const { data, error } = await supabase.from("negocios").update(updates).eq("id", id).select().single();
       if (error) throw error;
-      return data;
+      return { data, updates };
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, updates }) => {
       queryClient.invalidateQueries({ queryKey: ["negocios"] });
       queryClient.invalidateQueries({ queryKey: ["negocio", data.id] });
+      if (updates.negocio_status === "ganho") {
+        disparar.mutate({ evento: "negocio.ganho", dados: { negocio_id: data.id } });
+      } else if (updates.negocio_status === "perdido") {
+        disparar.mutate({ evento: "negocio.perdido", dados: { negocio_id: data.id } });
+      }
     },
   });
 }
