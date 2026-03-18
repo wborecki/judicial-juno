@@ -65,7 +65,7 @@ export default function Acompanhamento() {
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Acompanhamento de Credores</h1>
+          <h1 className="text-xl font-semibold text-foreground">Busca de Credor</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Monitore CPFs/CNPJs para saber quando surgem processos judiciais
           </p>
