@@ -33,7 +33,7 @@ export function useCreateComunicacaoDivida() {
     }) => {
       const { data, error } = await supabase
         .from("comunicacoes_divida")
-        .insert(input)
+        .insert([input])
         .select()
         .single();
       if (error) throw error;
