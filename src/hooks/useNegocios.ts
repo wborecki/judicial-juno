@@ -81,14 +81,16 @@ export function useNegocio(id: string | undefined) {
 
 export function useCreateNegocio() {
   const queryClient = useQueryClient();
+  const disparar = useDispararWebhook();
   return useMutation({
     mutationFn: async (negocio: NegocioInsert) => {
       const { data, error } = await supabase.from("negocios").insert(negocio).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["negocios"] });
+      disparar.mutate({ evento: "negocio.criado", dados: { negocio_id: data.id, titulo: data.titulo } });
     },
   });
 }
