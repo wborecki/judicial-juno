@@ -5,15 +5,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCamposAnalise } from "@/hooks/useCamposAnalise";
 import { useProcessoCamposValores, useSaveProcessoCampoValor } from "@/hooks/useProcessoCamposValores";
-import { useProcessoAreas, useEnsureProcessoAreas, useToggleAreaConcluida, useUpdateAreaObservacoes, AREAS_TRABALHO, AREA_LABELS, type AreaTrabalho } from "@/hooks/useProcessoAreas";
+import { useProcessoAreas, useEnsureProcessoAreas, useToggleAreaConcluida, useUpdateAreaObservacoes, useUpdateAreaEquipe, AREAS_TRABALHO, AREA_LABELS, type AreaTrabalho } from "@/hooks/useProcessoAreas";
+import { useEquipes } from "@/hooks/useEquipes";
 import { useAuth } from "@/hooks/useAuth";
+import { useUpdateProcesso, type Processo } from "@/hooks/useProcessos";
 import { toast } from "sonner";
-import { Scale, DollarSign, FileCheck, ShieldCheck, CheckCircle2, Clock, FunctionSquare } from "lucide-react";
+import { Scale, DollarSign, FileCheck, ShieldCheck, CheckCircle2, Clock, FunctionSquare, ShieldAlert, Users, PlayCircle } from "lucide-react";
 import { useEffect } from "react";
-import { evaluateFormula, formatFormulaResult, FIXED_FIELD_MAP } from "@/lib/formula-engine";
+import { evaluateFormula, formatFormulaResult } from "@/lib/formula-engine";
 
 const AREA_ICONS: Record<AreaTrabalho, React.ReactNode> = {
   juridico: <Scale className="w-4 h-4" />,
@@ -23,7 +26,7 @@ const AREA_ICONS: Record<AreaTrabalho, React.ReactNode> = {
 };
 
 interface Props {
-  processo: any;
+  processo: Processo;
   onSaveField: (field: string, value: any) => Promise<void>;
 }
 
@@ -35,13 +38,12 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
   const ensureAreas = useEnsureProcessoAreas();
   const toggleArea = useToggleAreaConcluida();
   const updateObs = useUpdateAreaObservacoes();
+  const updateAreaEquipe = useUpdateAreaEquipe();
+  const updateProcesso = useUpdateProcesso();
+  const { data: equipes = [] } = useEquipes();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (processo.id && ["distribuido", "em_analise"].includes(processo.pipeline_status) && areas.length === 0) {
-      ensureAreas.mutate(processo.id);
-    }
-  }, [processo.id, processo.pipeline_status, areas.length]);
+  const activeEquipes = equipes.filter((e: any) => e.ativa);
 
   const concluidasCount = areas.filter(a => a.concluido).length;
   const totalAreas = AREAS_TRABALHO.length;
@@ -64,7 +66,6 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
   // Build vars map for formulas
   const formulaVars = useMemo(() => {
     const vars = new Map<string, number>();
-    // Fixed fields
     if (processo.valor_estimado != null) {
       vars.set("Valor da Causa", Number(processo.valor_estimado));
       vars.set("Valor Estimado", Number(processo.valor_estimado));
@@ -72,7 +73,6 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
     if (processo.valor_precificado != null) {
       vars.set("Valor Precificado", Number(processo.valor_precificado));
     }
-    // Custom field values by name
     campos.forEach(c => {
       if (c.tipo !== "formula") {
         const val = getValor(c.id);
@@ -82,7 +82,6 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
     return vars;
   }, [processo.valor_estimado, processo.valor_precificado, campos, valores]);
 
-  // Group formula fields
   const formulaGrouped = useMemo(() => {
     const map: Record<string, typeof formulaCampos> = {};
     formulaCampos.forEach((c) => {
@@ -106,6 +105,7 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
         id: areaItem.id,
         concluido: !areaItem.concluido,
         concluido_por: user?.id,
+        processo_id: processo.id,
       });
       toast.success(!areaItem.concluido ? `${AREA_LABELS[areaItem.area as AreaTrabalho]} marcado como concluído` : `${AREA_LABELS[areaItem.area as AreaTrabalho]} reaberto`);
     } catch {
@@ -113,12 +113,54 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
     }
   };
 
+  const handleAptoAnalise = async () => {
+    try {
+      await ensureAreas.mutateAsync({ processoId: processo.id });
+      await updateProcesso.mutateAsync({
+        id: processo.id,
+        updates: {
+          apto_analise: true,
+          apto_analise_por: user?.id ?? null,
+          apto_analise_em: new Date().toISOString(),
+        } as any,
+      });
+      toast.success("Processo marcado como apto para análise. Áreas de trabalho liberadas.");
+    } catch {
+      toast.error("Erro ao marcar como apto");
+    }
+  };
+
   const getAreaData = (area: AreaTrabalho) => areas.find(a => a.area === area);
+
+  const isApto = (processo as any).apto_analise === true;
 
   return (
     <div className="space-y-4">
-      {/* Areas progress panel */}
-      {areas.length > 0 && (
+      {/* Gate: Apto para Análise */}
+      {!isApto && (
+        <div className="bg-warning/5 border border-warning/30 rounded-xl p-6 flex flex-col items-center text-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
+            <ShieldAlert className="w-6 h-6 text-warning" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Análise Prévia Pendente</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              O analista deve realizar uma análise inicial do processo antes de liberar para as equipes de trabalho (Jurídico, Financeiro, Documental, Compliance).
+            </p>
+          </div>
+          <Button
+            onClick={handleAptoAnalise}
+            disabled={ensureAreas.isPending || updateProcesso.isPending}
+            className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
+          >
+            <PlayCircle className="w-4 h-4" />
+            {ensureAreas.isPending ? "Liberando..." : "Apto para Análise — Liberar Áreas"}
+          </Button>
+        </div>
+      )}
+
+      {/* Areas progress panel - only after "Apto" */}
+      {isApto && areas.length > 0 && (
         <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-foreground">Áreas de Trabalho</p>
@@ -135,6 +177,7 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
               const areaData = getAreaData(area);
               if (!areaData) return null;
               const concluido = areaData.concluido;
+              const assignedEquipe = activeEquipes.find((e: any) => e.id === areaData.equipe_id);
               return (
                 <div
                   key={area}
@@ -175,7 +218,29 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-2 ml-10">
+                  {/* Equipe assignment */}
+                  <div className="mt-2 ml-10 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <Select
+                        value={areaData.equipe_id ?? ""}
+                        onValueChange={(v) => {
+                          updateAreaEquipe.mutate({ id: areaData.id, equipe_id: v || null });
+                        }}
+                      >
+                        <SelectTrigger className="h-7 text-[11px] w-[180px] border-dashed">
+                          <SelectValue placeholder="Atribuir equipe..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeEquipes.map((eq: any) => (
+                            <SelectItem key={eq.id} value={eq.id} className="text-xs">{eq.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {assignedEquipe && (
+                        <Badge variant="outline" className="text-[10px]">{assignedEquipe.nome}</Badge>
+                      )}
+                    </div>
                     <Textarea
                       placeholder="Observações da área..."
                       defaultValue={areaData.observacoes ?? ""}
@@ -247,7 +312,7 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
         </div>
       ))}
 
-      {campos.length === 0 && (
+      {campos.length === 0 && !isApto && (
         <p className="text-[10px] text-muted-foreground italic text-center py-4">
           Nenhum campo de análise configurado. Acesse Configurações → Campos de Análise para criar campos.
         </p>

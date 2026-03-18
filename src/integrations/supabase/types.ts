@@ -1212,6 +1212,7 @@ export type Database = {
           concluido_em: string | null
           concluido_por: string | null
           created_at: string
+          equipe_id: string | null
           id: string
           observacoes: string | null
           processo_id: string
@@ -1222,6 +1223,7 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          equipe_id?: string | null
           id?: string
           observacoes?: string | null
           processo_id: string
@@ -1232,6 +1234,7 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          equipe_id?: string | null
           id?: string
           observacoes?: string | null
           processo_id?: string
@@ -1242,6 +1245,13 @@ export type Database = {
             columns: ["concluido_por"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processo_areas_trabalho_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
             referencedColumns: ["id"]
           },
           {
@@ -1495,6 +1505,9 @@ export type Database = {
       processos: {
         Row: {
           analista_id: string | null
+          apto_analise: boolean
+          apto_analise_em: string | null
+          apto_analise_por: string | null
           area: string | null
           assunto: string | null
           classe_fase: string | null
@@ -1538,6 +1551,9 @@ export type Database = {
         }
         Insert: {
           analista_id?: string | null
+          apto_analise?: boolean
+          apto_analise_em?: string | null
+          apto_analise_por?: string | null
           area?: string | null
           assunto?: string | null
           classe_fase?: string | null
@@ -1581,6 +1597,9 @@ export type Database = {
         }
         Update: {
           analista_id?: string | null
+          apto_analise?: boolean
+          apto_analise_em?: string | null
+          apto_analise_por?: string | null
           area?: string | null
           assunto?: string | null
           classe_fase?: string | null
