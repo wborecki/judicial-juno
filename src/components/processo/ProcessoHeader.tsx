@@ -208,6 +208,21 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
                 <Button size="sm" onClick={onConvert} className="text-xs gap-1.5 h-7 rounded-lg bg-success hover:bg-success/90 text-success-foreground shrink-0">
                   <Briefcase className="w-3.5 h-3.5" />Criar Negócio
                 </Button>
+              ) : !isApto ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button size="sm" disabled className="text-xs gap-1.5 h-7 rounded-lg opacity-50 shrink-0">
+                          <Briefcase className="w-3.5 h-3.5" />Criar Negócio
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">O analista precisa marcar como "Apto para Análise" na aba Análise.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ) : (
                 <TooltipProvider>
                   <Tooltip>
@@ -219,7 +234,7 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">{hasAreas ? "Todas as áreas de trabalho precisam ser concluídas antes de criar um negócio." : "O processo precisa passar pela análise das áreas de trabalho antes de virar negócio."}</p>
+                      <p className="text-xs">Todas as áreas de trabalho precisam ser concluídas.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
