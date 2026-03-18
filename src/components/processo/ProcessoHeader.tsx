@@ -87,9 +87,10 @@ export default function ProcessoHeader({ processo, onConvert, onDiscard, onReana
   const triagem = processo.triagem_resultado ?? "pendente";
   const p = processo as any;
 
+  const isApto = (processo as any).apto_analise === true;
   const { data: areas = [] } = useProcessoAreas(processo.id);
-  const allAreasDone = areas.length > 0 && areas.every(a => a.concluido);
-  const hasAreas = areas.length > 0;
+  const allAreasDone = isApto && areas.length > 0 && areas.every(a => a.concluido);
+  const hasAreas = isApto && areas.length > 0;
   const pendingAreas = areas.filter(a => !a.concluido).length;
 
   const handleCopyCNJ = async () => {
