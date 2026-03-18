@@ -21,6 +21,8 @@ import {
 import { Copy, Check, MoreHorizontal, Pencil, RefreshCw, ExternalLink, Briefcase, ChevronDown, Eye, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Processo, useUpdateProcesso } from "@/hooks/useProcessos";
+import { useProcessoAreas } from "@/hooks/useProcessoAreas";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PessoaSheet from "@/components/PessoaSheet";
 
 const STATUS_LABELS: Record<number, string> = {
