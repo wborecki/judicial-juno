@@ -249,6 +249,14 @@ export default function Acompanhamento() {
               </div>
             )}
 
+            <Button
+              className="w-full"
+              onClick={() => setDividaSheetOpen(true)}
+            >
+              <Gavel className="w-4 h-4 mr-1" />
+              Comunicar Dívida ao Juiz
+            </Button>
+
             <div className="border-t pt-4">
               <h3 className="font-medium text-sm mb-3">Processos Encontrados</h3>
               {loadingResultados ? (
