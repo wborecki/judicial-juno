@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDispararWebhook } from "@/hooks/useN8nWebhooks";
 
 export const AREAS_TRABALHO = ["juridico", "financeiro", "documental", "compliance"] as const;
 export type AreaTrabalho = typeof AREAS_TRABALHO[number];
