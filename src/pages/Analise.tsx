@@ -29,6 +29,16 @@ export default function Analise() {
   const { data: membros } = useEquipeMembros();
   const trocar = useTrocarAnalista();
 
+  const processoIds = (processos ?? []).map(p => p.id);
+  const { data: allAreas = [] } = useProcessosAreas(processoIds);
+
+  const getProgressForProcesso = (processoId: string) => {
+    const areas = allAreas.filter(a => a.processo_id === processoId);
+    const total = AREAS_TRABALHO.length;
+    const done = areas.filter(a => a.concluido).length;
+    return { done, total };
+  };
+
   const [filterEquipe, setFilterEquipe] = useState("all");
   const [filterAnalista, setFilterAnalista] = useState("all");
 
