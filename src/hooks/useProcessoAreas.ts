@@ -67,8 +67,9 @@ export function useEnsureProcessoAreas() {
 
 export function useToggleAreaConcluida() {
   const qc = useQueryClient();
+  const disparar = useDispararWebhook();
   return useMutation({
-    mutationFn: async ({ id, concluido, concluido_por }: { id: string; concluido: boolean; concluido_por?: string }) => {
+    mutationFn: async ({ id, concluido, concluido_por, processo_id }: { id: string; concluido: boolean; concluido_por?: string; processo_id?: string }) => {
       const { error } = await supabase
         .from("processo_areas_trabalho")
         .update({
@@ -78,9 +79,21 @@ export function useToggleAreaConcluida() {
         } as any)
         .eq("id", id);
       if (error) throw error;
+      return { concluido, processo_id };
     },
-    onSuccess: () => {
+    onSuccess: async ({ concluido, processo_id }) => {
       qc.invalidateQueries({ queryKey: ["processo_areas"] });
+      if (concluido && processo_id) {
+        disparar.mutate({ evento: "area.concluida", dados: { processo_id } });
+        // Check if all areas are done
+        const { data } = await supabase
+          .from("processo_areas_trabalho")
+          .select("concluido")
+          .eq("processo_id", processo_id);
+        if (data && data.length > 0 && data.every((a: any) => a.concluido)) {
+          disparar.mutate({ evento: "areas.todas_concluidas", dados: { processo_id } });
+        }
+      }
     },
   });
 }
