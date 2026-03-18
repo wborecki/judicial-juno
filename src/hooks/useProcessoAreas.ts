@@ -20,6 +20,7 @@ export interface ProcessoArea {
   concluido_por: string | null;
   concluido_em: string | null;
   observacoes: string | null;
+  equipe_id: string | null;
   created_at: string;
 }
 
