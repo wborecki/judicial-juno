@@ -42,7 +42,7 @@ export function useProcessoAreas(processoId?: string) {
 export function useEnsureProcessoAreas() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ processoId, equipesPorArea }: { processoId: string; equipesPorArea?: Record<string, string | null> }) => {
+    mutationFn: async ({ processoId }: { processoId: string }) => {
       // Check existing
       const { data: existing } = await supabase
         .from("processo_areas_trabalho")
@@ -53,10 +53,18 @@ export function useEnsureProcessoAreas() {
       const missing = AREAS_TRABALHO.filter(a => !existingAreas.includes(a));
 
       if (missing.length > 0) {
+        // Fetch global config for auto-assignment
+        const { data: configs } = await supabase
+          .from("config_areas_equipes")
+          .select("area, equipe_id");
+
+        const configMap = new Map<string, string | null>();
+        (configs ?? []).forEach((c: any) => configMap.set(c.area, c.equipe_id));
+
         const rows = missing.map(area => ({
           processo_id: processoId,
           area,
-          equipe_id: equipesPorArea?.[area] ?? null,
+          equipe_id: configMap.get(area) ?? null,
         }));
         const { error } = await supabase
           .from("processo_areas_trabalho")
@@ -106,7 +114,6 @@ export function useToggleAreaConcluida() {
       qc.invalidateQueries({ queryKey: ["processo_areas"] });
       if (concluido && processo_id) {
         disparar.mutate({ evento: "area.concluida", dados: { processo_id } });
-        // Check if all areas are done
         const { data } = await supabase
           .from("processo_areas_trabalho")
           .select("concluido")
