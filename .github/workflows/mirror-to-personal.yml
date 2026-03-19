@@ -7,6 +7,7 @@ on:
 
 jobs:
   mirror:
+    if: github.repository == 'Solutions-in-BI/judicial-juno'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source repo
