@@ -9,13 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCamposAnalise } from "@/hooks/useCamposAnalise";
 import { useProcessoCamposValores, useSaveProcessoCampoValor } from "@/hooks/useProcessoCamposValores";
-import { useProcessoAreas, useEnsureProcessoAreas, useToggleAreaConcluida, useUpdateAreaObservacoes, useUpdateAreaEquipe, AREAS_TRABALHO, AREA_LABELS, type AreaTrabalho } from "@/hooks/useProcessoAreas";
+import { useProcessoAreas, useEnsureProcessoAreas, useToggleAreaConcluida, useUpdateAreaObservacoes, AREAS_TRABALHO, AREA_LABELS, type AreaTrabalho } from "@/hooks/useProcessoAreas";
 import { useEquipes } from "@/hooks/useEquipes";
 import { useAuth } from "@/hooks/useAuth";
 import { useUpdateProcesso, type Processo } from "@/hooks/useProcessos";
 import { toast } from "sonner";
-import { Scale, DollarSign, FileCheck, ShieldCheck, CheckCircle2, Clock, FunctionSquare, ShieldAlert, Users, PlayCircle } from "lucide-react";
-import { useEffect } from "react";
+import { Scale, DollarSign, FileCheck, ShieldCheck, CheckCircle2, Clock, FunctionSquare, ShieldAlert, PlayCircle, Users } from "lucide-react";
 import { evaluateFormula, formatFormulaResult } from "@/lib/formula-engine";
 
 const AREA_ICONS: Record<AreaTrabalho, React.ReactNode> = {
@@ -38,12 +37,9 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
   const ensureAreas = useEnsureProcessoAreas();
   const toggleArea = useToggleAreaConcluida();
   const updateObs = useUpdateAreaObservacoes();
-  const updateAreaEquipe = useUpdateAreaEquipe();
   const updateProcesso = useUpdateProcesso();
   const { data: equipes = [] } = useEquipes();
   const { user } = useAuth();
-
-  const activeEquipes = equipes.filter((e: any) => e.ativa);
 
   const concluidasCount = areas.filter(a => a.concluido).length;
   const totalAreas = AREAS_TRABALHO.length;
@@ -63,7 +59,6 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
 
   const getValor = (campoId: string) => valores.find((v) => v.campo_id === campoId)?.valor ?? "";
 
-  // Build vars map for formulas
   const formulaVars = useMemo(() => {
     const vars = new Map<string, number>();
     if (processo.valor_estimado != null) {
@@ -107,7 +102,7 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
         concluido_por: user?.id,
         processo_id: processo.id,
       });
-      toast.success(!areaItem.concluido ? `${AREA_LABELS[areaItem.area as AreaTrabalho]} marcado como concluído` : `${AREA_LABELS[areaItem.area as AreaTrabalho]} reaberto`);
+      toast.success(!areaItem.concluido ? `${AREA_LABELS[areaItem.area as AreaTrabalho]} concluído` : `${AREA_LABELS[areaItem.area as AreaTrabalho]} reaberto`);
     } catch {
       toast.error("Erro ao atualizar área");
     }
@@ -124,14 +119,13 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
           apto_analise_em: new Date().toISOString(),
         } as any,
       });
-      toast.success("Processo marcado como apto para análise. Áreas de trabalho liberadas.");
+      toast.success("Processo apto para análise. Áreas liberadas.");
     } catch {
       toast.error("Erro ao marcar como apto");
     }
   };
 
   const getAreaData = (area: AreaTrabalho) => areas.find(a => a.area === area);
-
   const isApto = (processo as any).apto_analise === true;
 
   return (
@@ -145,7 +139,7 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
           <div>
             <p className="text-sm font-semibold text-foreground">Análise Prévia Pendente</p>
             <p className="text-xs text-muted-foreground mt-1 max-w-md">
-              O analista deve realizar uma análise inicial do processo antes de liberar para as equipes de trabalho (Jurídico, Financeiro, Documental, Compliance).
+              O analista deve realizar uma análise inicial antes de liberar para as equipes de trabalho.
             </p>
           </div>
           <Button
@@ -159,104 +153,94 @@ export default function TabAnalise({ processo, onSaveField }: Props) {
         </div>
       )}
 
-      {/* Areas progress panel - only after "Apto" */}
+      {/* Areas checklist - clean vertical list */}
       {isApto && areas.length > 0 && (
         <div className="bg-card border border-border/40 rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-foreground">Áreas de Trabalho</p>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{concluidasCount}/{totalAreas} concluídas</span>
+              <span className="text-xs font-medium text-muted-foreground">{concluidasCount}/{totalAreas}</span>
               {concluidasCount === totalAreas && (
                 <Badge className="text-[10px] bg-success/10 text-success border-success/20">Pronto para Negócio</Badge>
               )}
             </div>
           </div>
-          <Progress value={progressPercent} className="h-2" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Progress value={progressPercent} className="h-1.5" />
+
+          <div className="space-y-1">
             {AREAS_TRABALHO.map(area => {
               const areaData = getAreaData(area);
               if (!areaData) return null;
               const concluido = areaData.concluido;
-              const assignedEquipe = activeEquipes.find((e: any) => e.id === areaData.equipe_id);
+              const assignedEquipe = equipes.find((e: any) => e.id === areaData.equipe_id);
+
               return (
                 <div
                   key={area}
-                  className={`rounded-lg border p-3 transition-colors ${
-                    concluido
-                      ? "border-success/30 bg-success/5"
-                      : "border-border/40 bg-muted/10"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    concluido ? "bg-success/5" : "hover:bg-muted/30"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={concluido}
-                      onCheckedChange={() => handleToggle(areaData)}
-                      className="shrink-0"
-                    />
-                    <div className={`shrink-0 ${concluido ? "text-success" : "text-muted-foreground"}`}>
-                      {AREA_ICONS[area]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold">{AREA_LABELS[area]}</span>
-                        {concluido ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs">
-                                  Concluído em {areaData.concluido_em ? new Date(areaData.concluido_em).toLocaleDateString("pt-BR") : "—"}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          <Clock className="w-3.5 h-3.5 text-muted-foreground/50" />
-                        )}
-                      </div>
-                    </div>
+                  <Checkbox
+                    checked={concluido}
+                    onCheckedChange={() => handleToggle(areaData)}
+                    className="shrink-0"
+                  />
+                  <div className={`shrink-0 ${concluido ? "text-success" : "text-muted-foreground"}`}>
+                    {AREA_ICONS[area]}
                   </div>
-                  {/* Equipe assignment */}
-                  <div className="mt-2 ml-10 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-3 h-3 text-muted-foreground" />
-                      <Select
-                        value={areaData.equipe_id ?? ""}
-                        onValueChange={(v) => {
-                          updateAreaEquipe.mutate({ id: areaData.id, equipe_id: v || null });
-                        }}
-                      >
-                        <SelectTrigger className="h-7 text-[11px] w-[180px] border-dashed">
-                          <SelectValue placeholder="Atribuir equipe..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {activeEquipes.map((eq: any) => (
-                            <SelectItem key={eq.id} value={eq.id} className="text-xs">{eq.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {assignedEquipe && (
-                        <Badge variant="outline" className="text-[10px]">{assignedEquipe.nome}</Badge>
-                      )}
+                  <span className={`text-xs font-medium w-24 shrink-0 ${concluido ? "text-success" : ""}`}>
+                    {AREA_LABELS[area]}
+                  </span>
+
+                  {assignedEquipe ? (
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Users className="w-3 h-3" />
+                      <span className="text-[11px]">{assignedEquipe.nome}</span>
                     </div>
-                    <Textarea
-                      placeholder="Observações da área..."
-                      defaultValue={areaData.observacoes ?? ""}
-                      onBlur={(e) => {
-                        const val = e.target.value.trim() || null;
-                        if (val !== areaData.observacoes) {
-                          updateObs.mutate({ id: areaData.id, observacoes: val });
-                        }
-                      }}
-                      className="resize-none h-14 text-[11px] bg-transparent"
-                    />
-                  </div>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground/50">Sem equipe</span>
+                  )}
+
+                  <div className="flex-1" />
+
+                  {concluido && areaData.concluido_em && (
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {new Date(areaData.concluido_em).toLocaleDateString("pt-BR")}
+                    </span>
+                  )}
+
+                  {concluido ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+                  ) : (
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* Observações colapsáveis por área */}
+          {AREAS_TRABALHO.map(area => {
+            const areaData = getAreaData(area);
+            if (!areaData) return null;
+            if (!areaData.observacoes && areaData.concluido) return null;
+            return (
+              <div key={`obs-${area}`} className="pl-10">
+                <Textarea
+                  placeholder={`Observações ${AREA_LABELS[area]}...`}
+                  defaultValue={areaData.observacoes ?? ""}
+                  onBlur={(e) => {
+                    const val = e.target.value.trim() || null;
+                    if (val !== areaData.observacoes) {
+                      updateObs.mutate({ id: areaData.id, observacoes: val });
+                    }
+                  }}
+                  className="resize-none h-12 text-[11px] bg-transparent border-dashed"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -407,17 +391,17 @@ function DynamicField({ campo, valor, onSave }: { campo: any; valor: string; onS
   );
 }
 
-function InlineNumberField({ label, defaultValue, onSave }: { label: string; defaultValue: number | null; onSave: (v: number | null) => void }) {
-  const [val, setVal] = useState(defaultValue ?? "");
+function InlineNumberField({ label, defaultValue, onSave }: { label: string; defaultValue?: number | null; onSave: (v: number | null) => void }) {
+  const [val, setVal] = useState(defaultValue?.toString() ?? "");
   return (
     <div>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
-      <input
+      <Input
         type="number"
         value={val}
         onChange={(e) => setVal(e.target.value)}
         onBlur={() => onSave(val === "" ? null : Number(val))}
-        className="h-8 w-full text-xs bg-transparent outline-none rounded border border-transparent px-2 hover:border-border/60 focus:border-input focus:ring-1 focus:ring-ring transition-colors"
+        className="h-8 text-xs"
         step="0.01"
       />
     </div>

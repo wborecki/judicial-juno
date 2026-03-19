@@ -465,6 +465,35 @@ export type Database = {
           },
         ]
       }
+      config_areas_equipes: {
+        Row: {
+          area: string
+          created_at: string
+          equipe_id: string | null
+          id: string
+        }
+        Insert: {
+          area: string
+          created_at?: string
+          equipe_id?: string | null
+          id?: string
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          equipe_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "config_areas_equipes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contatos: {
         Row: {
           created_at: string
