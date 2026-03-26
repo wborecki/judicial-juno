@@ -1,55 +1,77 @@
 
 
-## Plano: Reestruturar Busca de Devedor — Novas Colunas + Foco em Dívidas
+## Plano: Separar "Informar Dívida" e "Anexar Dívida"
 
-### Resumo
+### Conceito
 
-Trocar as colunas da tabela principal para: **Nome, CPF/CNPJ, Processo, Valor, Vara, Estado**. No detalhe (sheet lateral), listar **dívidas** em vez de processos, com botao para incluir nova divida. Adicionar botao "Informar Divida" direto na linha da tabela, bem visivel.
+São duas ações distintas:
+
+1. **"Informar Dívida"** — Processo de comunicação ao tribunal. Ao clicar, executa uma sequência visual de etapas com progresso animado (spinner + checklist):
+   - ✓ Compactando dados da dívida
+   - ✓ Acessando tribunal
+   - ⟳ Identificando autos...
+   - ○ Anexando dívida ao processo
+   - ○ Concluído
+   
+   Mostra um modal/dialog com stepper animado. Cada etapa roda por alguns segundos (simulado por enquanto, futuramente integrado). Ao final, marca como "enviado".
+
+2. **"Anexar Dívida"** — Registrar manualmente uma dívida que o devedor possui com qualquer órgão, empresa, pessoa física ou governo. É o formulário atual do `ComunicarDividaSheet`, renomeado para "Anexar Dívida". Campos: credor/entidade, valor, descrição, tipo (empresa, governo, pessoa física, etc).
 
 ### Alterações
 
-#### 1. Tabela `comunicacoes_divida` — novos campos
+#### 1. Novo componente `InformarDividaDialog.tsx`
+- Dialog modal com stepper vertical animado
+- 5 etapas com ícones: check (concluído), loader spinning (em andamento), circle (pendente)
+- Barra de progresso no topo
+- Ao abrir, executa as etapas em sequência (simulado com timers, ~2s cada)
+- Ao concluir, atualiza o status da dívida para "enviado" e fecha
+- Recebe o `acompanhamento` como prop
 
-A tabela já tem `numero_processo`, `tribunal`, `valor_credito`, `valor_divida`. Faltam `vara` e `estado (uf)`. Criar migração adicionando:
-- `vara text` — vara do processo
-- `uf text` — estado (UF)
+#### 2. Renomear `ComunicarDividaSheet` → Ajustar para "Anexar Dívida"
+- Trocar título para "Anexar Dívida"
+- Ícone de Paperclip em vez de Gavel
+- Adicionar campo "Credor/Entidade" (quem é o credor da dívida)
+- Adicionar campo "Tipo" (select: Empresa, Governo, Pessoa Física, Órgão Público)
+- Manter campos existentes (processo, tribunal, vara, UF, valores)
 
-#### 2. `src/pages/Acompanhamento.tsx` — Reestruturar tabela e sheet
+#### 3. Tabela `comunicacoes_divida` — novos campos
+- Migração: adicionar `credor_nome text` e `tipo_credor text`
 
-**Tabela principal** — Novas colunas:
-| Nome | CPF/CNPJ | Processo | Valor | Vara | Estado | Ações |
+#### 4. `Acompanhamento.tsx` — Dois botões na linha da tabela
+- Botão primário: **"Informar Dívida"** (ícone Gavel) → abre o dialog com stepper
+- Botão outline: **"Anexar Dívida"** (ícone Paperclip) → abre o sheet/formulário atual
+- Na sheet de detalhe: manter os dois botões também
 
-- Nome e CPF/CNPJ vêm do acompanhamento (pessoa)
-- Processo, Valor, Vara, Estado: mostrar da última dívida registrada (ou "—" se nenhuma)
-- Na coluna Ações: botão destacado **"Informar Dívida"** com ícone Gavel, cor primary, visível na linha (não escondido em menu)
-- Manter botões ativar/desativar e excluir como icon buttons menores ao lado
+#### 5. Hook `useComunicacoesDivida.ts`
+- Aceitar `credor_nome` e `tipo_credor` no mutation
 
-**Sheet de detalhe** — Ao clicar na linha:
-- Manter dados do devedor no topo (nome, CPF/CNPJ, status)
-- Remover seção "Processos Encontrados"
-- Listar **Dívidas Registradas** (da tabela `comunicacoes_divida`)
-- Botão "Nova Dívida" no topo da lista que abre o ComunicarDividaSheet
+### UI do Stepper (InformarDividaDialog)
 
-#### 3. `src/components/acompanhamento/ComunicarDividaSheet.tsx`
-
-- Adicionar campos **Vara** e **UF (Estado)** no formulário
-- Mostrar vara e UF no histórico de comunicações
-
-#### 4. `src/hooks/useComunicacoesDivida.ts`
-
-- Sem mudanças estruturais, apenas o input do mutation aceita `vara` e `uf`
-
-#### 5. `src/hooks/useAcompanhamentos.ts`
-
-- Na query de `useAcompanhamentos`, fazer join com `comunicacoes_divida` para trazer a última dívida de cada acompanhamento (para popular as colunas da tabela). Alternativa: buscar separadamente e fazer merge no componente.
+```text
+┌─────────────────────────────────┐
+│  Informar Dívida ao Tribunal    │
+│  ━━━━━━━━━━━━━━━━━░░░░  60%    │
+│                                 │
+│  ✓  Compactando dados           │
+│  ✓  Acessando tribunal          │
+│  ⟳  Identificando autos...      │
+│  ○  Anexando dívida ao processo │
+│  ○  Finalizado                  │
+│                                 │
+│  Devedor: João Silva            │
+│  CPF: 123.456.789-00            │
+│                                 │
+│              [Cancelar]         │
+└─────────────────────────────────┘
+```
 
 ### Arquivos
 
 | Arquivo | Ação |
 |---|---|
-| Migração SQL | Adicionar `vara` e `uf` em `comunicacoes_divida` |
-| `src/pages/Acompanhamento.tsx` | Reestruturar colunas da tabela, botão "Informar Dívida" na linha, sheet mostra dívidas |
-| `src/components/acompanhamento/ComunicarDividaSheet.tsx` | Adicionar campos vara e UF |
-| `src/hooks/useComunicacoesDivida.ts` | Aceitar vara/uf no mutation |
-| `src/hooks/useAcompanhamentos.ts` | Buscar última dívida para cada acompanhamento |
+| Migração SQL | Adicionar `credor_nome` e `tipo_credor` em `comunicacoes_divida` |
+| `src/components/acompanhamento/InformarDividaDialog.tsx` | Novo — stepper animado |
+| `src/components/acompanhamento/ComunicarDividaSheet.tsx` | Renomear para "Anexar Dívida", adicionar campos credor |
+| `src/pages/Acompanhamento.tsx` | Dois botões na tabela e no detalhe |
+| `src/hooks/useComunicacoesDivida.ts` | Aceitar novos campos |
 
