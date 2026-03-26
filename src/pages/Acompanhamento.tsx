@@ -41,6 +41,7 @@ export default function Acompanhamento() {
   const createMutation = useCreateAcompanhamento();
   const toggleMutation = useToggleAcompanhamento();
   const deleteMutation = useDeleteAcompanhamento();
+  const deleteDividaMutation = useDeleteComunicacaoDivida();
 
   const selectedDetail = acompanhamentos?.find((a: any) => a.id === detailId);
   const { data: dividas, isLoading: loadingDividas } = useComunicacoesDivida(detailId);
