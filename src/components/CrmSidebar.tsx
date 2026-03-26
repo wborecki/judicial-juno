@@ -16,7 +16,7 @@ interface NavItem {
 const analiseItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/processos", label: "Processos", icon: Scale },
-  { to: "/acompanhamento", label: "Busca de credor", icon: Radar },
+  { to: "/acompanhamento", label: "Busca de devedor", icon: Radar },
 ];
 
 const comercialItems: NavItem[] = [
