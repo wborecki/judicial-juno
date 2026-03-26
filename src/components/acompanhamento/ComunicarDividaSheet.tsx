@@ -103,7 +103,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     }
     const digits = novoPessoaCpf.replace(/\D/g, "");
     createPessoaMutation.mutate(
-      { nome: novoPessoaNome.trim(), cpf_cnpj: novoPessoaCpf.trim(), tipo: digits.length <= 11 ? "pessoa_fisica" : "empresa", email: null, telefone: null, endereco: null, cidade: null, uf: null },
+      { nome: novoPessoaNome.trim(), cpf_cnpj: novoPessoaCpf.trim(), tipo: "terceiro" },
       {
         onSuccess: (data: any) => {
           handleSelectCredor(data);
