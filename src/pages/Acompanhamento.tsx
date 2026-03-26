@@ -245,6 +245,15 @@ export default function Acompanhamento() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Editar"
+                          onClick={() => openEditAcomp(a)}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
                           size="sm"
                           className="h-7 text-xs gap-1 px-2.5"
                           onClick={() => openInformarDivida(a)}
@@ -276,10 +285,10 @@ export default function Acompanhamento() {
       </div>
 
       {/* Sheet: Novo Acompanhamento */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <Sheet open={sheetOpen} onOpenChange={(open) => { setSheetOpen(open); if (!open) resetForm(); }}>
         <SheetContent className="flex flex-col">
           <SheetHeader>
-            <SheetTitle>Novo Acompanhamento</SheetTitle>
+            <SheetTitle>{editingAcomp ? "Editar Acompanhamento" : "Novo Acompanhamento"}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto space-y-4 py-4 px-1 -mx-1">
             <div className="space-y-2">
@@ -353,9 +362,9 @@ export default function Acompanhamento() {
             </div>
           </div>
           <SheetFooter className="sticky bottom-0 bg-background border-t pt-4">
-            <Button variant="outline" onClick={() => setSheetOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Salvando..." : "Habilitar Acompanhamento"}
+            <Button variant="outline" onClick={() => { setSheetOpen(false); resetForm(); }}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+              {(createMutation.isPending || updateMutation.isPending) ? "Salvando..." : editingAcomp ? "Salvar Alterações" : "Habilitar Acompanhamento"}
             </Button>
           </SheetFooter>
         </SheetContent>
