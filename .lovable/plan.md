@@ -1,43 +1,58 @@
 
-Objetivo
-- Corrigir definitivamente o escurecimento acumulado quando há Sheet/Dialog sobrepostos, mantendo a opacidade padrão constante.
 
-Diagnóstico (causa raiz)
-- O CSS atual em `src/index.css` usa seletores com `+` e profundidade fixa (2, 3, 4 portais).
-- Quando a ordem dos portais muda (ou há portais intermediários), a regra não pega todos os casos, então overlays extras continuam com `bg-black/80` e a tela escurece progressivamente.
-- Além disso, apenas `dialog.tsx` e `sheet.tsx` têm `data-overlay`; `alert-dialog.tsx` e `drawer.tsx` ainda não participam da regra global.
+## Reestruturar "Busca de Devedor" — linha = processo, dívidas = da pessoa
 
-Plano de implementação
-1) Padronizar marcação de overlay em todos os componentes base de modal
-- Atualizar:
-  - `src/components/ui/alert-dialog.tsx`
-  - `src/components/ui/drawer.tsx`
-- Adicionar `data-overlay=""` no Overlay (igual já existe em `dialog.tsx` e `sheet.tsx`).
+### Entendimento
 
-2) Substituir regra frágil de stacking no CSS global
-- Em `src/index.css`, remover a regra atual com combinações fixas de `+`.
-- Adicionar uma regra única, geral, baseada em portais com overlay aberto, para deixar transparente qualquer overlay “depois do primeiro”:
-  - foco em `[data-state="open"]`
-  - cobertura ilimitada de níveis de sobreposição
-  - sem depender de serem irmãos adjacentes.
+- Cada **linha da tabela principal** é um **processo** (com número, valor, vara, UF).
+- O **nome e CPF** são da pessoa (autora do processo).
+- **Dívidas pertencem à pessoa**, não ao processo — aparecem no sheet lateral ao clicar na linha.
+- "Tipo Dívida" **não faz sentido** na tabela principal.
+- No sheet: seção de "Dívidas Registradas" + botão "Anexar Dívida" (na pessoa).
 
-3) Garantir comportamento consistente
-- Manter o primeiro overlay visível (escurecimento padrão).
-- Overlays subsequentes ficam transparentes (não acumulam preto), mas continuam bloqueando interação indevida do fundo.
+### 1. Adicionar campos de processo na tabela `acompanhamentos`
 
-Validação (end-to-end)
-- Fluxo principal em `/acompanhamento`:
-  1. Abrir “Detalhe” (Sheet 1),
-  2. Abrir “Anexar Dívida” (Sheet 2),
-  3. Abrir “Criar Nova Pessoa” (Dialog 3).
-  Resultado esperado: opacidade de fundo igual do primeiro nível, sem escurecer mais.
-- Fechar em cascata (Dialog → Sheet 2 → Sheet 1): overlay permanece correto em cada etapa.
-- Testar outro fluxo com `AlertDialog` sobre `Sheet` (ex.: páginas com exclusão): sem escurecimento acumulado.
-- Testar caso simples (apenas 1 modal): visual padrão intacto.
+Migration SQL para adicionar:
+- `numero_processo` (text, nullable)
+- `valor_processo` (numeric, nullable)  
+- `vara` (text, nullable)
+- `uf` (text, nullable)
 
-Detalhes técnicos
-- Arquivos impactados:
-  - `src/index.css` (regra global de overlay stacking)
-  - `src/components/ui/alert-dialog.tsx` (`data-overlay`)
-  - `src/components/ui/drawer.tsx` (`data-overlay`)
-- Não haverá alteração de banco, hooks de dados ou regras de negócio; ajuste é exclusivamente de camada de UI/overlay.
+### 2. Reestruturar tabela principal (`Acompanhamento.tsx`)
+
+Colunas novas:
+
+| Coluna | Dados |
+|---|---|
+| Nome | `pessoas.nome` (autor) |
+| CPF/CNPJ | `cpf_cnpj` |
+| Nº Processo | `numero_processo` (campo novo) |
+| Valor | `valor_processo` (campo novo) |
+| Vara | `vara` (campo novo) |
+| Estado | `uf` (campo novo) |
+| Dívidas | badge com `total_dividas` |
+| Ações | Informar Dívida + Excluir |
+
+Remover referências a `ultima_divida` nas células da tabela.
+
+### 3. Atualizar formulário "Novo Acompanhamento"
+
+Adicionar campos ao formulário de criação:
+- Número do Processo (text input)
+- Valor do Processo (number input)
+- Vara (text input)
+- UF (select com estados)
+
+### 4. Sheet lateral (detalhe)
+
+Manter estrutura atual: info do devedor no topo, lista de dívidas registradas da pessoa abaixo. "Anexar Dívida" continua anexando na pessoa (sem campo de nº processo no formulário de dívida — já está correto).
+
+### 5. Ajustar hook `useAcompanhamentos`
+
+O hook já traz `total_dividas`. Manter essa lógica. Os novos campos (`numero_processo`, `valor_processo`, `vara`, `uf`) vêm automaticamente do `select("*")`.
+
+### Arquivos impactados
+- `supabase/migrations/` — nova migration (4 colunas)
+- `src/pages/Acompanhamento.tsx` — tabela + formulário de criação
+- `src/hooks/useAcompanhamentos.ts` — sem mudanças necessárias (select * já traz)
+
