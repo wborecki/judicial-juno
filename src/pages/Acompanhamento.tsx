@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAcompanhamentos, useCreateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
+import { useAcompanhamentos, useCreateAcompanhamento, useUpdateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
 import { useComunicacoesDivida, useDeleteComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
@@ -32,8 +32,8 @@ const UF_LIST = [
 export default function Acompanhamento() {
   const [search, setSearch] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingAcomp, setEditingAcomp] = useState<any>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [numeroProcesso, setNumeroProcesso] = useState("");
   const [valorProcesso, setValorProcesso] = useState("");
