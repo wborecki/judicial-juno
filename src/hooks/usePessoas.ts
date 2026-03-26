@@ -28,7 +28,7 @@ export function usePessoas() {
 export function useCreatePessoa() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: Omit<PessoaDB, "id" | "created_at">) => {
+    mutationFn: async (input: Partial<Omit<PessoaDB, "id" | "created_at">> & { nome: string; cpf_cnpj: string }) => {
       const { data, error } = await supabase.from("pessoas").insert(input).select().single();
       if (error) throw error;
       return data as PessoaDB;
