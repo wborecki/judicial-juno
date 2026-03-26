@@ -116,14 +116,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const handleSelectCredor = (p: any) => {
     setCredorPessoaId(p.id);
     setCredorSearch("");
-    if (p.cpf_cnpj) {
-      const digits = p.cpf_cnpj.replace(/\D/g, "");
-      if (digits.length <= 11) {
-        setTipoCredor("pessoa_fisica");
-      } else {
-        setTipoCredor("empresa");
-      }
-    }
+    // Auto-set tipo_credor from pessoa.tipo
+    setTipoCredor(p.tipo || "");
   };
 
   const handleCriarPessoa = () => {
@@ -301,19 +295,6 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Tipo do Credor</Label>
-              <Select value={tipoCredor} onValueChange={setTipoCredor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPOS_CREDOR.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-1.5">
               <Label>Tipo da Dívida</Label>
