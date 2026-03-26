@@ -291,23 +291,32 @@ export default function Acompanhamento() {
             <SheetTitle>{editingAcomp ? "Editar Acompanhamento" : "Novo Acompanhamento"}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto space-y-4 py-4 px-1 -mx-1">
-            <div className="space-y-2">
-              <Label>Pessoa (Autor)</Label>
-              <Select value={selectedPessoaId} onValueChange={setSelectedPessoaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma pessoa cadastrada" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pessoas?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome} — {p.cpf_cnpj}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                O CPF/CNPJ da pessoa será usado para monitoramento automático.
-              </p>
+            {editingAcomp ? (
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Pessoa (Autor)</p>
+                <p className="text-sm font-medium">{editingAcomp.pessoas?.nome}</p>
+                <p className="font-mono text-xs text-muted-foreground">{editingAcomp.cpf_cnpj}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Pessoa (Autor)</Label>
+                <Select value={selectedPessoaId} onValueChange={setSelectedPessoaId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma pessoa cadastrada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pessoas?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome} — {p.cpf_cnpj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  O CPF/CNPJ da pessoa será usado para monitoramento automático.
+                </p>
+              </div>
+            )}
             </div>
             <div className="space-y-2">
               <Label>Número do Processo</Label>
