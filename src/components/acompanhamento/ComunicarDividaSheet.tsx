@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Paperclip, Search, Plus } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Paperclip, Search, Plus, Upload, X, FileText } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useCreateComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
+import { useCreateComunicacaoDivida, useUpdateComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { usePessoas, useCreatePessoa } from "@/hooks/usePessoas";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const TIPOS_DIVIDA = [
@@ -38,9 +39,10 @@ interface ComunicarDividaSheetProps {
     cpf_cnpj: string;
     pessoas?: { nome?: string; cpf_cnpj?: string; endereco?: string; cidade?: string; uf?: string; email?: string; telefone?: string } | null;
   } | null;
+  editData?: any | null;
 }
 
-export default function ComunicarDividaSheet({ open, onOpenChange, acompanhamento }: ComunicarDividaSheetProps) {
+export default function ComunicarDividaSheet({ open, onOpenChange, acompanhamento, editData }: ComunicarDividaSheetProps) {
   const [credorPessoaId, setCredorPessoaId] = useState("");
   const [credorSearch, setCredorSearch] = useState("");
   const [tipoCredor, setTipoCredor] = useState("");
@@ -51,11 +53,43 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const [criarPessoaOpen, setCriarPessoaOpen] = useState(false);
   const [novoPessoaNome, setNovoPessoaNome] = useState("");
   const [novoPessoaCpf, setNovoPessoaCpf] = useState("");
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [arquivoExistente, setArquivoExistente] = useState<{ url: string; nome: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: pessoas } = usePessoas();
   const createMutation = useCreateComunicacaoDivida();
+  const updateMutation = useUpdateComunicacaoDivida();
   const createPessoaMutation = useCreatePessoa();
   const pessoa = acompanhamento?.pessoas;
+
+  const isEdit = !!editData;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editData && open) {
+      setCredorPessoaId(editData.pessoa_id || "");
+      setTipoCredor(editData.tipo_credor || "");
+      setTipoDivida(editData.numero_processo !== "—" ? editData.numero_processo || "" : "");
+      setValorDivida(editData.valor_divida != null ? String(editData.valor_divida) : "");
+      setObservacoes(editData.observacoes || "");
+      setDataVencimento("");
+      setArquivo(null);
+      if (editData.comprovante_url) {
+        setArquivoExistente({ url: editData.comprovante_url, nome: editData.comprovante_nome || "comprovante.pdf" });
+      } else {
+        setArquivoExistente(null);
+      }
+      // Try to find credor by name
+      if (editData.credor_nome && pessoas) {
+        const found = pessoas.find((p: any) => p.nome === editData.credor_nome);
+        if (found) setCredorPessoaId(found.id);
+      }
+    } else if (!editData && open) {
+      resetForm();
+    }
+  }, [editData, open, pessoas]);
 
   const credorSelecionado = useMemo(
     () => pessoas?.find((p: any) => p.id === credorPessoaId),
@@ -80,12 +114,13 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     setValorDivida("");
     setDataVencimento("");
     setObservacoes("");
+    setArquivo(null);
+    setArquivoExistente(null);
   };
 
   const handleSelectCredor = (p: any) => {
     setCredorPessoaId(p.id);
     setCredorSearch("");
-    // Auto-detect tipo based on cpf_cnpj length
     if (p.cpf_cnpj) {
       const digits = p.cpf_cnpj.replace(/\D/g, "");
       if (digits.length <= 11) {
@@ -116,42 +151,78 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     );
   };
 
-  const handleSubmit = () => {
+  const uploadFile = async (file: File): Promise<{ url: string; nome: string } | null> => {
+    const ext = file.name.split(".").pop() || "pdf";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("comprovantes-divida").upload(path, file);
+    if (error) {
+      toast.error("Erro ao enviar arquivo");
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from("comprovantes-divida").getPublicUrl(path);
+    return { url: urlData.publicUrl, nome: file.name };
+  };
+
+  const handleSubmit = async () => {
     if (!acompanhamento) return;
-    if (!credorSelecionado) {
+    if (!credorSelecionado && !isEdit) {
       toast.error("Selecione o credor da lista de pessoas");
       return;
     }
 
-    createMutation.mutate(
-      {
-        acompanhamento_id: acompanhamento.id,
-        pessoa_id: acompanhamento.pessoa_id,
-        credor_nome: credorSelecionado.nome,
-        tipo_credor: tipoCredor || undefined,
-        numero_processo: tipoDivida || "—",
-        valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
-        dados_pessoa: pessoa ? {
-          nome: pessoa.nome,
-          cpf_cnpj: pessoa.cpf_cnpj,
-          endereco: pessoa.endereco,
-          cidade: pessoa.cidade,
-          uf: pessoa.uf,
-          email: pessoa.email,
-          telefone: pessoa.telefone,
-        } : undefined,
-        observacoes: observacoes || undefined,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Dívida anexada com sucesso");
-          resetForm();
-          onOpenChange(false);
-        },
-        onError: () => toast.error("Erro ao anexar dívida"),
+    setUploading(true);
+    let comprovante_url = arquivoExistente?.url;
+    let comprovante_nome = arquivoExistente?.nome;
+
+    if (arquivo) {
+      const result = await uploadFile(arquivo);
+      if (result) {
+        comprovante_url = result.url;
+        comprovante_nome = result.nome;
       }
-    );
+    }
+
+    const payload: any = {
+      credor_nome: credorSelecionado?.nome || editData?.credor_nome,
+      tipo_credor: tipoCredor || undefined,
+      numero_processo: tipoDivida || "—",
+      valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
+      observacoes: observacoes || undefined,
+      comprovante_url: comprovante_url || undefined,
+      comprovante_nome: comprovante_nome || undefined,
+    };
+
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({ id: editData.id, updates: payload });
+        toast.success("Dívida atualizada com sucesso");
+      } else {
+        await createMutation.mutateAsync({
+          ...payload,
+          acompanhamento_id: acompanhamento.id,
+          pessoa_id: acompanhamento.pessoa_id,
+          dados_pessoa: pessoa ? {
+            nome: pessoa.nome,
+            cpf_cnpj: pessoa.cpf_cnpj,
+            endereco: pessoa.endereco,
+            cidade: pessoa.cidade,
+            uf: pessoa.uf,
+            email: pessoa.email,
+            telefone: pessoa.telefone,
+          } : undefined,
+        });
+        toast.success("Dívida anexada com sucesso");
+      }
+      resetForm();
+      onOpenChange(false);
+    } catch {
+      toast.error("Erro ao salvar dívida");
+    } finally {
+      setUploading(false);
+    }
   };
+
+  const isPending = createMutation.isPending || updateMutation.isPending || uploading;
 
   return (
     <>
@@ -160,7 +231,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Paperclip className="w-5 h-5 text-primary" />
-            Anexar Dívida
+            {isEdit ? "Editar Dívida" : "Anexar Dívida"}
           </SheetTitle>
         </SheetHeader>
 
@@ -284,6 +355,52 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
               </div>
             </div>
 
+            {/* Upload de comprovante */}
+            <div className="space-y-1.5">
+              <Label>Comprovante da Dívida (PDF)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setArquivo(file);
+                    setArquivoExistente(null);
+                  }
+                }}
+              />
+              {arquivo ? (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2.5">
+                  <FileText className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-sm truncate flex-1">{arquivo.name}</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setArquivo(null)}>
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : arquivoExistente ? (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2.5">
+                  <FileText className="w-4 h-4 text-primary shrink-0" />
+                  <a href={arquivoExistente.url} target="_blank" rel="noopener noreferrer" className="text-sm truncate flex-1 text-primary underline">
+                    {arquivoExistente.nome}
+                  </a>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setArquivoExistente(null)}>
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 text-muted-foreground"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-4 h-4" />
+                  Selecionar arquivo...
+                </Button>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label>Observações</Label>
               <Textarea
@@ -298,9 +415,9 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
 
         <SheetFooter className="sticky bottom-0 bg-background border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={createMutation.isPending}>
+          <Button onClick={handleSubmit} disabled={isPending}>
             <Paperclip className="w-4 h-4 mr-1" />
-            {createMutation.isPending ? "Salvando..." : "Anexar Dívida"}
+            {isPending ? "Salvando..." : isEdit ? "Salvar Alterações" : "Anexar Dívida"}
           </Button>
         </SheetFooter>
       </SheetContent>
