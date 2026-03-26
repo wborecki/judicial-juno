@@ -21,9 +21,11 @@ export function useAcompanhamentos() {
         .in("acompanhamento_id", ids)
         .order("created_at", { ascending: false });
 
-      // Group by acompanhamento_id and pick the latest
+      // Group by acompanhamento_id: pick latest + count
       const latestMap: Record<string, any> = {};
+      const countMap: Record<string, number> = {};
       dividas?.forEach((d) => {
+        countMap[d.acompanhamento_id] = (countMap[d.acompanhamento_id] || 0) + 1;
         if (!latestMap[d.acompanhamento_id]) {
           latestMap[d.acompanhamento_id] = d;
         }
@@ -32,6 +34,7 @@ export function useAcompanhamentos() {
       return (acomps || []).map((a) => ({
         ...a,
         ultima_divida: latestMap[a.id] || null,
+        total_dividas: countMap[a.id] || 0,
       }));
     },
   });
