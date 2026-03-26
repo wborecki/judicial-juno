@@ -101,7 +101,6 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       toast.error("Preencha nome e CPF/CNPJ");
       return;
     }
-    const digits = novoPessoaCpf.replace(/\D/g, "");
     createPessoaMutation.mutate(
       { nome: novoPessoaNome.trim(), cpf_cnpj: novoPessoaCpf.trim(), tipo: "terceiro" },
       {
