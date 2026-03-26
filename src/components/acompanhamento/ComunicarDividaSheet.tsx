@@ -41,12 +41,9 @@ interface ComunicarDividaSheetProps {
 export default function ComunicarDividaSheet({ open, onOpenChange, acompanhamento }: ComunicarDividaSheetProps) {
   const [credorNome, setCredorNome] = useState("");
   const [tipoCredor, setTipoCredor] = useState("");
-  const [numeroProcesso, setNumeroProcesso] = useState("");
-  const [tribunal, setTribunal] = useState("");
-  const [vara, setVara] = useState("");
-  const [uf, setUf] = useState("");
-  const [valorCredito, setValorCredito] = useState("");
+  const [tipoDivida, setTipoDivida] = useState("");
   const [valorDivida, setValorDivida] = useState("");
+  const [dataVencimento, setDataVencimento] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
   const createMutation = useCreateComunicacaoDivida();
@@ -55,12 +52,9 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const resetForm = () => {
     setCredorNome("");
     setTipoCredor("");
-    setNumeroProcesso("");
-    setTribunal("");
-    setVara("");
-    setUf("");
-    setValorCredito("");
+    setTipoDivida("");
     setValorDivida("");
+    setDataVencimento("");
     setObservacoes("");
   };
 
@@ -77,11 +71,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         pessoa_id: acompanhamento.pessoa_id,
         credor_nome: credorNome.trim(),
         tipo_credor: tipoCredor || undefined,
-        numero_processo: numeroProcesso.trim() || "—",
-        tribunal: tribunal || undefined,
-        vara: vara || undefined,
-        uf: uf || undefined,
-        valor_credito: valorCredito ? parseFloat(valorCredito) : undefined,
+        numero_processo: tipoDivida || "—",
         valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
         dados_pessoa: pessoa ? {
           nome: pessoa.nome,
@@ -149,64 +139,20 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
             </div>
 
             <div className="space-y-1.5">
-              <Label>Número do Processo</Label>
-              <Input
-                value={numeroProcesso}
-                onChange={(e) => setNumeroProcesso(e.target.value)}
-                placeholder="0000000-00.0000.0.00.0000"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Tribunal</Label>
-              <Select value={tribunal} onValueChange={setTribunal}>
+              <Label>Tipo da Dívida</Label>
+              <Select value={tipoDivida} onValueChange={setTipoDivida}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tribunal" />
+                  <SelectValue placeholder="Selecione o tipo da dívida" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TRIBUNAIS.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  {TIPOS_DIVIDA.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Vara</Label>
-                <Input
-                  value={vara}
-                  onChange={(e) => setVara(e.target.value)}
-                  placeholder="Ex: 1ª Vara Cível"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Estado (UF)</Label>
-                <Select value={uf} onValueChange={setUf}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UFS.map((u) => (
-                      <SelectItem key={u} value={u}>{u}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Valor do Crédito (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={valorCredito}
-                  onChange={(e) => setValorCredito(e.target.value)}
-                  placeholder="0,00"
-                />
-              </div>
               <div className="space-y-1.5">
                 <Label>Valor da Dívida (R$)</Label>
                 <Input
@@ -218,6 +164,14 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                   placeholder="0,00"
                 />
               </div>
+              <div className="space-y-1.5">
+                <Label>Data de Vencimento</Label>
+                <Input
+                  type="date"
+                  value={dataVencimento}
+                  onChange={(e) => setDataVencimento(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -225,7 +179,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
               <Textarea
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Detalhes adicionais..."
+                placeholder="Detalhes adicionais sobre a dívida..."
                 rows={3}
               />
             </div>
