@@ -437,77 +437,82 @@ export default function Acompanhamento() {
             </div>
 
             {/* Lista de Dívidas */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium text-sm mb-3">Dívidas Registradas</h3>
-              {loadingDividas ? (
+            {loadingDividas ? (
+              <div className="border-t pt-4">
                 <p className="text-sm text-muted-foreground">Carregando...</p>
-              ) : !dividas?.length ? (
-                <p className="text-sm text-muted-foreground">Nenhuma dívida registrada ainda.</p>
-              ) : (
-                <div className="space-y-2">
-                  {dividas.map((c: any) => {
-                    const st = STATUS_LABELS[c.status] || STATUS_LABELS.pendente;
-                    return (
-                      <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-xs">{c.credor_nome || c.tipo_divida || "Dívida"}</span>
-                          <div className="flex items-center gap-1">
-                            <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              title="Editar"
-                              onClick={() => openEditDivida(c)}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-destructive"
-                              title="Excluir"
-                              onClick={() =>
-                                deleteDividaMutation.mutate(c.id, {
-                                  onSuccess: () => toast.success("Dívida excluída"),
-                                  onError: () => toast.error("Erro ao excluir dívida"),
-                                })
-                              }
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        {c.tipo_divida && (
-                          <p className="text-xs text-muted-foreground capitalize">{c.tipo_divida}</p>
-                        )}
-                        <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                          {c.tipo_credor && <span className="capitalize">{c.tipo_credor.replace("_", " ")}</span>}
-                          {c.tribunal && <span>Tribunal: {c.tribunal}</span>}
-                          {c.vara && <span>Vara: {c.vara}</span>}
-                          {c.uf && <span>UF: {c.uf}</span>}
-                        </div>
-                        <div className="flex gap-3 text-xs text-muted-foreground">
-                          {c.valor_credito != null && <span>Crédito: R$ {Number(c.valor_credito).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
-                          {c.valor_divida != null && <span>Dívida: R$ {Number(c.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
-                        </div>
-                        {(c as any).comprovante_url && (
-                          <a
-                            href={(c as any).comprovante_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                          >
-                            <FileText className="w-3 h-3" />
-                            {(c as any).comprovante_nome || "Comprovante"}
-                          </a>
-                        )}
-                        <p className="text-muted-foreground text-[10px]">
-                          Registrado em: {format(new Date(c.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                        </p>
+              </div>
+            ) : (() => {
+              const pendentes = dividas?.filter((c: any) => c.status === "pendente" || c.status === "rascunho") || [];
+              const registradas = dividas?.filter((c: any) => c.status !== "pendente" && c.status !== "rascunho") || [];
+
+              const renderDivida = (c: any) => {
+                const st = STATUS_LABELS[c.status] || STATUS_LABELS.pendente;
+                return (
+                  <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-xs">{c.credor_nome || c.tipo_divida || "Dívida"}</span>
+                      <div className="flex items-center gap-1">
+                        <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" title="Editar" onClick={() => openEditDivida(c)}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" title="Excluir"
+                          onClick={() => deleteDividaMutation.mutate(c.id, {
+                            onSuccess: () => toast.success("Dívida excluída"),
+                            onError: () => toast.error("Erro ao excluir dívida"),
+                          })}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
-                    );
-                  })}
+                    </div>
+                    {c.tipo_divida && <p className="text-xs text-muted-foreground capitalize">{c.tipo_divida}</p>}
+                    <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                      {c.tipo_credor && <span className="capitalize">{c.tipo_credor.replace("_", " ")}</span>}
+                      {c.tribunal && <span>Tribunal: {c.tribunal}</span>}
+                      {c.vara && <span>Vara: {c.vara}</span>}
+                      {c.uf && <span>UF: {c.uf}</span>}
+                    </div>
+                    <div className="flex gap-3 text-xs text-muted-foreground">
+                      {c.valor_credito != null && <span>Crédito: R$ {Number(c.valor_credito).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
+                      {c.valor_divida != null && <span>Dívida: R$ {Number(c.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
+                    </div>
+                    {(c as any).comprovante_url && (
+                      <a href={(c as any).comprovante_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                        <FileText className="w-3 h-3" />
+                        {(c as any).comprovante_nome || "Comprovante"}
+                      </a>
+                    )}
+                    <p className="text-muted-foreground text-[10px]">
+                      Registrado em: {format(new Date(c.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {/* Dívidas Pendentes */}
+                  {pendentes.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h3 className="font-medium text-sm mb-3">Dívidas Pendentes</h3>
+                      <div className="space-y-2">{pendentes.map(renderDivida)}</div>
+                    </div>
+                  )}
+
+                  {/* Dívidas Registradas */}
+                  <div className="border-t pt-4">
+                    <h3 className="font-medium text-sm mb-3">Dívidas Registradas</h3>
+                    {registradas.length > 0 ? (
+                      <div className="space-y-2">{registradas.map(renderDivida)}</div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nenhuma dívida registrada ainda.</p>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
                 </div>
               )}
             </div>
