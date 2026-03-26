@@ -317,7 +317,6 @@ export default function Acompanhamento() {
                 </p>
               </div>
             )}
-            </div>
             <div className="space-y-2">
               <Label>Número do Processo</Label>
               <Input
