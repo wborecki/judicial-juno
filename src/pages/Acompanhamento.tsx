@@ -407,6 +407,9 @@ export default function Acompanhamento() {
               {selectedDetail?.numero_processo && (
                 <p className="font-mono text-xs text-muted-foreground">Processo: {selectedDetail.numero_processo}</p>
               )}
+              {selectedDetail?.valor_processo != null && (
+                <p className="text-xs text-muted-foreground">Valor: R$ {Number(selectedDetail.valor_processo).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              )}
               {selectedDetail?.observacoes && (
                 <p className="text-xs text-muted-foreground mt-1">{selectedDetail.observacoes}</p>
               )}
