@@ -1,0 +1,1 @@
+ALTER TABLE public.comunicacoes_divida ADD COLUMN credor_nome text, ADD COLUMN tipo_credor text;
