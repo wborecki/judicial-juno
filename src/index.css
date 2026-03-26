@@ -254,3 +254,8 @@
   border-radius: 0.25rem;
   font-weight: 500;
 }
+
+/* Prevent overlay stacking - only show the topmost overlay */
+body > [data-radix-portal]:not(:last-of-type) > [data-state="open"][data-radix-overlay] {
+  background: transparent !important;
+}
