@@ -165,7 +165,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto py-4 px-1 -mx-1 space-y-5">
           {/* Dados da Pessoa (readonly) */}
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
             <p className="text-xs font-medium text-muted-foreground mb-1">Dados do Devedor</p>
