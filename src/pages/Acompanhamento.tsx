@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Eye, EyeOff, Trash2, Radar, Gavel, Paperclip } from "lucide-react";
+import { Search, Plus, Trash2, Radar, Gavel, Paperclip } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,17 +131,18 @@ export default function Acompanhamento() {
                 <TableHead className="w-[10%]">Valor</TableHead>
                 <TableHead className="w-[10%]">Vara</TableHead>
                 <TableHead className="w-[7%]">Estado</TableHead>
-                <TableHead className="w-[26%] text-right">Ações</TableHead>
+                <TableHead className="w-[7%] text-center">Dívidas</TableHead>
+                <TableHead className="w-[19%] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
                 </TableRow>
               ) : !filtered?.length ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Nenhum acompanhamento cadastrado
                   </TableCell>
                 </TableRow>
@@ -160,6 +161,11 @@ export default function Acompanhamento() {
                       </TableCell>
                       <TableCell className="text-xs truncate">{div?.vara || "—"}</TableCell>
                       <TableCell className="text-xs">{div?.uf || "—"}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={a.total_dividas > 0 ? "default" : "secondary"} className="text-xs">
+                          {a.total_dividas}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button
@@ -178,15 +184,6 @@ export default function Acompanhamento() {
                           >
                             <Paperclip className="w-3.5 h-3.5" />
                             Anexar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            title={a.ativo ? "Desativar" : "Ativar"}
-                            onClick={() => toggleMutation.mutate({ id: a.id, ativo: !a.ativo })}
-                          >
-                            {a.ativo ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </Button>
                           <Button
                             variant="ghost"
