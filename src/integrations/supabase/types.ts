@@ -72,11 +72,15 @@ export type Database = {
           created_at: string
           criado_por: string | null
           id: string
+          numero_processo: string | null
           observacoes: string | null
           pessoa_id: string
           total_processos_encontrados: number
+          uf: string | null
           ultima_verificacao: string | null
           updated_at: string
+          valor_processo: number | null
+          vara: string | null
         }
         Insert: {
           ativo?: boolean
@@ -84,11 +88,15 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           id?: string
+          numero_processo?: string | null
           observacoes?: string | null
           pessoa_id: string
           total_processos_encontrados?: number
+          uf?: string | null
           ultima_verificacao?: string | null
           updated_at?: string
+          valor_processo?: number | null
+          vara?: string | null
         }
         Update: {
           ativo?: boolean
@@ -96,11 +104,15 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           id?: string
+          numero_processo?: string | null
           observacoes?: string | null
           pessoa_id?: string
           total_processos_encontrados?: number
+          uf?: string | null
           ultima_verificacao?: string | null
           updated_at?: string
+          valor_processo?: number | null
+          vara?: string | null
         }
         Relationships: [
           {
