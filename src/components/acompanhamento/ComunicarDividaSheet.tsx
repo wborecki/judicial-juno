@@ -201,8 +201,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                     placeholder="Buscar por nome ou CPF/CNPJ..."
                     className="pl-9"
                   />
-                  {credorSearch.trim() && pessoasFiltradas.length > 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md max-h-48 overflow-y-auto">
+                  {credorSearch.trim() && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md max-h-56 overflow-y-auto">
                       {pessoasFiltradas.map((p: any) => (
                         <button
                           key={p.id}
@@ -214,11 +214,20 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                           <span className="text-xs font-mono text-muted-foreground shrink-0">{p.cpf_cnpj}</span>
                         </button>
                       ))}
-                    </div>
-                  )}
-                  {credorSearch.trim() && pessoasFiltradas.length === 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md p-3">
-                      <p className="text-xs text-muted-foreground text-center">Nenhuma pessoa encontrada</p>
+                      {pessoasFiltradas.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-2">Nenhuma pessoa encontrada</p>
+                      )}
+                      <button
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-center gap-2 border-t border-border text-primary"
+                        onClick={() => {
+                          setNovoPessoaNome(credorSearch.trim());
+                          setCriarPessoaOpen(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span className="text-sm font-medium">Criar nova pessoa</span>
+                      </button>
                     </div>
                   )}
                 </div>
