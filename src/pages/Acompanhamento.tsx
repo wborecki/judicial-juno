@@ -66,36 +66,75 @@ export default function Acompanhamento() {
     );
   });
 
-  const handleCreate = () => {
-    const pessoa = pessoas?.find((p) => p.id === selectedPessoaId);
-    if (!pessoa) {
-      toast.error("Selecione uma pessoa");
-      return;
-    }
-    createMutation.mutate(
-      {
-        pessoa_id: pessoa.id,
-        cpf_cnpj: pessoa.cpf_cnpj,
-        observacoes: observacoes || undefined,
-        numero_processo: numeroProcesso || undefined,
-        valor_processo: valorProcesso ? Number(valorProcesso) : undefined,
-        vara: vara || undefined,
-        uf: uf || undefined,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Acompanhamento habilitado");
-          setSheetOpen(false);
-          setSelectedPessoaId("");
-          setObservacoes("");
-          setNumeroProcesso("");
-          setValorProcesso("");
-          setVara("");
-          setUf("");
+  const resetForm = () => {
+    setSelectedPessoaId("");
+    setObservacoes("");
+    setNumeroProcesso("");
+    setValorProcesso("");
+    setVara("");
+    setUf("");
+    setEditingAcomp(null);
+  };
+
+  const openEditAcomp = (a: any) => {
+    setEditingAcomp(a);
+    setSelectedPessoaId(a.pessoa_id);
+    setNumeroProcesso(a.numero_processo || "");
+    setValorProcesso(a.valor_processo != null ? String(a.valor_processo) : "");
+    setVara(a.vara || "");
+    setUf(a.uf || "");
+    setObservacoes(a.observacoes || "");
+    setSheetOpen(true);
+  };
+
+  const handleSave = () => {
+    if (editingAcomp) {
+      updateMutation.mutate(
+        {
+          id: editingAcomp.id,
+          updates: {
+            numero_processo: numeroProcesso || undefined,
+            valor_processo: valorProcesso ? Number(valorProcesso) : null,
+            vara: vara || undefined,
+            uf: uf || undefined,
+            observacoes: observacoes || undefined,
+          },
         },
-        onError: () => toast.error("Erro ao criar acompanhamento"),
+        {
+          onSuccess: () => {
+            toast.success("Acompanhamento atualizado");
+            setSheetOpen(false);
+            resetForm();
+          },
+          onError: () => toast.error("Erro ao atualizar"),
+        }
+      );
+    } else {
+      const pessoa = pessoas?.find((p) => p.id === selectedPessoaId);
+      if (!pessoa) {
+        toast.error("Selecione uma pessoa");
+        return;
       }
-    );
+      createMutation.mutate(
+        {
+          pessoa_id: pessoa.id,
+          cpf_cnpj: pessoa.cpf_cnpj,
+          observacoes: observacoes || undefined,
+          numero_processo: numeroProcesso || undefined,
+          valor_processo: valorProcesso ? Number(valorProcesso) : undefined,
+          vara: vara || undefined,
+          uf: uf || undefined,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Acompanhamento habilitado");
+            setSheetOpen(false);
+            resetForm();
+          },
+          onError: () => toast.error("Erro ao criar acompanhamento"),
+        }
+      );
+    }
   };
 
   const openAnexarDivida = (acomp: any) => {
