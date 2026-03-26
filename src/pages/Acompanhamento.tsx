@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAcompanhamentos, useCreateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
+import { useAcompanhamentos, useCreateAcompanhamento, useUpdateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
 import { useComunicacoesDivida, useDeleteComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ const UF_LIST = [
 export default function Acompanhamento() {
   const [search, setSearch] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingAcomp, setEditingAcomp] = useState<any>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -48,6 +49,7 @@ export default function Acompanhamento() {
   const { data: acompanhamentos, isLoading } = useAcompanhamentos();
   const { data: pessoas } = usePessoas();
   const createMutation = useCreateAcompanhamento();
+  const updateMutation = useUpdateAcompanhamento();
   const toggleMutation = useToggleAcompanhamento();
   const deleteMutation = useDeleteAcompanhamento();
   const deleteDividaMutation = useDeleteComunicacaoDivida();
@@ -64,36 +66,75 @@ export default function Acompanhamento() {
     );
   });
 
-  const handleCreate = () => {
-    const pessoa = pessoas?.find((p) => p.id === selectedPessoaId);
-    if (!pessoa) {
-      toast.error("Selecione uma pessoa");
-      return;
-    }
-    createMutation.mutate(
-      {
-        pessoa_id: pessoa.id,
-        cpf_cnpj: pessoa.cpf_cnpj,
-        observacoes: observacoes || undefined,
-        numero_processo: numeroProcesso || undefined,
-        valor_processo: valorProcesso ? Number(valorProcesso) : undefined,
-        vara: vara || undefined,
-        uf: uf || undefined,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Acompanhamento habilitado");
-          setSheetOpen(false);
-          setSelectedPessoaId("");
-          setObservacoes("");
-          setNumeroProcesso("");
-          setValorProcesso("");
-          setVara("");
-          setUf("");
+  const resetForm = () => {
+    setSelectedPessoaId("");
+    setObservacoes("");
+    setNumeroProcesso("");
+    setValorProcesso("");
+    setVara("");
+    setUf("");
+    setEditingAcomp(null);
+  };
+
+  const openEditAcomp = (a: any) => {
+    setEditingAcomp(a);
+    setSelectedPessoaId(a.pessoa_id);
+    setNumeroProcesso(a.numero_processo || "");
+    setValorProcesso(a.valor_processo != null ? String(a.valor_processo) : "");
+    setVara(a.vara || "");
+    setUf(a.uf || "");
+    setObservacoes(a.observacoes || "");
+    setSheetOpen(true);
+  };
+
+  const handleSave = () => {
+    if (editingAcomp) {
+      updateMutation.mutate(
+        {
+          id: editingAcomp.id,
+          updates: {
+            numero_processo: numeroProcesso || undefined,
+            valor_processo: valorProcesso ? Number(valorProcesso) : null,
+            vara: vara || undefined,
+            uf: uf || undefined,
+            observacoes: observacoes || undefined,
+          },
         },
-        onError: () => toast.error("Erro ao criar acompanhamento"),
+        {
+          onSuccess: () => {
+            toast.success("Acompanhamento atualizado");
+            setSheetOpen(false);
+            resetForm();
+          },
+          onError: () => toast.error("Erro ao atualizar"),
+        }
+      );
+    } else {
+      const pessoa = pessoas?.find((p) => p.id === selectedPessoaId);
+      if (!pessoa) {
+        toast.error("Selecione uma pessoa");
+        return;
       }
-    );
+      createMutation.mutate(
+        {
+          pessoa_id: pessoa.id,
+          cpf_cnpj: pessoa.cpf_cnpj,
+          observacoes: observacoes || undefined,
+          numero_processo: numeroProcesso || undefined,
+          valor_processo: valorProcesso ? Number(valorProcesso) : undefined,
+          vara: vara || undefined,
+          uf: uf || undefined,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Acompanhamento habilitado");
+            setSheetOpen(false);
+            resetForm();
+          },
+          onError: () => toast.error("Erro ao criar acompanhamento"),
+        }
+      );
+    }
   };
 
   const openAnexarDivida = (acomp: any) => {
@@ -138,7 +179,7 @@ export default function Acompanhamento() {
             Monitore CPFs/CNPJs e registre dívidas judiciais
           </p>
         </div>
-        <Button size="sm" onClick={() => setSheetOpen(true)}>
+        <Button size="sm" onClick={() => { resetForm(); setSheetOpen(true); }}>
           <Plus className="w-4 h-4 mr-1" /> Novo Acompanhamento
         </Button>
       </div>
@@ -204,6 +245,15 @@ export default function Acompanhamento() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Editar"
+                          onClick={() => openEditAcomp(a)}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
                           size="sm"
                           className="h-7 text-xs gap-1 px-2.5"
                           onClick={() => openInformarDivida(a)}
@@ -235,30 +285,38 @@ export default function Acompanhamento() {
       </div>
 
       {/* Sheet: Novo Acompanhamento */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <Sheet open={sheetOpen} onOpenChange={(open) => { setSheetOpen(open); if (!open) resetForm(); }}>
         <SheetContent className="flex flex-col">
           <SheetHeader>
-            <SheetTitle>Novo Acompanhamento</SheetTitle>
+            <SheetTitle>{editingAcomp ? "Editar Acompanhamento" : "Novo Acompanhamento"}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto space-y-4 py-4 px-1 -mx-1">
-            <div className="space-y-2">
-              <Label>Pessoa (Autor)</Label>
-              <Select value={selectedPessoaId} onValueChange={setSelectedPessoaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma pessoa cadastrada" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pessoas?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome} — {p.cpf_cnpj}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                O CPF/CNPJ da pessoa será usado para monitoramento automático.
-              </p>
-            </div>
+            {editingAcomp ? (
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Pessoa (Autor)</p>
+                <p className="text-sm font-medium">{editingAcomp.pessoas?.nome}</p>
+                <p className="font-mono text-xs text-muted-foreground">{editingAcomp.cpf_cnpj}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Pessoa (Autor)</Label>
+                <Select value={selectedPessoaId} onValueChange={setSelectedPessoaId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma pessoa cadastrada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pessoas?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome} — {p.cpf_cnpj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  O CPF/CNPJ da pessoa será usado para monitoramento automático.
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Número do Processo</Label>
               <Input
@@ -312,9 +370,9 @@ export default function Acompanhamento() {
             </div>
           </div>
           <SheetFooter className="sticky bottom-0 bg-background border-t pt-4">
-            <Button variant="outline" onClick={() => setSheetOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Salvando..." : "Habilitar Acompanhamento"}
+            <Button variant="outline" onClick={() => { setSheetOpen(false); resetForm(); }}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+              {(createMutation.isPending || updateMutation.isPending) ? "Salvando..." : editingAcomp ? "Salvar Alterações" : "Habilitar Acompanhamento"}
             </Button>
           </SheetFooter>
         </SheetContent>

@@ -86,6 +86,20 @@ export function useToggleAcompanhamento() {
   });
 }
 
+export function useUpdateAcompanhamento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: { numero_processo?: string; valor_processo?: number | null; vara?: string; uf?: string; observacoes?: string } }) => {
+      const { error } = await supabase
+        .from("acompanhamentos")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["acompanhamentos"] }),
+  });
+}
+
 export function useDeleteAcompanhamento() {
   const qc = useQueryClient();
   return useMutation({
