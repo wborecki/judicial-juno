@@ -245,15 +245,6 @@ export default function Acompanhamento() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          title="Editar"
-                          onClick={() => openEditAcomp(a)}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
                           size="sm"
                           className="h-7 text-xs gap-1 px-2.5"
                           onClick={() => openInformarDivida(a)}
@@ -392,9 +383,25 @@ export default function Acompanhamento() {
             <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{selectedDetail?.pessoas?.nome}</p>
-                <Badge variant={selectedDetail?.ativo ? "default" : "secondary"} className="text-[10px]">
-                  {selectedDetail?.ativo ? "Ativo" : "Inativo"}
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title="Editar processo"
+                    onClick={() => {
+                      if (selectedDetail) {
+                        setDetailId(null);
+                        openEditAcomp(selectedDetail);
+                      }
+                    }}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Badge variant={selectedDetail?.ativo ? "default" : "secondary"} className="text-[10px]">
+                    {selectedDetail?.ativo ? "Ativo" : "Inativo"}
+                  </Badge>
+                </div>
               </div>
               <p className="font-mono text-xs text-muted-foreground">{selectedDetail?.cpf_cnpj}</p>
               {selectedDetail?.numero_processo && (
