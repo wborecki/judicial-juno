@@ -34,10 +34,52 @@ export function useCreateComunicacaoDivida() {
       criado_por?: string;
       credor_nome?: string;
       tipo_credor?: string;
+      comprovante_url?: string;
+      comprovante_nome?: string;
     }) => {
       const { data, error } = await supabase
         .from("comunicacoes_divida")
-        .insert([input])
+        .insert([input as any])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["comunicacoes_divida", data.acompanhamento_id] });
+      qc.invalidateQueries({ queryKey: ["acompanhamentos"] });
+    },
+  });
+}
+
+export function useUpdateComunicacaoDivida() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
+      const { data, error } = await supabase
+        .from("comunicacoes_divida")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["comunicacoes_divida", data.acompanhamento_id] });
+      qc.invalidateQueries({ queryKey: ["acompanhamentos"] });
+    },
+  });
+}
+
+export function useDeleteComunicacaoDivida() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from("comunicacoes_divida")
+        .delete()
+        .eq("id", id)
         .select()
         .single();
       if (error) throw error;
