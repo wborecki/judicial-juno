@@ -77,7 +77,7 @@ export function AppHeader() {
             const host = window.location.hostname;
             if (host === "localhost") return null;
             const isVercel = host.includes("vercel.app");
-            const label = isVercel ? "Vercel" : host.includes("lovable") ? "Lovable" : null;
+            const label = isVercel ? "Vercel" : null;
             if (!label) return null;
             return (
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
