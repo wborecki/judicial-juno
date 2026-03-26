@@ -174,16 +174,7 @@ export default function Acompanhamento() {
                             onClick={() => openInformarDivida(a)}
                           >
                             <Gavel className="w-3.5 h-3.5" />
-                            Informar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs gap-1 px-2.5"
-                            onClick={() => openAnexarDivida(a)}
-                          >
-                            <Paperclip className="w-3.5 h-3.5" />
-                            Anexar
+                            Informar Dívida
                           </Button>
                           <Button
                             variant="ghost"
