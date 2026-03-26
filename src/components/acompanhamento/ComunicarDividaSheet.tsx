@@ -23,12 +23,7 @@ const TIPOS_DIVIDA = [
   { value: "outros", label: "Outros" },
 ];
 
-const TIPOS_CREDOR = [
-  { value: "empresa", label: "Empresa" },
-  { value: "governo", label: "Governo" },
-  { value: "pessoa_fisica", label: "Pessoa Física" },
-  { value: "orgao_publico", label: "Órgão Público" },
-];
+// tipo_credor is derived from the pessoa.tipo field automatically
 
 interface ComunicarDividaSheetProps {
   open: boolean;
