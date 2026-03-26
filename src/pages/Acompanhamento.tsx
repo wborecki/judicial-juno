@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Eye, EyeOff, Trash2, Radar, ChevronRight, Gavel } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, Trash2, Radar, Gavel } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,20 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAcompanhamentos, useAcompanhamentoResultados, useCreateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
+import { useAcompanhamentos, useCreateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
+import { useComunicacoesDivida } from "@/hooks/useComunicacoesDivida";
 import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ComunicarDividaSheet from "@/components/acompanhamento/ComunicarDividaSheet";
+
+const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  pendente: { label: "Pendente", variant: "outline" },
+  enviado: { label: "Enviado", variant: "default" },
+  erro: { label: "Erro", variant: "destructive" },
+  rascunho: { label: "Rascunho", variant: "secondary" },
+};
 
 export default function Acompanhamento() {
   const [search, setSearch] = useState("");
@@ -22,13 +30,16 @@ export default function Acompanhamento() {
   const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
+  const [dividaSheetAcomp, setDividaSheetAcomp] = useState<any>(null);
 
   const { data: acompanhamentos, isLoading } = useAcompanhamentos();
-  const { data: resultados, isLoading: loadingResultados } = useAcompanhamentoResultados(detailId);
   const { data: pessoas } = usePessoas();
   const createMutation = useCreateAcompanhamento();
   const toggleMutation = useToggleAcompanhamento();
   const deleteMutation = useDeleteAcompanhamento();
+
+  const selectedDetail = acompanhamentos?.find((a: any) => a.id === detailId);
+  const { data: dividas, isLoading: loadingDividas } = useComunicacoesDivida(detailId);
 
   const filtered = acompanhamentos?.filter((a: any) => {
     const q = search.toLowerCase();
@@ -58,7 +69,15 @@ export default function Acompanhamento() {
     );
   };
 
-  const selectedDetail = acompanhamentos?.find((a: any) => a.id === detailId);
+  const openDividaSheet = (acomp: any) => {
+    setDividaSheetAcomp({
+      id: acomp.id,
+      pessoa_id: acomp.pessoa_id,
+      cpf_cnpj: acomp.cpf_cnpj,
+      pessoas: acomp.pessoas,
+    });
+    setDividaSheetOpen(true);
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -67,7 +86,7 @@ export default function Acompanhamento() {
         <div>
           <h1 className="text-xl font-semibold text-foreground">Busca de Devedor</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Monitore CPFs/CNPJs para saber quando surgem processos judiciais
+            Monitore CPFs/CNPJs e registre dívidas judiciais
           </p>
         </div>
         <Button size="sm" onClick={() => setSheetOpen(true)}>
@@ -94,72 +113,78 @@ export default function Acompanhamento() {
           <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-[25%]">Nome</TableHead>
-                <TableHead className="w-[18%]">CPF/CNPJ</TableHead>
-                <TableHead className="w-[12%]">Status</TableHead>
-                <TableHead className="w-[18%]">Última Verificação</TableHead>
-                <TableHead className="w-[12%]">Processos</TableHead>
-                <TableHead className="w-[15%] text-right">Ações</TableHead>
+                <TableHead className="w-[20%]">Nome</TableHead>
+                <TableHead className="w-[14%]">CPF/CNPJ</TableHead>
+                <TableHead className="w-[18%]">Processo</TableHead>
+                <TableHead className="w-[12%]">Valor</TableHead>
+                <TableHead className="w-[10%]">Vara</TableHead>
+                <TableHead className="w-[8%]">Estado</TableHead>
+                <TableHead className="w-[18%] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
                 </TableRow>
               ) : !filtered?.length ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nenhum acompanhamento cadastrado
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((a: any) => (
-                  <TableRow key={a.id} className="cursor-pointer" onClick={() => setDetailId(a.id)}>
-                    <TableCell className="font-medium truncate">{a.pessoas?.nome || "—"}</TableCell>
-                    <TableCell className="font-mono text-xs">{a.cpf_cnpj}</TableCell>
-                    <TableCell>
-                      <Badge variant={a.ativo ? "default" : "secondary"} className="text-[10px]">
-                        {a.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {a.ultima_verificacao
-                        ? format(new Date(a.ultima_verificacao), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                        : "Nunca verificado"}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold">{a.total_processos_encontrados || 0}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          title={a.ativo ? "Desativar" : "Ativar"}
-                          onClick={() => toggleMutation.mutate({ id: a.id, ativo: !a.ativo })}
-                        >
-                          {a.ativo ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          title="Excluir"
-                          onClick={() =>
-                            deleteMutation.mutate(a.id, {
-                              onSuccess: () => toast.success("Acompanhamento excluído"),
-                            })
-                          }
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filtered.map((a: any) => {
+                  const div = a.ultima_divida;
+                  return (
+                    <TableRow key={a.id} className="cursor-pointer" onClick={() => setDetailId(a.id)}>
+                      <TableCell className="font-medium truncate">{a.pessoas?.nome || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{a.cpf_cnpj}</TableCell>
+                      <TableCell className="font-mono text-xs truncate">{div?.numero_processo || "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        {div?.valor_divida != null
+                          ? `R$ ${Number(div.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs truncate">{div?.vara || "—"}</TableCell>
+                      <TableCell className="text-xs">{div?.uf || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs gap-1 px-2.5"
+                            onClick={() => openDividaSheet(a)}
+                          >
+                            <Gavel className="w-3.5 h-3.5" />
+                            Informar Dívida
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title={a.ativo ? "Desativar" : "Ativar"}
+                            onClick={() => toggleMutation.mutate({ id: a.id, ativo: !a.ativo })}
+                          >
+                            {a.ativo ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            title="Excluir"
+                            onClick={() =>
+                              deleteMutation.mutate(a.id, {
+                                onSuccess: () => toast.success("Acompanhamento excluído"),
+                              })
+                            }
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -210,7 +235,7 @@ export default function Acompanhamento() {
         </SheetContent>
       </Sheet>
 
-      {/* Sheet: Detalhe / Resultados */}
+      {/* Sheet: Detalhe — Lista de Dívidas */}
       <Sheet open={!!detailId} onOpenChange={(open) => !open && setDetailId(null)}>
         <SheetContent className="flex flex-col sm:max-w-lg">
           <SheetHeader>
@@ -220,65 +245,61 @@ export default function Acompanhamento() {
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto py-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">CPF/CNPJ</p>
-                <p className="font-mono">{selectedDetail?.cpf_cnpj}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Status</p>
-                <Badge variant={selectedDetail?.ativo ? "default" : "secondary"}>
+            {/* Info do devedor */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{selectedDetail?.pessoas?.nome}</p>
+                <Badge variant={selectedDetail?.ativo ? "default" : "secondary"} className="text-[10px]">
                   {selectedDetail?.ativo ? "Ativo" : "Inativo"}
                 </Badge>
               </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Última Verificação</p>
-                <p>{selectedDetail?.ultima_verificacao
-                  ? format(new Date(selectedDetail.ultima_verificacao), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                  : "Nunca"}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Processos Encontrados</p>
-                <p className="font-semibold text-lg">{selectedDetail?.total_processos_encontrados || 0}</p>
-              </div>
+              <p className="font-mono text-xs text-muted-foreground">{selectedDetail?.cpf_cnpj}</p>
+              {selectedDetail?.observacoes && (
+                <p className="text-xs text-muted-foreground mt-1">{selectedDetail.observacoes}</p>
+              )}
             </div>
-            {selectedDetail?.observacoes && (
-              <div>
-                <p className="text-muted-foreground text-xs mb-1">Observações</p>
-                <p className="text-sm">{selectedDetail.observacoes}</p>
-              </div>
-            )}
 
+            {/* Botão principal */}
             <Button
               className="w-full"
-              onClick={() => setDividaSheetOpen(true)}
+              onClick={() => selectedDetail && openDividaSheet(selectedDetail)}
             >
               <Gavel className="w-4 h-4 mr-1" />
-              Comunicar Dívida ao Juiz
+              Nova Dívida
             </Button>
 
+            {/* Lista de Dívidas */}
             <div className="border-t pt-4">
-              <h3 className="font-medium text-sm mb-3">Processos Encontrados</h3>
-              {loadingResultados ? (
+              <h3 className="font-medium text-sm mb-3">Dívidas Registradas</h3>
+              {loadingDividas ? (
                 <p className="text-sm text-muted-foreground">Carregando...</p>
-              ) : !resultados?.length ? (
-                <p className="text-sm text-muted-foreground">Nenhum processo encontrado ainda pela automação.</p>
+              ) : !dividas?.length ? (
+                <p className="text-sm text-muted-foreground">Nenhuma dívida registrada ainda.</p>
               ) : (
                 <div className="space-y-2">
-                  {resultados.map((r: any) => (
-                    <div key={r.id} className="border rounded-lg p-3 text-sm space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-medium">{r.numero_processo || "—"}</span>
-                        <Badge variant={r.vinculado ? "default" : "outline"} className="text-[10px]">
-                          {r.vinculado ? "Vinculado" : "Não vinculado"}
-                        </Badge>
+                  {dividas.map((c: any) => {
+                    const st = STATUS_LABELS[c.status] || STATUS_LABELS.pendente;
+                    return (
+                      <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-medium">{c.numero_processo}</span>
+                          <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                          {c.tribunal && <span>Tribunal: {c.tribunal}</span>}
+                          {c.vara && <span>Vara: {c.vara}</span>}
+                          {c.uf && <span>UF: {c.uf}</span>}
+                        </div>
+                        <div className="flex gap-3 text-xs text-muted-foreground">
+                          {c.valor_credito != null && <span>Crédito: R$ {Number(c.valor_credito).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
+                          {c.valor_divida != null && <span>Dívida: R$ {Number(c.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
+                        </div>
+                        <p className="text-muted-foreground text-[10px]">
+                          Registrado em: {format(new Date(c.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </p>
                       </div>
-                      {r.tribunal && <p className="text-muted-foreground text-xs">Tribunal: {r.tribunal}</p>}
-                      <p className="text-muted-foreground text-[10px]">
-                        Encontrado em: {format(new Date(r.encontrado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -290,12 +311,7 @@ export default function Acompanhamento() {
       <ComunicarDividaSheet
         open={dividaSheetOpen}
         onOpenChange={setDividaSheetOpen}
-        acompanhamento={selectedDetail ? {
-          id: selectedDetail.id,
-          pessoa_id: selectedDetail.pessoa_id,
-          cpf_cnpj: selectedDetail.cpf_cnpj,
-          pessoas: selectedDetail.pessoas as any,
-        } : null}
+        acompanhamento={dividaSheetAcomp}
       />
     </div>
   );

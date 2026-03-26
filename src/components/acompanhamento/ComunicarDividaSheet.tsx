@@ -6,14 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useCreateComunicacaoDivida, useComunicacoesDivida } from "@/hooks/useComunicacoesDivida";
+import { useCreateComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const TRIBUNAIS = [
-  "TRF1", "TRF2", "TRF3", "TRF4", "TRF5", "TRF6",
+  "TRF1","TRF2","TRF3","TRF4","TRF5","TRF6",
   "TJAC","TJAL","TJAM","TJAP","TJBA","TJCE","TJDF","TJES","TJGO",
   "TJMA","TJMG","TJMS","TJMT","TJPA","TJPB","TJPE","TJPI","TJPR",
   "TJRJ","TJRN","TJRO","TJRR","TJRS","TJSC","TJSE","TJSP","TJTO",
@@ -23,12 +20,10 @@ const TRIBUNAIS = [
   "STF","STJ",
 ];
 
-const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pendente: { label: "Pendente", variant: "outline" },
-  enviado: { label: "Enviado", variant: "default" },
-  erro: { label: "Erro", variant: "destructive" },
-  rascunho: { label: "Rascunho", variant: "secondary" },
-};
+const UFS = [
+  "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
+  "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
+];
 
 interface ComunicarDividaSheetProps {
   open: boolean;
@@ -44,18 +39,20 @@ interface ComunicarDividaSheetProps {
 export default function ComunicarDividaSheet({ open, onOpenChange, acompanhamento }: ComunicarDividaSheetProps) {
   const [numeroProcesso, setNumeroProcesso] = useState("");
   const [tribunal, setTribunal] = useState("");
+  const [vara, setVara] = useState("");
+  const [uf, setUf] = useState("");
   const [valorCredito, setValorCredito] = useState("");
   const [valorDivida, setValorDivida] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
   const createMutation = useCreateComunicacaoDivida();
-  const { data: comunicacoes, isLoading: loadingComunicacoes } = useComunicacoesDivida(acompanhamento?.id ?? null);
-
   const pessoa = acompanhamento?.pessoas;
 
   const resetForm = () => {
     setNumeroProcesso("");
     setTribunal("");
+    setVara("");
+    setUf("");
     setValorCredito("");
     setValorDivida("");
     setObservacoes("");
@@ -74,6 +71,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         pessoa_id: acompanhamento.pessoa_id,
         numero_processo: numeroProcesso.trim(),
         tribunal: tribunal || undefined,
+        vara: vara || undefined,
+        uf: uf || undefined,
         valor_credito: valorCredito ? parseFloat(valorCredito) : undefined,
         valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
         dados_pessoa: pessoa ? {
@@ -89,10 +88,11 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       },
       {
         onSuccess: () => {
-          toast.success("Comunicação de dívida registrada");
+          toast.success("Dívida registrada com sucesso");
           resetForm();
+          onOpenChange(false);
         },
-        onError: () => toast.error("Erro ao registrar comunicação"),
+        onError: () => toast.error("Erro ao registrar dívida"),
       }
     );
   };
@@ -103,23 +103,16 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Gavel className="w-5 h-5 text-primary" />
-            Comunicar Dívida ao Juiz
+            Informar Dívida
           </SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto py-4 space-y-5">
           {/* Dados da Pessoa (readonly) */}
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Dados do Credor</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Dados do Devedor</p>
             <p className="text-sm font-medium">{pessoa?.nome || "—"}</p>
             <p className="text-xs font-mono text-muted-foreground">{acompanhamento?.cpf_cnpj}</p>
-            {pessoa?.endereco && (
-              <p className="text-xs text-muted-foreground">
-                {pessoa.endereco}{pessoa.cidade ? `, ${pessoa.cidade}` : ""}{pessoa.uf ? ` - ${pessoa.uf}` : ""}
-              </p>
-            )}
-            {pessoa?.email && <p className="text-xs text-muted-foreground">{pessoa.email}</p>}
-            {pessoa?.telefone && <p className="text-xs text-muted-foreground">{pessoa.telefone}</p>}
           </div>
 
           {/* Formulário */}
@@ -145,6 +138,30 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Vara</Label>
+                <Input
+                  value={vara}
+                  onChange={(e) => setVara(e.target.value)}
+                  placeholder="Ex: 1ª Vara Cível"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Estado (UF)</Label>
+                <Select value={uf} onValueChange={setUf}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UFS.map((u) => (
+                      <SelectItem key={u} value={u}>{u}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -177,42 +194,10 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
               <Textarea
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Detalhes adicionais sobre a comunicação..."
+                placeholder="Detalhes adicionais..."
                 rows={3}
               />
             </div>
-          </div>
-
-          {/* Histórico de comunicações */}
-          <div className="border-t pt-4">
-            <h3 className="font-medium text-sm mb-3">Histórico de Comunicações</h3>
-            {loadingComunicacoes ? (
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            ) : !comunicacoes?.length ? (
-              <p className="text-sm text-muted-foreground">Nenhuma comunicação registrada ainda.</p>
-            ) : (
-              <div className="space-y-2">
-                {comunicacoes.map((c) => {
-                  const st = STATUS_LABELS[c.status] || STATUS_LABELS.pendente;
-                  return (
-                    <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-medium">{c.numero_processo}</span>
-                        <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
-                      </div>
-                      {c.tribunal && <p className="text-muted-foreground text-xs">Tribunal: {c.tribunal}</p>}
-                      <div className="flex gap-3 text-xs text-muted-foreground">
-                        {c.valor_credito != null && <span>Crédito: R$ {Number(c.valor_credito).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
-                        {c.valor_divida != null && <span>Dívida: R$ {Number(c.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
-                      </div>
-                      <p className="text-muted-foreground text-[10px]">
-                        Registrado em: {format(new Date(c.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
 
@@ -220,7 +205,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={createMutation.isPending}>
             <Gavel className="w-4 h-4 mr-1" />
-            {createMutation.isPending ? "Registrando..." : "Registrar Comunicação"}
+            {createMutation.isPending ? "Registrando..." : "Registrar Dívida"}
           </Button>
         </SheetFooter>
       </SheetContent>
