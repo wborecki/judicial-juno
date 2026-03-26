@@ -386,6 +386,7 @@ export default function Acompanhamento() {
         open={dividaSheetOpen}
         onOpenChange={setDividaSheetOpen}
         acompanhamento={dividaSheetAcomp}
+        editData={dividaEditData}
       />
 
       {/* Dialog: Informar Dívida ao Tribunal */}
