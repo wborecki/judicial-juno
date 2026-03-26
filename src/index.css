@@ -255,14 +255,9 @@
   font-weight: 500;
 }
 
-/* Prevent overlay stacking - hide all but the last overlay */
-body > [data-radix-portal] ~ [data-radix-portal] [data-state="open"][role="dialog"] ~ div[data-state="open"] {
-  background: transparent !important;
-}
-/* Fallback: any stacked Radix overlay beyond the first portal */
-body > [data-radix-portal]:not(:last-of-type) {
-  --overlay-bg: transparent;
-}
-body > [data-radix-portal]:not(:last-of-type) > div[data-state="open"]:first-child {
+/* Prevent overlay stacking — earlier portals become transparent */
+[data-radix-portal] + [data-radix-portal] + [data-radix-portal] + [data-radix-portal] [data-overlay],
+[data-radix-portal] + [data-radix-portal] + [data-radix-portal] [data-overlay],
+[data-radix-portal] + [data-radix-portal] [data-overlay] {
   background: transparent !important;
 }
