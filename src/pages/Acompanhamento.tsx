@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Trash2, Radar, Gavel, Paperclip } from "lucide-react";
+import { Search, Plus, Trash2, Radar, Gavel, Paperclip, Pencil, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAcompanhamentos, useCreateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
-import { useComunicacoesDivida } from "@/hooks/useComunicacoesDivida";
+import { useComunicacoesDivida, useDeleteComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -32,6 +32,7 @@ export default function Acompanhamento() {
   const [observacoes, setObservacoes] = useState("");
   const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
   const [dividaSheetAcomp, setDividaSheetAcomp] = useState<any>(null);
+  const [dividaEditData, setDividaEditData] = useState<any>(null);
   const [informarOpen, setInformarOpen] = useState(false);
   const [informarAcomp, setInformarAcomp] = useState<any>(null);
 
