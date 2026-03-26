@@ -418,6 +418,7 @@ export type Database = {
           pessoa_id: string | null
           status: string
           tipo_credor: string | null
+          tipo_divida: string | null
           tribunal: string | null
           uf: string | null
           valor_credito: number | null
@@ -439,6 +440,7 @@ export type Database = {
           pessoa_id?: string | null
           status?: string
           tipo_credor?: string | null
+          tipo_divida?: string | null
           tribunal?: string | null
           uf?: string | null
           valor_credito?: number | null
@@ -460,6 +462,7 @@ export type Database = {
           pessoa_id?: string | null
           status?: string
           tipo_credor?: string | null
+          tipo_divida?: string | null
           tribunal?: string | null
           uf?: string | null
           valor_credito?: number | null
