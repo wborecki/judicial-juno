@@ -155,6 +155,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   };
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col sm:max-w-lg">
         <SheetHeader>
