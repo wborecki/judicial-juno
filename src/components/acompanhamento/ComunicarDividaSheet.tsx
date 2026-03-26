@@ -48,9 +48,13 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const [valorDivida, setValorDivida] = useState("");
   const [dataVencimento, setDataVencimento] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [criarPessoaOpen, setCriarPessoaOpen] = useState(false);
+  const [novoPessoaNome, setNovoPessoaNome] = useState("");
+  const [novoPessoaCpf, setNovoPessoaCpf] = useState("");
 
   const { data: pessoas } = usePessoas();
   const createMutation = useCreateComunicacaoDivida();
+  const createPessoaMutation = useCreatePessoa();
   const pessoa = acompanhamento?.pessoas;
 
   const credorSelecionado = useMemo(
