@@ -305,5 +305,31 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    {/* Dialog para criar nova pessoa */}
+    <Dialog open={criarPessoaOpen} onOpenChange={setCriarPessoaOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Criar Nova Pessoa</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>Nome *</Label>
+            <Input value={novoPessoaNome} onChange={(e) => setNovoPessoaNome(e.target.value)} placeholder="Nome completo ou razão social" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>CPF / CNPJ *</Label>
+            <Input value={novoPessoaCpf} onChange={(e) => setNovoPessoaCpf(e.target.value)} placeholder="000.000.000-00 ou 00.000.000/0000-00" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setCriarPessoaOpen(false)}>Cancelar</Button>
+          <Button onClick={handleCriarPessoa} disabled={createPessoaMutation.isPending}>
+            {createPessoaMutation.isPending ? "Criando..." : "Criar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
