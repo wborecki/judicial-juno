@@ -5,12 +5,34 @@ export function useAcompanhamentos() {
   return useQuery({
     queryKey: ["acompanhamentos"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: acomps, error } = await supabase
         .from("acompanhamentos")
         .select("*, pessoas(nome, cpf_cnpj, tipo)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+
+      // Fetch latest divida for each acompanhamento
+      const ids = acomps?.map((a) => a.id) || [];
+      if (!ids.length) return acomps || [];
+
+      const { data: dividas } = await supabase
+        .from("comunicacoes_divida")
+        .select("*")
+        .in("acompanhamento_id", ids)
+        .order("created_at", { ascending: false });
+
+      // Group by acompanhamento_id and pick the latest
+      const latestMap: Record<string, any> = {};
+      dividas?.forEach((d) => {
+        if (!latestMap[d.acompanhamento_id]) {
+          latestMap[d.acompanhamento_id] = d;
+        }
+      });
+
+      return (acomps || []).map((a) => ({
+        ...a,
+        ultima_divida: latestMap[a.id] || null,
+      }));
     },
   });
 }

@@ -415,8 +415,10 @@ export type Database = {
           pessoa_id: string | null
           status: string
           tribunal: string | null
+          uf: string | null
           valor_credito: number | null
           valor_divida: number | null
+          vara: string | null
         }
         Insert: {
           acompanhamento_id: string
@@ -430,8 +432,10 @@ export type Database = {
           pessoa_id?: string | null
           status?: string
           tribunal?: string | null
+          uf?: string | null
           valor_credito?: number | null
           valor_divida?: number | null
+          vara?: string | null
         }
         Update: {
           acompanhamento_id?: string
@@ -445,8 +449,10 @@ export type Database = {
           pessoa_id?: string | null
           status?: string
           tribunal?: string | null
+          uf?: string | null
           valor_credito?: number | null
           valor_divida?: number | null
+          vara?: string | null
         }
         Relationships: [
           {

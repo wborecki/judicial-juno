@@ -25,6 +25,8 @@ export function useCreateComunicacaoDivida() {
       pessoa_id?: string;
       numero_processo: string;
       tribunal?: string;
+      vara?: string;
+      uf?: string;
       valor_credito?: number;
       valor_divida?: number;
       dados_pessoa?: Record<string, string | null | undefined>;
@@ -41,6 +43,7 @@ export function useCreateComunicacaoDivida() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["comunicacoes_divida", data.acompanhamento_id] });
+      qc.invalidateQueries({ queryKey: ["acompanhamentos"] });
     },
   });
 }

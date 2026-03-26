@@ -1,0 +1,1 @@
+ALTER TABLE public.comunicacoes_divida ADD COLUMN vara text, ADD COLUMN uf text;
