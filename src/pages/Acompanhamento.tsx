@@ -404,12 +404,14 @@ export default function Acompanhamento() {
                 </div>
               </div>
               <p className="font-mono text-xs text-muted-foreground">{selectedDetail?.cpf_cnpj}</p>
-              {selectedDetail?.numero_processo && (
-                <p className="font-mono text-xs text-muted-foreground">Processo: {selectedDetail.numero_processo}</p>
-              )}
-              {selectedDetail?.valor_processo != null && (
-                <p className="text-xs text-muted-foreground">Valor: R$ {Number(selectedDetail.valor_processo).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              )}
+              <p className="font-mono text-xs text-muted-foreground">
+                Processo: {selectedDetail?.numero_processo || "—"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Valor: {selectedDetail?.valor_processo != null
+                  ? `R$ ${Number(selectedDetail.valor_processo).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                  : "—"}
+              </p>
               {selectedDetail?.observacoes && (
                 <p className="text-xs text-muted-foreground mt-1">{selectedDetail.observacoes}</p>
               )}
