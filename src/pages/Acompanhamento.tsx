@@ -513,9 +513,6 @@ export default function Acompanhamento() {
                 </>
               );
             })()}
-                </div>
-              )}
-            </div>
           </div>
         </SheetContent>
       </Sheet>
