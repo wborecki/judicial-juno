@@ -96,6 +96,27 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     }
   };
 
+  const handleCriarPessoa = () => {
+    if (!novoPessoaNome.trim() || !novoPessoaCpf.trim()) {
+      toast.error("Preencha nome e CPF/CNPJ");
+      return;
+    }
+    const digits = novoPessoaCpf.replace(/\D/g, "");
+    createPessoaMutation.mutate(
+      { nome: novoPessoaNome.trim(), cpf_cnpj: novoPessoaCpf.trim(), tipo: digits.length <= 11 ? "pessoa_fisica" : "empresa" },
+      {
+        onSuccess: (data: any) => {
+          handleSelectCredor(data);
+          setCriarPessoaOpen(false);
+          setNovoPessoaNome("");
+          setNovoPessoaCpf("");
+          toast.success("Pessoa criada com sucesso");
+        },
+        onError: () => toast.error("Erro ao criar pessoa"),
+      }
+    );
+  };
+
   const handleSubmit = () => {
     if (!acompanhamento) return;
     if (!credorSelecionado) {
