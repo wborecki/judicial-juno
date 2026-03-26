@@ -47,7 +47,6 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const [credorSearch, setCredorSearch] = useState("");
   const [tipoCredor, setTipoCredor] = useState("");
   const [tipoDivida, setTipoDivida] = useState("");
-  const [numeroProcesso, setNumeroProcesso] = useState("");
   const [valorDivida, setValorDivida] = useState("");
   const [dataVencimento, setDataVencimento] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -74,7 +73,6 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       setTipoCredor(editData.tipo_credor || "");
       setTipoDivida(editData.tipo_divida || "");
       setValorDivida(editData.valor_divida != null ? String(editData.valor_divida) : "");
-      setNumeroProcesso(editData.numero_processo && editData.numero_processo !== "—" ? editData.numero_processo : "");
       setObservacoes(editData.observacoes || "");
       setDataVencimento("");
       setArquivo(null);
@@ -113,7 +111,6 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     setCredorSearch("");
     setTipoCredor("");
     setTipoDivida("");
-    setNumeroProcesso("");
     setValorDivida("");
     setDataVencimento("");
     setObservacoes("");
@@ -188,7 +185,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     const payload: any = {
       credor_nome: credorSelecionado?.nome || editData?.credor_nome,
       tipo_credor: tipoCredor || undefined,
-      numero_processo: numeroProcesso.trim() || "—",
+      numero_processo: "—",
       tipo_divida: tipoDivida || undefined,
       valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
       observacoes: observacoes || undefined,
@@ -335,16 +332,6 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Número do Processo</Label>
-              <Input
-                value={numeroProcesso}
-                onChange={(e) => setNumeroProcesso(e.target.value)}
-                placeholder="0000000-00.0000.0.00.0000"
-                className="font-mono"
-              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
