@@ -255,7 +255,9 @@
   font-weight: 500;
 }
 
-/* Prevent overlay stacking - only show the topmost overlay */
-body > [data-radix-portal]:not(:last-of-type) > [data-state="open"].fixed.inset-0 {
+/* Prevent overlay stacking — earlier portals become transparent */
+[data-radix-portal] + [data-radix-portal] + [data-radix-portal] + [data-radix-portal] [data-overlay],
+[data-radix-portal] + [data-radix-portal] + [data-radix-portal] [data-overlay],
+[data-radix-portal] + [data-radix-portal] [data-overlay] {
   background: transparent !important;
 }
