@@ -406,6 +406,7 @@ export type Database = {
         Row: {
           acompanhamento_id: string
           created_at: string
+          credor_nome: string | null
           criado_por: string | null
           dados_pessoa: Json | null
           enviado_em: string | null
@@ -414,6 +415,7 @@ export type Database = {
           observacoes: string | null
           pessoa_id: string | null
           status: string
+          tipo_credor: string | null
           tribunal: string | null
           uf: string | null
           valor_credito: number | null
@@ -423,6 +425,7 @@ export type Database = {
         Insert: {
           acompanhamento_id: string
           created_at?: string
+          credor_nome?: string | null
           criado_por?: string | null
           dados_pessoa?: Json | null
           enviado_em?: string | null
@@ -431,6 +434,7 @@ export type Database = {
           observacoes?: string | null
           pessoa_id?: string | null
           status?: string
+          tipo_credor?: string | null
           tribunal?: string | null
           uf?: string | null
           valor_credito?: number | null
@@ -440,6 +444,7 @@ export type Database = {
         Update: {
           acompanhamento_id?: string
           created_at?: string
+          credor_nome?: string | null
           criado_por?: string | null
           dados_pessoa?: Json | null
           enviado_em?: string | null
@@ -448,6 +453,7 @@ export type Database = {
           observacoes?: string | null
           pessoa_id?: string | null
           status?: string
+          tipo_credor?: string | null
           tribunal?: string | null
           uf?: string | null
           valor_credito?: number | null
