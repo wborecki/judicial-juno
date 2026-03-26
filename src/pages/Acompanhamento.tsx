@@ -34,6 +34,7 @@ export default function Acompanhamento() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingAcomp, setEditingAcomp] = useState<any>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [numeroProcesso, setNumeroProcesso] = useState("");
   const [valorProcesso, setValorProcesso] = useState("");
@@ -48,6 +49,7 @@ export default function Acompanhamento() {
   const { data: acompanhamentos, isLoading } = useAcompanhamentos();
   const { data: pessoas } = usePessoas();
   const createMutation = useCreateAcompanhamento();
+  const updateMutation = useUpdateAcompanhamento();
   const toggleMutation = useToggleAcompanhamento();
   const deleteMutation = useDeleteAcompanhamento();
   const deleteDividaMutation = useDeleteComunicacaoDivida();
