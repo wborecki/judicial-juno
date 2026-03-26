@@ -24,12 +24,21 @@ const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secon
   rascunho: { label: "Rascunho", variant: "secondary" },
 };
 
+const UF_LIST = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
+  "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"
+];
+
 export default function Acompanhamento() {
   const [search, setSearch] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selectedPessoaId, setSelectedPessoaId] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [numeroProcesso, setNumeroProcesso] = useState("");
+  const [valorProcesso, setValorProcesso] = useState("");
+  const [vara, setVara] = useState("");
+  const [uf, setUf] = useState("");
   const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
   const [dividaSheetAcomp, setDividaSheetAcomp] = useState<any>(null);
   const [dividaEditData, setDividaEditData] = useState<any>(null);
@@ -50,7 +59,8 @@ export default function Acompanhamento() {
     const q = search.toLowerCase();
     return (
       a.pessoas?.nome?.toLowerCase().includes(q) ||
-      a.cpf_cnpj?.toLowerCase().includes(q)
+      a.cpf_cnpj?.toLowerCase().includes(q) ||
+      a.numero_processo?.toLowerCase().includes(q)
     );
   });
 
@@ -61,13 +71,25 @@ export default function Acompanhamento() {
       return;
     }
     createMutation.mutate(
-      { pessoa_id: pessoa.id, cpf_cnpj: pessoa.cpf_cnpj, observacoes: observacoes || undefined },
+      {
+        pessoa_id: pessoa.id,
+        cpf_cnpj: pessoa.cpf_cnpj,
+        observacoes: observacoes || undefined,
+        numero_processo: numeroProcesso || undefined,
+        valor_processo: valorProcesso ? Number(valorProcesso) : undefined,
+        vara: vara || undefined,
+        uf: uf || undefined,
+      },
       {
         onSuccess: () => {
           toast.success("Acompanhamento habilitado");
           setSheetOpen(false);
           setSelectedPessoaId("");
           setObservacoes("");
+          setNumeroProcesso("");
+          setValorProcesso("");
+          setVara("");
+          setUf("");
         },
         onError: () => toast.error("Erro ao criar acompanhamento"),
       }
@@ -126,7 +148,7 @@ export default function Acompanhamento() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome ou CPF/CNPJ..."
+            placeholder="Buscar por nome, CPF/CNPJ ou nº processo..."
             className="pl-9 h-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -140,14 +162,14 @@ export default function Acompanhamento() {
           <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-[18%]">Nome</TableHead>
+                <TableHead className="w-[18%]">Nome (Autor)</TableHead>
                 <TableHead className="w-[13%]">CPF/CNPJ</TableHead>
-                <TableHead className="w-[16%]">Tipo Dívida</TableHead>
-                <TableHead className="w-[10%]">Valor</TableHead>
+                <TableHead className="w-[18%]">Nº Processo</TableHead>
+                <TableHead className="w-[12%]">Valor</TableHead>
                 <TableHead className="w-[10%]">Vara</TableHead>
-                <TableHead className="w-[7%]">Estado</TableHead>
+                <TableHead className="w-[7%]">UF</TableHead>
                 <TableHead className="w-[7%] text-center">Dívidas</TableHead>
-                <TableHead className="w-[19%] text-right">Ações</TableHead>
+                <TableHead className="w-[15%] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -162,53 +184,50 @@ export default function Acompanhamento() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((a: any) => {
-                  const div = a.ultima_divida;
-                  return (
-                    <TableRow key={a.id} className="cursor-pointer" onClick={() => setDetailId(a.id)}>
-                      <TableCell className="font-medium truncate">{a.pessoas?.nome || "—"}</TableCell>
-                      <TableCell className="font-mono text-xs">{a.cpf_cnpj}</TableCell>
-                      <TableCell className="text-xs truncate capitalize">{div?.tipo_divida || div?.numero_processo || "—"}</TableCell>
-                      <TableCell className="text-xs">
-                        {div?.valor_divida != null
-                          ? `R$ ${Number(div.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-xs truncate">{div?.vara || "—"}</TableCell>
-                      <TableCell className="text-xs">{div?.uf || "—"}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={a.total_dividas > 0 ? "default" : "secondary"} className="text-xs">
-                          {a.total_dividas}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs gap-1 px-2.5"
-                            onClick={() => openInformarDivida(a)}
-                          >
-                            <Gavel className="w-3.5 h-3.5" />
-                            Informar Dívida
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive"
-                            title="Excluir"
-                            onClick={() =>
-                              deleteMutation.mutate(a.id, {
-                                onSuccess: () => toast.success("Acompanhamento excluído"),
-                              })
-                            }
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                filtered.map((a: any) => (
+                  <TableRow key={a.id} className="cursor-pointer" onClick={() => setDetailId(a.id)}>
+                    <TableCell className="font-medium truncate">{a.pessoas?.nome || "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{a.cpf_cnpj}</TableCell>
+                    <TableCell className="font-mono text-xs truncate">{a.numero_processo || "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {a.valor_processo != null
+                        ? `R$ ${Number(a.valor_processo).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs truncate">{a.vara || "—"}</TableCell>
+                    <TableCell className="text-xs">{a.uf || "—"}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={a.total_dividas > 0 ? "default" : "secondary"} className="text-xs">
+                        {a.total_dividas}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs gap-1 px-2.5"
+                          onClick={() => openInformarDivida(a)}
+                        >
+                          <Gavel className="w-3.5 h-3.5" />
+                          Informar Dívida
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          title="Excluir"
+                          onClick={() =>
+                            deleteMutation.mutate(a.id, {
+                              onSuccess: () => toast.success("Acompanhamento excluído"),
+                            })
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -223,7 +242,7 @@ export default function Acompanhamento() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Pessoa</Label>
+              <Label>Pessoa (Autor)</Label>
               <Select value={selectedPessoaId} onValueChange={setSelectedPessoaId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma pessoa cadastrada" />
@@ -239,6 +258,48 @@ export default function Acompanhamento() {
               <p className="text-[11px] text-muted-foreground">
                 O CPF/CNPJ da pessoa será usado para monitoramento automático.
               </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Número do Processo</Label>
+              <Input
+                value={numeroProcesso}
+                onChange={(e) => setNumeroProcesso(e.target.value)}
+                placeholder="0000000-00.0000.0.00.0000"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valor do Processo</Label>
+              <Input
+                type="number"
+                value={valorProcesso}
+                onChange={(e) => setValorProcesso(e.target.value)}
+                placeholder="0,00"
+                min={0}
+                step="0.01"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Vara</Label>
+                <Input
+                  value={vara}
+                  onChange={(e) => setVara(e.target.value)}
+                  placeholder="Ex: 1ª Vara Cível"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>UF</Label>
+                <Select value={uf} onValueChange={setUf}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UF_LIST.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Observações</Label>
@@ -278,6 +339,9 @@ export default function Acompanhamento() {
                 </Badge>
               </div>
               <p className="font-mono text-xs text-muted-foreground">{selectedDetail?.cpf_cnpj}</p>
+              {selectedDetail?.numero_processo && (
+                <p className="font-mono text-xs text-muted-foreground">Processo: {selectedDetail.numero_processo}</p>
+              )}
               {selectedDetail?.observacoes && (
                 <p className="text-xs text-muted-foreground mt-1">{selectedDetail.observacoes}</p>
               )}
@@ -316,7 +380,7 @@ export default function Acompanhamento() {
                     return (
                       <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-xs">{c.credor_nome || c.numero_processo}</span>
+                          <span className="font-medium text-xs">{c.credor_nome || c.tipo_divida || "Dívida"}</span>
                           <div className="flex items-center gap-1">
                             <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
                             <Button
@@ -344,8 +408,8 @@ export default function Acompanhamento() {
                             </Button>
                           </div>
                         </div>
-                        {c.credor_nome && c.numero_processo !== "—" && (
-                          <p className="font-mono text-xs text-muted-foreground">{c.numero_processo}</p>
+                        {c.tipo_divida && (
+                          <p className="text-xs text-muted-foreground capitalize">{c.tipo_divida}</p>
                         )}
                         <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
                           {c.tipo_credor && <span className="capitalize">{c.tipo_credor.replace("_", " ")}</span>}
