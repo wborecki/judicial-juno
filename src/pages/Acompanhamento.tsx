@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Eye, EyeOff, Trash2, Radar, Gavel } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, Trash2, Radar, Gavel, Paperclip } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ComunicarDividaSheet from "@/components/acompanhamento/ComunicarDividaSheet";
+import InformarDividaDialog from "@/components/acompanhamento/InformarDividaDialog";
 
 const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pendente: { label: "Pendente", variant: "outline" },
@@ -31,6 +32,8 @@ export default function Acompanhamento() {
   const [observacoes, setObservacoes] = useState("");
   const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
   const [dividaSheetAcomp, setDividaSheetAcomp] = useState<any>(null);
+  const [informarOpen, setInformarOpen] = useState(false);
+  const [informarAcomp, setInformarAcomp] = useState<any>(null);
 
   const { data: acompanhamentos, isLoading } = useAcompanhamentos();
   const { data: pessoas } = usePessoas();
@@ -69,7 +72,7 @@ export default function Acompanhamento() {
     );
   };
 
-  const openDividaSheet = (acomp: any) => {
+  const openAnexarDivida = (acomp: any) => {
     setDividaSheetAcomp({
       id: acomp.id,
       pessoa_id: acomp.pessoa_id,
@@ -77,6 +80,15 @@ export default function Acompanhamento() {
       pessoas: acomp.pessoas,
     });
     setDividaSheetOpen(true);
+  };
+
+  const openInformarDivida = (acomp: any) => {
+    setInformarAcomp({
+      id: acomp.id,
+      cpf_cnpj: acomp.cpf_cnpj,
+      pessoas: acomp.pessoas,
+    });
+    setInformarOpen(true);
   };
 
   return (
@@ -113,13 +125,13 @@ export default function Acompanhamento() {
           <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-[20%]">Nome</TableHead>
-                <TableHead className="w-[14%]">CPF/CNPJ</TableHead>
-                <TableHead className="w-[18%]">Processo</TableHead>
-                <TableHead className="w-[12%]">Valor</TableHead>
+                <TableHead className="w-[18%]">Nome</TableHead>
+                <TableHead className="w-[13%]">CPF/CNPJ</TableHead>
+                <TableHead className="w-[16%]">Processo</TableHead>
+                <TableHead className="w-[10%]">Valor</TableHead>
                 <TableHead className="w-[10%]">Vara</TableHead>
-                <TableHead className="w-[8%]">Estado</TableHead>
-                <TableHead className="w-[18%] text-right">Ações</TableHead>
+                <TableHead className="w-[7%]">Estado</TableHead>
+                <TableHead className="w-[26%] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -153,10 +165,19 @@ export default function Acompanhamento() {
                           <Button
                             size="sm"
                             className="h-7 text-xs gap-1 px-2.5"
-                            onClick={() => openDividaSheet(a)}
+                            onClick={() => openInformarDivida(a)}
                           >
                             <Gavel className="w-3.5 h-3.5" />
-                            Informar Dívida
+                            Informar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1 px-2.5"
+                            onClick={() => openAnexarDivida(a)}
+                          >
+                            <Paperclip className="w-3.5 h-3.5" />
+                            Anexar
                           </Button>
                           <Button
                             variant="ghost"
@@ -259,14 +280,24 @@ export default function Acompanhamento() {
               )}
             </div>
 
-            {/* Botão principal */}
-            <Button
-              className="w-full"
-              onClick={() => selectedDetail && openDividaSheet(selectedDetail)}
-            >
-              <Gavel className="w-4 h-4 mr-1" />
-              Nova Dívida
-            </Button>
+            {/* Dois botões */}
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={() => selectedDetail && openInformarDivida(selectedDetail)}
+              >
+                <Gavel className="w-4 h-4 mr-1" />
+                Informar Dívida
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => selectedDetail && openAnexarDivida(selectedDetail)}
+              >
+                <Paperclip className="w-4 h-4 mr-1" />
+                Anexar Dívida
+              </Button>
+            </div>
 
             {/* Lista de Dívidas */}
             <div className="border-t pt-4">
@@ -282,10 +313,14 @@ export default function Acompanhamento() {
                     return (
                       <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-xs font-medium">{c.numero_processo}</span>
+                          <span className="font-medium text-xs">{c.credor_nome || c.numero_processo}</span>
                           <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
                         </div>
+                        {c.credor_nome && c.numero_processo !== "—" && (
+                          <p className="font-mono text-xs text-muted-foreground">{c.numero_processo}</p>
+                        )}
                         <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                          {c.tipo_credor && <span className="capitalize">{c.tipo_credor.replace("_", " ")}</span>}
                           {c.tribunal && <span>Tribunal: {c.tribunal}</span>}
                           {c.vara && <span>Vara: {c.vara}</span>}
                           {c.uf && <span>UF: {c.uf}</span>}
@@ -307,11 +342,18 @@ export default function Acompanhamento() {
         </SheetContent>
       </Sheet>
 
-      {/* Sheet: Comunicar Dívida */}
+      {/* Sheet: Anexar Dívida */}
       <ComunicarDividaSheet
         open={dividaSheetOpen}
         onOpenChange={setDividaSheetOpen}
         acompanhamento={dividaSheetAcomp}
+      />
+
+      {/* Dialog: Informar Dívida ao Tribunal */}
+      <InformarDividaDialog
+        open={informarOpen}
+        onOpenChange={setInformarOpen}
+        acompanhamento={informarAcomp}
       />
     </div>
   );

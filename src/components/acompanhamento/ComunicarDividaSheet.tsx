@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Gavel } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,13 @@ const UFS = [
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
 ];
 
+const TIPOS_CREDOR = [
+  { value: "empresa", label: "Empresa" },
+  { value: "governo", label: "Governo" },
+  { value: "pessoa_fisica", label: "Pessoa Física" },
+  { value: "orgao_publico", label: "Órgão Público" },
+];
+
 interface ComunicarDividaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,6 +44,8 @@ interface ComunicarDividaSheetProps {
 }
 
 export default function ComunicarDividaSheet({ open, onOpenChange, acompanhamento }: ComunicarDividaSheetProps) {
+  const [credorNome, setCredorNome] = useState("");
+  const [tipoCredor, setTipoCredor] = useState("");
   const [numeroProcesso, setNumeroProcesso] = useState("");
   const [tribunal, setTribunal] = useState("");
   const [vara, setVara] = useState("");
@@ -49,6 +58,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const pessoa = acompanhamento?.pessoas;
 
   const resetForm = () => {
+    setCredorNome("");
+    setTipoCredor("");
     setNumeroProcesso("");
     setTribunal("");
     setVara("");
@@ -60,8 +71,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
 
   const handleSubmit = () => {
     if (!acompanhamento) return;
-    if (!numeroProcesso.trim()) {
-      toast.error("Informe o número do processo");
+    if (!credorNome.trim()) {
+      toast.error("Informe o nome do credor");
       return;
     }
 
@@ -69,7 +80,9 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       {
         acompanhamento_id: acompanhamento.id,
         pessoa_id: acompanhamento.pessoa_id,
-        numero_processo: numeroProcesso.trim(),
+        credor_nome: credorNome.trim(),
+        tipo_credor: tipoCredor || undefined,
+        numero_processo: numeroProcesso.trim() || "—",
         tribunal: tribunal || undefined,
         vara: vara || undefined,
         uf: uf || undefined,
@@ -88,11 +101,11 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       },
       {
         onSuccess: () => {
-          toast.success("Dívida registrada com sucesso");
+          toast.success("Dívida anexada com sucesso");
           resetForm();
           onOpenChange(false);
         },
-        onError: () => toast.error("Erro ao registrar dívida"),
+        onError: () => toast.error("Erro ao anexar dívida"),
       }
     );
   };
@@ -102,8 +115,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       <SheetContent className="flex flex-col sm:max-w-lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Gavel className="w-5 h-5 text-primary" />
-            Informar Dívida
+            <Paperclip className="w-5 h-5 text-primary" />
+            Anexar Dívida
           </SheetTitle>
         </SheetHeader>
 
@@ -118,7 +131,30 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
           {/* Formulário */}
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Número do Processo *</Label>
+              <Label>Credor / Entidade *</Label>
+              <Input
+                value={credorNome}
+                onChange={(e) => setCredorNome(e.target.value)}
+                placeholder="Nome do credor da dívida"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Tipo do Credor</Label>
+              <Select value={tipoCredor} onValueChange={setTipoCredor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_CREDOR.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Número do Processo</Label>
               <Input
                 value={numeroProcesso}
                 onChange={(e) => setNumeroProcesso(e.target.value)}
@@ -204,8 +240,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         <SheetFooter className="sticky bottom-0 bg-background border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-            <Gavel className="w-4 h-4 mr-1" />
-            {createMutation.isPending ? "Registrando..." : "Registrar Dívida"}
+            <Paperclip className="w-4 h-4 mr-1" />
+            {createMutation.isPending ? "Salvando..." : "Anexar Dívida"}
           </Button>
         </SheetFooter>
       </SheetContent>

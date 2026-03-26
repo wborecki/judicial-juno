@@ -32,6 +32,8 @@ export function useCreateComunicacaoDivida() {
       dados_pessoa?: Record<string, string | null | undefined>;
       observacoes?: string;
       criado_por?: string;
+      credor_nome?: string;
+      tipo_credor?: string;
     }) => {
       const { data, error } = await supabase
         .from("comunicacoes_divida")
