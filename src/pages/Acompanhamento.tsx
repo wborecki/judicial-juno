@@ -179,7 +179,7 @@ export default function Acompanhamento() {
             Monitore CPFs/CNPJs e registre dívidas judiciais
           </p>
         </div>
-        <Button size="sm" onClick={() => setSheetOpen(true)}>
+        <Button size="sm" onClick={() => { resetForm(); setSheetOpen(true); }}>
           <Plus className="w-4 h-4 mr-1" /> Novo Acompanhamento
         </Button>
       </div>
