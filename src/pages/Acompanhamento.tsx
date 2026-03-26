@@ -240,7 +240,7 @@ export default function Acompanhamento() {
           <SheetHeader>
             <SheetTitle>Novo Acompanhamento</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto space-y-4 py-4">
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 px-1 -mx-1">
             <div className="space-y-2">
               <Label>Pessoa (Autor)</Label>
               <Select value={selectedPessoaId} onValueChange={setSelectedPessoaId}>
