@@ -1,77 +1,43 @@
 
+Objetivo
+- Corrigir definitivamente o escurecimento acumulado quando há Sheet/Dialog sobrepostos, mantendo a opacidade padrão constante.
 
-## Plano: Separar "Informar Dívida" e "Anexar Dívida"
+Diagnóstico (causa raiz)
+- O CSS atual em `src/index.css` usa seletores com `+` e profundidade fixa (2, 3, 4 portais).
+- Quando a ordem dos portais muda (ou há portais intermediários), a regra não pega todos os casos, então overlays extras continuam com `bg-black/80` e a tela escurece progressivamente.
+- Além disso, apenas `dialog.tsx` e `sheet.tsx` têm `data-overlay`; `alert-dialog.tsx` e `drawer.tsx` ainda não participam da regra global.
 
-### Conceito
+Plano de implementação
+1) Padronizar marcação de overlay em todos os componentes base de modal
+- Atualizar:
+  - `src/components/ui/alert-dialog.tsx`
+  - `src/components/ui/drawer.tsx`
+- Adicionar `data-overlay=""` no Overlay (igual já existe em `dialog.tsx` e `sheet.tsx`).
 
-São duas ações distintas:
+2) Substituir regra frágil de stacking no CSS global
+- Em `src/index.css`, remover a regra atual com combinações fixas de `+`.
+- Adicionar uma regra única, geral, baseada em portais com overlay aberto, para deixar transparente qualquer overlay “depois do primeiro”:
+  - foco em `[data-state="open"]`
+  - cobertura ilimitada de níveis de sobreposição
+  - sem depender de serem irmãos adjacentes.
 
-1. **"Informar Dívida"** — Processo de comunicação ao tribunal. Ao clicar, executa uma sequência visual de etapas com progresso animado (spinner + checklist):
-   - ✓ Compactando dados da dívida
-   - ✓ Acessando tribunal
-   - ⟳ Identificando autos...
-   - ○ Anexando dívida ao processo
-   - ○ Concluído
-   
-   Mostra um modal/dialog com stepper animado. Cada etapa roda por alguns segundos (simulado por enquanto, futuramente integrado). Ao final, marca como "enviado".
+3) Garantir comportamento consistente
+- Manter o primeiro overlay visível (escurecimento padrão).
+- Overlays subsequentes ficam transparentes (não acumulam preto), mas continuam bloqueando interação indevida do fundo.
 
-2. **"Anexar Dívida"** — Registrar manualmente uma dívida que o devedor possui com qualquer órgão, empresa, pessoa física ou governo. É o formulário atual do `ComunicarDividaSheet`, renomeado para "Anexar Dívida". Campos: credor/entidade, valor, descrição, tipo (empresa, governo, pessoa física, etc).
+Validação (end-to-end)
+- Fluxo principal em `/acompanhamento`:
+  1. Abrir “Detalhe” (Sheet 1),
+  2. Abrir “Anexar Dívida” (Sheet 2),
+  3. Abrir “Criar Nova Pessoa” (Dialog 3).
+  Resultado esperado: opacidade de fundo igual do primeiro nível, sem escurecer mais.
+- Fechar em cascata (Dialog → Sheet 2 → Sheet 1): overlay permanece correto em cada etapa.
+- Testar outro fluxo com `AlertDialog` sobre `Sheet` (ex.: páginas com exclusão): sem escurecimento acumulado.
+- Testar caso simples (apenas 1 modal): visual padrão intacto.
 
-### Alterações
-
-#### 1. Novo componente `InformarDividaDialog.tsx`
-- Dialog modal com stepper vertical animado
-- 5 etapas com ícones: check (concluído), loader spinning (em andamento), circle (pendente)
-- Barra de progresso no topo
-- Ao abrir, executa as etapas em sequência (simulado com timers, ~2s cada)
-- Ao concluir, atualiza o status da dívida para "enviado" e fecha
-- Recebe o `acompanhamento` como prop
-
-#### 2. Renomear `ComunicarDividaSheet` → Ajustar para "Anexar Dívida"
-- Trocar título para "Anexar Dívida"
-- Ícone de Paperclip em vez de Gavel
-- Adicionar campo "Credor/Entidade" (quem é o credor da dívida)
-- Adicionar campo "Tipo" (select: Empresa, Governo, Pessoa Física, Órgão Público)
-- Manter campos existentes (processo, tribunal, vara, UF, valores)
-
-#### 3. Tabela `comunicacoes_divida` — novos campos
-- Migração: adicionar `credor_nome text` e `tipo_credor text`
-
-#### 4. `Acompanhamento.tsx` — Dois botões na linha da tabela
-- Botão primário: **"Informar Dívida"** (ícone Gavel) → abre o dialog com stepper
-- Botão outline: **"Anexar Dívida"** (ícone Paperclip) → abre o sheet/formulário atual
-- Na sheet de detalhe: manter os dois botões também
-
-#### 5. Hook `useComunicacoesDivida.ts`
-- Aceitar `credor_nome` e `tipo_credor` no mutation
-
-### UI do Stepper (InformarDividaDialog)
-
-```text
-┌─────────────────────────────────┐
-│  Informar Dívida ao Tribunal    │
-│  ━━━━━━━━━━━━━━━━━░░░░  60%    │
-│                                 │
-│  ✓  Compactando dados           │
-│  ✓  Acessando tribunal          │
-│  ⟳  Identificando autos...      │
-│  ○  Anexando dívida ao processo │
-│  ○  Finalizado                  │
-│                                 │
-│  Devedor: João Silva            │
-│  CPF: 123.456.789-00            │
-│                                 │
-│              [Cancelar]         │
-└─────────────────────────────────┘
-```
-
-### Arquivos
-
-| Arquivo | Ação |
-|---|---|
-| Migração SQL | Adicionar `credor_nome` e `tipo_credor` em `comunicacoes_divida` |
-| `src/components/acompanhamento/InformarDividaDialog.tsx` | Novo — stepper animado |
-| `src/components/acompanhamento/ComunicarDividaSheet.tsx` | Renomear para "Anexar Dívida", adicionar campos credor |
-| `src/pages/Acompanhamento.tsx` | Dois botões na tabela e no detalhe |
-| `src/hooks/useComunicacoesDivida.ts` | Aceitar novos campos |
-
+Detalhes técnicos
+- Arquivos impactados:
+  - `src/index.css` (regra global de overlay stacking)
+  - `src/components/ui/alert-dialog.tsx` (`data-overlay`)
+  - `src/components/ui/drawer.tsx` (`data-overlay`)
+- Não haverá alteração de banco, hooks de dados ou regras de negócio; ajuste é exclusivamente de camada de UI/overlay.
