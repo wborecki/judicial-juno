@@ -81,6 +81,19 @@ export default function Acompanhamento() {
       cpf_cnpj: acomp.cpf_cnpj,
       pessoas: acomp.pessoas,
     });
+    setDividaEditData(null);
+    setDividaSheetOpen(true);
+  };
+
+  const openEditDivida = (divida: any) => {
+    if (!selectedDetail) return;
+    setDividaSheetAcomp({
+      id: selectedDetail.id,
+      pessoa_id: selectedDetail.pessoa_id,
+      cpf_cnpj: selectedDetail.cpf_cnpj,
+      pessoas: selectedDetail.pessoas,
+    });
+    setDividaEditData(divida);
     setDividaSheetOpen(true);
   };
 
