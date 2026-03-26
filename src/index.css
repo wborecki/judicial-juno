@@ -137,11 +137,9 @@
     transition: opacity 150ms ease;
   }
 
-  body:has([data-overlay][data-state="open"]),
-  body:has([data-overlay][data-state="closed"]) {
-    &::before {
-      opacity: 1;
-    }
+  body:has([data-overlay][data-state="open"])::before,
+  body:has([data-overlay][data-state="closed"])::before {
+    opacity: 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
