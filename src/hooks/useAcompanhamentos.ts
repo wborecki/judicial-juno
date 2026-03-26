@@ -59,7 +59,7 @@ export function useAcompanhamentoResultados(acompanhamentoId: string | null) {
 export function useCreateAcompanhamento() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { pessoa_id: string; cpf_cnpj: string; observacoes?: string; criado_por?: string }) => {
+    mutationFn: async (input: { pessoa_id: string; cpf_cnpj: string; observacoes?: string; criado_por?: string; numero_processo?: string; valor_processo?: number; vara?: string; uf?: string }) => {
       const { data, error } = await supabase
         .from("acompanhamentos")
         .insert(input)
