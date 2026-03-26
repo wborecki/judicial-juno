@@ -125,6 +125,25 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Backdrop global único para evitar escurecimento acumulado em modais sobrepostos */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    pointer-events: none;
+    opacity: 0;
+    background: hsl(0 0% 0% / 0.8);
+    transition: opacity 150ms ease;
+  }
+
+  body:has([data-overlay][data-state="open"]),
+  body:has([data-overlay][data-state="closed"]) {
+    &::before {
+      opacity: 1;
+    }
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
   }
@@ -255,7 +274,7 @@
   font-weight: 500;
 }
 
-/* Prevent overlay stacking — only the first portal overlay is visible */
-[data-radix-portal] ~ [data-radix-portal] [data-overlay] {
+/* Overlays individuais ficam transparentes; o escurecimento vem apenas do backdrop global */
+[data-overlay] {
   background: transparent !important;
 }
