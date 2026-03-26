@@ -9,20 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { toast } from "sonner";
 
-const TRIBUNAIS = [
-  "TRF1","TRF2","TRF3","TRF4","TRF5","TRF6",
-  "TJAC","TJAL","TJAM","TJAP","TJBA","TJCE","TJDF","TJES","TJGO",
-  "TJMA","TJMG","TJMS","TJMT","TJPA","TJPB","TJPE","TJPI","TJPR",
-  "TJRJ","TJRN","TJRO","TJRR","TJRS","TJSC","TJSE","TJSP","TJTO",
-  "TST","TRT1","TRT2","TRT3","TRT4","TRT5","TRT6","TRT7","TRT8",
-  "TRT9","TRT10","TRT11","TRT12","TRT13","TRT14","TRT15","TRT16",
-  "TRT17","TRT18","TRT19","TRT20","TRT21","TRT22","TRT23","TRT24",
-  "STF","STJ",
-];
-
-const UFS = [
-  "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
-  "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
+const TIPOS_DIVIDA = [
+  { value: "emprestimo", label: "Empréstimo" },
+  { value: "financiamento", label: "Financiamento" },
+  { value: "cartao_credito", label: "Cartão de Crédito" },
+  { value: "tributo", label: "Tributo / Imposto" },
+  { value: "multa", label: "Multa" },
+  { value: "servico", label: "Serviço" },
+  { value: "aluguel", label: "Aluguel" },
+  { value: "outros", label: "Outros" },
 ];
 
 const TIPOS_CREDOR = [
