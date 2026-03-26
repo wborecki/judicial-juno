@@ -3,6 +3,9 @@ import { Gavel, Check, Circle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const STEPS = [
   "Compactando dados da dívida",
@@ -25,11 +28,28 @@ interface InformarDividaDialogProps {
 export default function InformarDividaDialog({ open, onOpenChange, acompanhamento }: InformarDividaDialogProps) {
   const [currentStep, setCurrentStep] = useState(-1);
   const [finished, setFinished] = useState(false);
+  const qc = useQueryClient();
 
   const reset = useCallback(() => {
     setCurrentStep(-1);
     setFinished(false);
   }, []);
+
+  // When finished, update all pending debts to "enviado"
+  const markDividasAsEnviado = useCallback(async () => {
+    if (!acompanhamento) return;
+    const { error } = await supabase
+      .from("comunicacoes_divida")
+      .update({ status: "enviado", enviado_em: new Date().toISOString() })
+      .eq("acompanhamento_id", acompanhamento.id)
+      .eq("status", "pendente");
+    if (error) {
+      toast.error("Erro ao atualizar status das dívidas");
+    } else {
+      qc.invalidateQueries({ queryKey: ["comunicacoes_divida", acompanhamento.id] });
+      qc.invalidateQueries({ queryKey: ["acompanhamentos"] });
+    }
+  }, [acompanhamento, qc]);
 
   useEffect(() => {
     if (!open) {
@@ -37,13 +57,12 @@ export default function InformarDividaDialog({ open, onOpenChange, acompanhament
       return;
     }
 
-    // Start the sequence
     setCurrentStep(0);
     setFinished(false);
 
     const timers: NodeJS.Timeout[] = [];
     STEPS.forEach((_, i) => {
-      if (i === 0) return; // already set
+      if (i === 0) return;
       timers.push(
         setTimeout(() => {
           setCurrentStep(i);
@@ -56,6 +75,13 @@ export default function InformarDividaDialog({ open, onOpenChange, acompanhament
 
     return () => timers.forEach(clearTimeout);
   }, [open, reset]);
+
+  // When finished, mark debts
+  useEffect(() => {
+    if (finished) {
+      markDividasAsEnviado();
+    }
+  }, [finished, markDividasAsEnviado]);
 
   const progress = currentStep < 0 ? 0 : Math.round(((currentStep + (finished ? 1 : 0.5)) / STEPS.length) * 100);
 
@@ -70,7 +96,6 @@ export default function InformarDividaDialog({ open, onOpenChange, acompanhament
         </DialogHeader>
 
         <div className="space-y-5 py-2">
-          {/* Progress bar */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Progresso</span>
@@ -79,12 +104,10 @@ export default function InformarDividaDialog({ open, onOpenChange, acompanhament
             <Progress value={progress} className="h-2" />
           </div>
 
-          {/* Stepper */}
           <div className="space-y-3">
             {STEPS.map((label, i) => {
               const isCompleted = i < currentStep || finished;
               const isActive = i === currentStep && !finished;
-              const isPending = i > currentStep;
 
               return (
                 <div key={i} className="flex items-center gap-3">
@@ -109,7 +132,6 @@ export default function InformarDividaDialog({ open, onOpenChange, acompanhament
             })}
           </div>
 
-          {/* Debtor info */}
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-0.5">
             <p className="text-xs text-muted-foreground">Devedor</p>
             <p className="text-sm font-medium">{acompanhamento?.pessoas?.nome || "—"}</p>
