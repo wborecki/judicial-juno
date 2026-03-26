@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Trash2, Radar, Gavel, Paperclip } from "lucide-react";
+import { Search, Plus, Trash2, Radar, Gavel, Paperclip, Pencil, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAcompanhamentos, useCreateAcompanhamento, useToggleAcompanhamento, useDeleteAcompanhamento } from "@/hooks/useAcompanhamentos";
-import { useComunicacoesDivida } from "@/hooks/useComunicacoesDivida";
+import { useComunicacoesDivida, useDeleteComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
 import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -32,6 +32,7 @@ export default function Acompanhamento() {
   const [observacoes, setObservacoes] = useState("");
   const [dividaSheetOpen, setDividaSheetOpen] = useState(false);
   const [dividaSheetAcomp, setDividaSheetAcomp] = useState<any>(null);
+  const [dividaEditData, setDividaEditData] = useState<any>(null);
   const [informarOpen, setInformarOpen] = useState(false);
   const [informarAcomp, setInformarAcomp] = useState<any>(null);
 
@@ -40,6 +41,7 @@ export default function Acompanhamento() {
   const createMutation = useCreateAcompanhamento();
   const toggleMutation = useToggleAcompanhamento();
   const deleteMutation = useDeleteAcompanhamento();
+  const deleteDividaMutation = useDeleteComunicacaoDivida();
 
   const selectedDetail = acompanhamentos?.find((a: any) => a.id === detailId);
   const { data: dividas, isLoading: loadingDividas } = useComunicacoesDivida(detailId);
@@ -79,6 +81,19 @@ export default function Acompanhamento() {
       cpf_cnpj: acomp.cpf_cnpj,
       pessoas: acomp.pessoas,
     });
+    setDividaEditData(null);
+    setDividaSheetOpen(true);
+  };
+
+  const openEditDivida = (divida: any) => {
+    if (!selectedDetail) return;
+    setDividaSheetAcomp({
+      id: selectedDetail.id,
+      pessoa_id: selectedDetail.pessoa_id,
+      cpf_cnpj: selectedDetail.cpf_cnpj,
+      pessoas: selectedDetail.pessoas,
+    });
+    setDividaEditData(divida);
     setDividaSheetOpen(true);
   };
 
@@ -302,7 +317,32 @@ export default function Acompanhamento() {
                       <div key={c.id} className="border rounded-lg p-3 text-sm space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-xs">{c.credor_nome || c.numero_processo}</span>
-                          <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge variant={st.variant} className="text-[10px]">{st.label}</Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              title="Editar"
+                              onClick={() => openEditDivida(c)}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive"
+                              title="Excluir"
+                              onClick={() =>
+                                deleteDividaMutation.mutate(c.id, {
+                                  onSuccess: () => toast.success("Dívida excluída"),
+                                  onError: () => toast.error("Erro ao excluir dívida"),
+                                })
+                              }
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
                         {c.credor_nome && c.numero_processo !== "—" && (
                           <p className="font-mono text-xs text-muted-foreground">{c.numero_processo}</p>
@@ -317,6 +357,17 @@ export default function Acompanhamento() {
                           {c.valor_credito != null && <span>Crédito: R$ {Number(c.valor_credito).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
                           {c.valor_divida != null && <span>Dívida: R$ {Number(c.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>}
                         </div>
+                        {(c as any).comprovante_url && (
+                          <a
+                            href={(c as any).comprovante_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          >
+                            <FileText className="w-3 h-3" />
+                            {(c as any).comprovante_nome || "Comprovante"}
+                          </a>
+                        )}
                         <p className="text-muted-foreground text-[10px]">
                           Registrado em: {format(new Date(c.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                         </p>
@@ -335,6 +386,7 @@ export default function Acompanhamento() {
         open={dividaSheetOpen}
         onOpenChange={setDividaSheetOpen}
         acompanhamento={dividaSheetAcomp}
+        editData={dividaEditData}
       />
 
       {/* Dialog: Informar Dívida ao Tribunal */}

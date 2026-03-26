@@ -405,6 +405,8 @@ export type Database = {
       comunicacoes_divida: {
         Row: {
           acompanhamento_id: string
+          comprovante_nome: string | null
+          comprovante_url: string | null
           created_at: string
           credor_nome: string | null
           criado_por: string | null
@@ -424,6 +426,8 @@ export type Database = {
         }
         Insert: {
           acompanhamento_id: string
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
           created_at?: string
           credor_nome?: string | null
           criado_por?: string | null
@@ -443,6 +447,8 @@ export type Database = {
         }
         Update: {
           acompanhamento_id?: string
+          comprovante_nome?: string | null
+          comprovante_url?: string | null
           created_at?: string
           credor_nome?: string | null
           criado_por?: string | null
