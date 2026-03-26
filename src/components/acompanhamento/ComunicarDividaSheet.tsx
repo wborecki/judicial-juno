@@ -71,7 +71,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     if (editData && open) {
       setCredorPessoaId(editData.pessoa_id || "");
       setTipoCredor(editData.tipo_credor || "");
-      setTipoDivida(editData.numero_processo !== "—" ? editData.numero_processo || "" : "");
+      setTipoDivida(editData.tipo_divida || "");
       setValorDivida(editData.valor_divida != null ? String(editData.valor_divida) : "");
       setObservacoes(editData.observacoes || "");
       setDataVencimento("");
@@ -185,7 +185,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     const payload: any = {
       credor_nome: credorSelecionado?.nome || editData?.credor_nome,
       tipo_credor: tipoCredor || undefined,
-      numero_processo: tipoDivida || "—",
+      numero_processo: "—",
+      tipo_divida: tipoDivida || undefined,
       valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
       observacoes: observacoes || undefined,
       comprovante_url: comprovante_url || undefined,

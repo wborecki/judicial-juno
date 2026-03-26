@@ -142,7 +142,7 @@ export default function Acompanhamento() {
               <TableRow className="bg-muted/40">
                 <TableHead className="w-[18%]">Nome</TableHead>
                 <TableHead className="w-[13%]">CPF/CNPJ</TableHead>
-                <TableHead className="w-[16%]">Processo</TableHead>
+                <TableHead className="w-[16%]">Tipo Dívida</TableHead>
                 <TableHead className="w-[10%]">Valor</TableHead>
                 <TableHead className="w-[10%]">Vara</TableHead>
                 <TableHead className="w-[7%]">Estado</TableHead>
@@ -168,7 +168,7 @@ export default function Acompanhamento() {
                     <TableRow key={a.id} className="cursor-pointer" onClick={() => setDetailId(a.id)}>
                       <TableCell className="font-medium truncate">{a.pessoas?.nome || "—"}</TableCell>
                       <TableCell className="font-mono text-xs">{a.cpf_cnpj}</TableCell>
-                      <TableCell className="font-mono text-xs truncate">{div?.numero_processo || "—"}</TableCell>
+                      <TableCell className="text-xs truncate capitalize">{div?.tipo_divida || div?.numero_processo || "—"}</TableCell>
                       <TableCell className="text-xs">
                         {div?.valor_divida != null
                           ? `R$ ${Number(div.valor_divida).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
