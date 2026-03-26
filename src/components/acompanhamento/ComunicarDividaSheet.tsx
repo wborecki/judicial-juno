@@ -1,13 +1,14 @@
 import { useState, useMemo } from "react";
-import { Paperclip, Search } from "lucide-react";
+import { Paperclip, Search, Plus } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useCreateComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
-import { usePessoas } from "@/hooks/usePessoas";
+import { usePessoas, useCreatePessoa } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 
 const TIPOS_DIVIDA = [
@@ -47,9 +48,13 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   const [valorDivida, setValorDivida] = useState("");
   const [dataVencimento, setDataVencimento] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [criarPessoaOpen, setCriarPessoaOpen] = useState(false);
+  const [novoPessoaNome, setNovoPessoaNome] = useState("");
+  const [novoPessoaCpf, setNovoPessoaCpf] = useState("");
 
   const { data: pessoas } = usePessoas();
   const createMutation = useCreateComunicacaoDivida();
+  const createPessoaMutation = useCreatePessoa();
   const pessoa = acompanhamento?.pessoas;
 
   const credorSelecionado = useMemo(
@@ -91,6 +96,27 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     }
   };
 
+  const handleCriarPessoa = () => {
+    if (!novoPessoaNome.trim() || !novoPessoaCpf.trim()) {
+      toast.error("Preencha nome e CPF/CNPJ");
+      return;
+    }
+    const digits = novoPessoaCpf.replace(/\D/g, "");
+    createPessoaMutation.mutate(
+      { nome: novoPessoaNome.trim(), cpf_cnpj: novoPessoaCpf.trim(), tipo: digits.length <= 11 ? "pessoa_fisica" : "empresa", email: null, telefone: null, endereco: null, cidade: null, uf: null },
+      {
+        onSuccess: (data: any) => {
+          handleSelectCredor(data);
+          setCriarPessoaOpen(false);
+          setNovoPessoaNome("");
+          setNovoPessoaCpf("");
+          toast.success("Pessoa criada com sucesso");
+        },
+        onError: () => toast.error("Erro ao criar pessoa"),
+      }
+    );
+  };
+
   const handleSubmit = () => {
     if (!acompanhamento) return;
     if (!credorSelecionado) {
@@ -129,6 +155,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
   };
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex flex-col sm:max-w-lg">
         <SheetHeader>
@@ -175,8 +202,8 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                     placeholder="Buscar por nome ou CPF/CNPJ..."
                     className="pl-9"
                   />
-                  {credorSearch.trim() && pessoasFiltradas.length > 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md max-h-48 overflow-y-auto">
+                  {credorSearch.trim() && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md max-h-56 overflow-y-auto">
                       {pessoasFiltradas.map((p: any) => (
                         <button
                           key={p.id}
@@ -188,11 +215,20 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
                           <span className="text-xs font-mono text-muted-foreground shrink-0">{p.cpf_cnpj}</span>
                         </button>
                       ))}
-                    </div>
-                  )}
-                  {credorSearch.trim() && pessoasFiltradas.length === 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md p-3">
-                      <p className="text-xs text-muted-foreground text-center">Nenhuma pessoa encontrada</p>
+                      {pessoasFiltradas.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-2">Nenhuma pessoa encontrada</p>
+                      )}
+                      <button
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-center gap-2 border-t border-border text-primary"
+                        onClick={() => {
+                          setNovoPessoaNome(credorSearch.trim());
+                          setCriarPessoaOpen(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span className="text-sm font-medium">Criar nova pessoa</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -270,5 +306,31 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    {/* Dialog para criar nova pessoa */}
+    <Dialog open={criarPessoaOpen} onOpenChange={setCriarPessoaOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Criar Nova Pessoa</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="space-y-1.5">
+            <Label>Nome *</Label>
+            <Input value={novoPessoaNome} onChange={(e) => setNovoPessoaNome(e.target.value)} placeholder="Nome completo ou razão social" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>CPF / CNPJ *</Label>
+            <Input value={novoPessoaCpf} onChange={(e) => setNovoPessoaCpf(e.target.value)} placeholder="000.000.000-00 ou 00.000.000/0000-00" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setCriarPessoaOpen(false)}>Cancelar</Button>
+          <Button onClick={handleCriarPessoa} disabled={createPessoaMutation.isPending}>
+            {createPessoaMutation.isPending ? "Criando..." : "Criar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
