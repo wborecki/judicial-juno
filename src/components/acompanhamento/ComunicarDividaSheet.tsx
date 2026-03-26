@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Paperclip } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Paperclip, Search } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateComunicacaoDivida } from "@/hooks/useComunicacoesDivida";
+import { usePessoas } from "@/hooks/usePessoas";
 import { toast } from "sonner";
 
 const TIPOS_DIVIDA = [
@@ -39,18 +40,36 @@ interface ComunicarDividaSheetProps {
 }
 
 export default function ComunicarDividaSheet({ open, onOpenChange, acompanhamento }: ComunicarDividaSheetProps) {
-  const [credorNome, setCredorNome] = useState("");
+  const [credorPessoaId, setCredorPessoaId] = useState("");
+  const [credorSearch, setCredorSearch] = useState("");
   const [tipoCredor, setTipoCredor] = useState("");
   const [tipoDivida, setTipoDivida] = useState("");
   const [valorDivida, setValorDivida] = useState("");
   const [dataVencimento, setDataVencimento] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
+  const { data: pessoas } = usePessoas();
   const createMutation = useCreateComunicacaoDivida();
   const pessoa = acompanhamento?.pessoas;
 
+  const credorSelecionado = useMemo(
+    () => pessoas?.find((p: any) => p.id === credorPessoaId),
+    [pessoas, credorPessoaId]
+  );
+
+  const pessoasFiltradas = useMemo(() => {
+    if (!pessoas || !credorSearch.trim()) return [];
+    const q = credorSearch.toLowerCase();
+    return pessoas
+      .filter((p: any) =>
+        p.nome?.toLowerCase().includes(q) || p.cpf_cnpj?.includes(q)
+      )
+      .slice(0, 8);
+  }, [pessoas, credorSearch]);
+
   const resetForm = () => {
-    setCredorNome("");
+    setCredorPessoaId("");
+    setCredorSearch("");
     setTipoCredor("");
     setTipoDivida("");
     setValorDivida("");
@@ -58,10 +77,24 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
     setObservacoes("");
   };
 
+  const handleSelectCredor = (p: any) => {
+    setCredorPessoaId(p.id);
+    setCredorSearch("");
+    // Auto-detect tipo based on cpf_cnpj length
+    if (p.cpf_cnpj) {
+      const digits = p.cpf_cnpj.replace(/\D/g, "");
+      if (digits.length <= 11) {
+        setTipoCredor("pessoa_fisica");
+      } else {
+        setTipoCredor("empresa");
+      }
+    }
+  };
+
   const handleSubmit = () => {
     if (!acompanhamento) return;
-    if (!credorNome.trim()) {
-      toast.error("Informe o nome do credor");
+    if (!credorSelecionado) {
+      toast.error("Selecione o credor da lista de pessoas");
       return;
     }
 
@@ -69,7 +102,7 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
       {
         acompanhamento_id: acompanhamento.id,
         pessoa_id: acompanhamento.pessoa_id,
-        credor_nome: credorNome.trim(),
+        credor_nome: credorSelecionado.nome,
         tipo_credor: tipoCredor || undefined,
         numero_processo: tipoDivida || "—",
         valor_divida: valorDivida ? parseFloat(valorDivida) : undefined,
@@ -115,13 +148,55 @@ export default function ComunicarDividaSheet({ open, onOpenChange, acompanhament
 
           {/* Formulário */}
           <div className="space-y-3">
+            {/* Credor - busca na tabela pessoas */}
             <div className="space-y-1.5">
               <Label>Credor / Entidade *</Label>
-              <Input
-                value={credorNome}
-                onChange={(e) => setCredorNome(e.target.value)}
-                placeholder="Nome do credor da dívida"
-              />
+              {credorSelecionado ? (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{credorSelecionado.nome}</p>
+                    <p className="text-xs font-mono text-muted-foreground">{credorSelecionado.cpf_cnpj}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs shrink-0"
+                    onClick={() => { setCredorPessoaId(""); setCredorSearch(""); }}
+                  >
+                    Trocar
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={credorSearch}
+                    onChange={(e) => setCredorSearch(e.target.value)}
+                    placeholder="Buscar por nome ou CPF/CNPJ..."
+                    className="pl-9"
+                  />
+                  {credorSearch.trim() && pessoasFiltradas.length > 0 && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md max-h-48 overflow-y-auto">
+                      {pessoasFiltradas.map((p: any) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-center justify-between gap-2"
+                          onClick={() => handleSelectCredor(p)}
+                        >
+                          <span className="text-sm font-medium truncate">{p.nome}</span>
+                          <span className="text-xs font-mono text-muted-foreground shrink-0">{p.cpf_cnpj}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {credorSearch.trim() && pessoasFiltradas.length === 0 && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-md p-3">
+                      <p className="text-xs text-muted-foreground text-center">Nenhuma pessoa encontrada</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
